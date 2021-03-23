@@ -7,6 +7,13 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+enum TRIGGER_MODE_SELECTOR {
+    S_FREE_RUNNING = 0,
+    S_SOFTWARE = 1,
+    S_LEVEL = 2,
+    S_EXTERNAL = 3
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -14,8 +21,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-
-private:
     Ui::MainWindow *ui;
+
 };
 #endif // MAINWINDOW_H

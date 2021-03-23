@@ -8,8 +8,10 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_compile_definitions(LINUX)
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check https://doc.qt.io/qt/deployment-android.html for more information.
@@ -33,15 +35,39 @@ else()
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 endif()
 
+
+find_package(spdlog)
+find_package(adq)
+
+add_subdirectory(include/spdlog-1.8.2)
+
 include_directories(include/qcustomplot)
+include_directories(include/fastsave)
 
 set(PROJECT_SOURCES
         main.cpp
+        ADQDeviceConfiguration.cpp
+        ADQDeviceConfiguration.h
         MainWindow.cpp
         MainWindow.h
         MainWindow.ui
         include/qcustomplot/qcustomplot.cpp
         include/qcustomplot/qcustomplot.h
+        Acquisition.cpp
+        Acquisition.h
+        BufferProcessor.cpp
+        BufferProcessor.h
+        Semaphore.h
+        StreamingBuffers.cpp
+        StreamingBuffers.h
+        StreamingHeader.h
+        RecordProcessor.h
+        Application.cpp
+        Application.h
+        ScopeUpdater.cpp
+        ScopeUpdater.h
+        ApplicationConfiguration.cpp
+        ApplicationConfiguration.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -64,10 +90,14 @@ if(${QT_VERSION_MAJOR} GREATER 4)
     set(PROJECT_LIBRARIES
         Qt${QT_VERSION_MAJOR}::Widgets
         Qt5::PrintSupport
+        spdlog
+        adq
     )
 else()
     set(PROJECT_LIBRARIES
         Qt${QT_VERSION_MAJOR}::Widgets
+        spdlog
+        adq
     )
 endif()
 
