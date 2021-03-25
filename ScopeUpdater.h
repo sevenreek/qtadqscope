@@ -2,9 +2,11 @@
 #define SCOPEUPDATER_H
 #include "RecordProcessor.h"
 #include "qcustomplot.h"
+#include <QObject>
 
-class ScopeUpdater : public RecordProcessor
+class ScopeUpdater : public QObject, public RecordProcessor
 {
+    Q_OBJECT
 private:
     QCustomPlot &plot;
     QVector<double> x, y;
@@ -13,6 +15,8 @@ public:
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
     unsigned long long finish();
     void reallocate(unsigned long long sampleCount);
+signals:
+    void onScopeUpdate(QVector<double> &x, QVector<double> y);
 };
 
 #endif // SCOPEUPDATER_H

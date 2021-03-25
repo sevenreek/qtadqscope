@@ -8,154 +8,54 @@ Acquisition::Acquisition(
     std::shared_ptr<ScopeUpdater> scopeUpdater):
         appConfig(appConfig),
         adqDevice(adqDevice),
-        scopeUpdater(scopeUpdater)
-{
-    this->writeBuffers = std::unique_ptr<WriteBuffers>(
-        new WriteBuffers(
+        scopeUpdater(scopeUpdater),
+        writeBuffers{
             appConfig.writeBufferCount,
             appConfig.deviceConfig.transferBufferSize,
-            1<<(appConfig.getCurrentChannel())
-        )
-    );
-}
-
-unsigned long Acquisition::checkDMA()
+            (unsigned char)(1<<(appConfig.getCurrentChannel()))
+        },
+        bufferProcessor(new BaseBufferProcessor(appConfig.deviceConfig.transferBufferSize/sizeof(short)))
 {
+    scopeUpdater->moveToThread(&this->bufferProcessingThread);
 
-    return 0;
-}
-void Acquisition::runDMAChecker()
-{
-    if(this->bufferProcessor == nullptr)
-    {
-        spdlog::critical("BufferProcessor not found. cannot start.");
-        this->setState(ACQUISITION_STATES::STOPPED);
-        return;
-    }
-    this->dmaCheckingActive = true;
-    spdlog::debug("DMA thread active");
-    while(this->dmaCheckingActive)
-    {
-        unsigned int buffersFilled = 0;
+    bufferProcessorHandler = new LoopBufferProcessor{writeBuffers, *bufferProcessor.get()};
+    bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
+    connect(&this->bufferProcessingThread, &QThread::finished, bufferProcessorHandler, &QObject::deleteLater);
+    connect(this, &Acquisition::onStart, bufferProcessorHandler, &LoopBufferProcessor::runLoop, Qt::ConnectionType::QueuedConnection);
+    connect(bufferProcessorHandler, &LoopBufferProcessor::onLoopStopped, this, &Acquisition::onProcessingThreadStopped);
+    connect(bufferProcessorHandler, &LoopBufferProcessor::onError, this, &Acquisition::error);
 
-        if(!this->adqDevice.GetTransferBufferStatus(&buffersFilled)) {
-            spdlog::error("Could not get transfer buffer status. Stopping.");
-            this->error(); // stop if error
-            break;
-        }
-        /*
-        if(buffersFilled)
-        {
-            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
-        }
-        else if(std::chrono::system_clock::now()
-            > this->lastFilledBufferReceivedOn + std::chrono::milliseconds(flushTimeoutMs))
-        {
-            spdlog::info("Flushing DMA buffers.");
-            this->adqDevice->FlushDMA();
-            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
-        }*/
-        if(buffersFilled >= this->appConfig.deviceConfig.transferBufferCount-1) {
-            if(this->adqDevice.GetStreamOverflow()) {
-                spdlog::error("STREAM OVERFLOWING! Some samples will be lost!", buffersFilled);
-            }
-            else {
-                spdlog::warn("Filled {}/{} DMA buffers. Overflow likely soon!", buffersFilled, this->appConfig.deviceConfig.transferBufferCount);
-            }
-        }
-        if(buffersFilled)
-            spdlog::debug("Filled {} buffers.", buffersFilled);
-        for(int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
-        {
-            StreamingBuffers* sbuf = this->writeBuffers->awaitWrite();
-            spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
-            if(!this->dmaCheckingActive) break;
-            if(!this->adqDevice.GetDataStreaming(
-                (void**)(sbuf->data),
-                (void**)(sbuf->headers),
-                sbuf->channelMask,
-                sbuf->nof_samples,
-                sbuf->nof_headers,
-                sbuf->header_status
-            )) {
-                spdlog::error("Could not get data stream. Stopping.");
-                this->error(); // stop if error
-                break;
-            }
-            spdlog::debug("Wrote buffers. Notifying.");
-            this->writeBuffers->notifyWritten();
-            spdlog::debug("Notify written");
-        }
-        if(buffersFilled == 0)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    }
-    this->dmaThreadActive = false;
-    if(!this->bufferThreadActive) {
-        this->setState(ACQUISITION_STATES::STOPPED);
-    }
-    this->onAcquisitionThreadStopped();
+    dmaChecker = new DMAChecker{writeBuffers, adqDevice, appConfig.deviceConfig.transferBufferCount};
+    dmaChecker->moveToThread(&this->dmaCheckingThread);
+    connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker, &QObject::deleteLater);
+    connect(this, &Acquisition::onStart, dmaChecker, &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
+    connect(dmaChecker, &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
+    connect(dmaChecker, &DMAChecker::onError, this, &Acquisition::error);
+
+    bufferProcessingThread.start();
+    dmaCheckingThread.start();
 }
+Acquisition::~Acquisition() {
+    this->joinThreads();
+}
+
 void Acquisition::stopDMAChecker()
 {
-    this->dmaCheckingActive = false;
+    this->dmaChecker->stopLoop();
 }
-void Acquisition::joinDMAChecker()
+void Acquisition::joinThreads()
 {
-    if(this->dmaCheckingThread != nullptr)
-    {
-        this->writeBuffers->notifyRead();
-        spdlog::debug("Trying to join DMA");
-        this->dmaCheckingThread->join();
-        spdlog::debug("dma joined");
-        this->dmaCheckingThread.reset();
-    }
-}
-void Acquisition::runProcessor()
-{
-    if(this->bufferProcessor == nullptr)
-    {
-        spdlog::critical("BufferProcessor not found. cannot start.");
-        this->state = ACQUISITION_STATES::STOPPED;
-        return;
-    }
-    this->bufferProcessingActive = true;
-    spdlog::debug("Processor thread active");
-    while(this->bufferProcessingActive)
-    {
-        StreamingBuffers * b = this->writeBuffers->awaitRead();
-        spdlog::debug("Got read lock on {}", fmt::ptr(b));
-        if(this->writeBuffers->stopWriteThreads) break; // break if we want to join the thread
-        if(!this->bufferProcessor->processBuffers(*b, this->isTriggeredStreaming)) {
-            spdlog::error("Could not process buffers. Stopping.");
-            this->stop();
-            return;
-        }
-        spdlog::debug("Read succeful");
-        this->writeBuffers->notifyRead();
-        spdlog::debug("Read notify");
-    }
-    this->bufferThreadActive = false;
-    if(!this->dmaThreadActive) {
-        this->setState(ACQUISITION_STATES::STOPPED);
-    }
-    this->onAcquisitionThreadStopped();
+    this->stopDMAChecker();
+    this->stopProcessor();
+    this->dmaCheckingThread.quit();
+    this->bufferProcessingThread.quit();
+
+    this->bufferProcessingThread.wait();
+    this->dmaCheckingThread.wait();
 }
 void Acquisition::stopProcessor()
 {
-    this->bufferProcessingActive = false;
-}
-void Acquisition::joinProcessor()
-{
-    if(this->bufferProcessingThread != nullptr)
-    {
-        this->writeBuffers->notifyWritten();
-        spdlog::debug("Trying to join processor");
-        this->bufferProcessingThread->join();
-        spdlog::debug("processor joined");
-        this->bufferProcessingThread.reset();
-    }
+    this->bufferProcessorHandler->stopLoop();
 }
 bool Acquisition::configure()
 {
@@ -192,11 +92,10 @@ bool Acquisition::configure()
     if(this->appConfig.getCurrentChannelConfig().recordLength <= 0) // continuous
     {
         this->isTriggeredStreaming = false;
-        this->bufferProcessor = std::unique_ptr<BufferProcessor>(
-            new BaseBufferProcessor(
+        /*
+        this->bufferProcessor->reallocateBuffers(
                 appConfig.deviceConfig.transferBufferSize/sizeof(short)
-            )
-        );
+        );*/
         spdlog::info("Configuring continuous streaming with mask {:#b}.", channelMask);
         if(!this->adqDevice.ContinuousStreamingSetup(channelMask)) {spdlog::error("ContinuousStreamingSetup failed."); return false;};
         this->scopeUpdater->reallocate(this->appConfig.deviceConfig.transferBufferSize/sizeof(short));
@@ -204,11 +103,7 @@ bool Acquisition::configure()
     else
     {
         this->isTriggeredStreaming = true;
-        this->bufferProcessor = std::unique_ptr<BufferProcessor>(
-            new BaseBufferProcessor(
-                appConfig.getCurrentChannelConfig().recordLength
-            )
-        );
+        this->bufferProcessor->reallocateBuffers(appConfig.getCurrentChannelConfig().recordLength);
         spdlog::info("Configuring triggered streaming.");
         if(!this->adqDevice.SetPreTrigSamples(this->appConfig.getCurrentChannelConfig().pretrigger)) {spdlog::error("SetPreTrigSamples failed."); return false;};
         if(!this->adqDevice.SetLvlTrigLevel(this->appConfig.getCurrentChannelConfig().triggerLevelCode)) {spdlog::error("SetLvlTrigLevel failed."); return false;};
@@ -224,7 +119,7 @@ bool Acquisition::configure()
         this->scopeUpdater->reallocate(this->appConfig.getCurrentChannelConfig().recordLength);
     }
     spdlog::info("Configured acquisition successfully.");
-    this->writeBuffers->reconfigure(
+    this->writeBuffers.reconfigure(
         this->appConfig.writeBufferCount,
         this->appConfig.deviceConfig.transferBufferSize,
         channelMask
@@ -240,19 +135,7 @@ bool Acquisition::configure()
 bool Acquisition::start()
 {
     this->setState(ACQUISITION_STATES::RUNNING);
-    this->joinProcessor();
-    this->joinDMAChecker();
-    this->writeBuffers->resetSemaphores();
-    this->bufferProcessingThread = std::unique_ptr<std::thread>(
-        new std::thread{[](Acquisition* acq) {
-            acq->runProcessor();
-        }, this}
-    );
-    this->dmaCheckingThread = std::unique_ptr<std::thread>(
-        new std::thread{[](Acquisition* acq) {
-            acq->runDMAChecker();
-        }, this}
-    );
+    this->writeBuffers.resetSemaphores();
     this->appConfig.getCurrentChannelConfig().log();
     spdlog::info("API: Stream start");
     if(!this->adqDevice.StartStreaming())
@@ -260,14 +143,11 @@ bool Acquisition::start()
         spdlog::error("Stream failed to start!");
         return false;
     }
+    emit this->onStart();
     if(this->appConfig.getCurrentChannelConfig().isContinuousStreaming)
     {
         spdlog::debug("SWTRIG");
         this->adqDevice.SWTrig();
-    }
-    else
-    {
-        spdlog::debug("NOT SWTRIG");
     }
     return true;
 }
@@ -278,7 +158,7 @@ bool Acquisition::stop()
     this->setState(ACQUISITION_STATES::STOPPING);
     this->stopDMAChecker();
     this->stopProcessor();
-    if(!this->dmaThreadActive && !this->bufferThreadActive)
+    if(this->dmaLoopStopped && this->processingLoopStopped)
     {
         this->setState(ACQUISITION_STATES::STOPPED);
     }
@@ -286,10 +166,8 @@ bool Acquisition::stop()
 }
 void Acquisition::error()
 {
-    this->stopProcessor();
-    this->stopDMAChecker();
-    this->adqDevice.StopStreaming();
-    this->setState(ACQUISITION_STATES::STOPPED);
+    spdlog::error("Error in one of the acquisition threads");
+    this->stop();
 }
 ACQUISITION_STATES Acquisition::getState()
 {
@@ -301,12 +179,19 @@ void Acquisition::setState(ACQUISITION_STATES state)
     this->state = state;
     onStateChanged(state);
 }
-
-bool Acquisition::getDMAThreadActive()
+void Acquisition::onAcquisitionThreadStopped()
 {
-    return this->dmaThreadActive;
+    this->dmaLoopStopped = true;
+    if(this->dmaLoopStopped && this->processingLoopStopped)
+    {
+        this->setState(ACQUISITION_STATES::STOPPED);
+    }
 }
-bool Acquisition::getProcessingThreadActive()
+void Acquisition::onProcessingThreadStopped()
 {
-    return this->bufferThreadActive;
+    this->processingLoopStopped = true;
+    if(this->dmaLoopStopped && this->processingLoopStopped)
+    {
+        this->setState(ACQUISITION_STATES::STOPPED);
+    }
 }

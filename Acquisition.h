@@ -9,8 +9,8 @@
 #include "RecordProcessor.h"
 #include "StreamingBuffers.h"
 #include "ScopeUpdater.h"
-#include <thread>
-
+#include <QThread>
+#include "AcquisitionThreads.h"
 enum ACQUISITION_STATES {
     STOPPED,
     STOPPING,
@@ -23,28 +23,30 @@ class Acquisition : public QObject
 protected:
     ApplicationConfiguration& appConfig;
     ADQInterface& adqDevice;
-    std::unique_ptr<WriteBuffers> writeBuffers;
     std::shared_ptr<ScopeUpdater> scopeUpdater;
+    WriteBuffers writeBuffers;
+    DMAChecker *dmaChecker;
+    std::unique_ptr<BufferProcessor> bufferProcessor;
+    LoopBufferProcessor *bufferProcessorHandler;
+
     bool dmaCheckingActive = false;
     bool bufferProcessingActive = false;
-    bool dmaThreadActive = false;
-    bool bufferThreadActive = false;
+
+    bool dmaLoopStopped = true;
+    bool processingLoopStopped = true;
+
     bool configured = false;
     bool isTriggeredStreaming = false;
-    std::unique_ptr<std::thread> dmaCheckingThread;
-    std::unique_ptr<std::thread> bufferProcessingThread;
+    QThread dmaCheckingThread;
+    QThread bufferProcessingThread;
     ACQUISITION_STATES state = ACQUISITION_STATES::STOPPED;
-    void runDMAChecker();
     void stopDMAChecker();
-    void joinDMAChecker();
-    void runProcessor();
     void stopProcessor();
-    void joinProcessor();
+    void joinThreads();
     void setState(ACQUISITION_STATES state);
-    void error();
+
 public:
-    std::unique_ptr<BufferProcessor> bufferProcessor;
-    Acquisition() = delete;
+    ~Acquisition();
     Acquisition(
         ApplicationConfiguration& appConfig,
         ADQInterface& adqDevice,
@@ -54,14 +56,14 @@ public:
     bool configure();
     bool start();
     unsigned long checkDMA();
-    bool getDMAThreadActive();
-    bool getProcessingThreadActive();
 public slots:
     bool stop();
-signals:
-    void onStateChanged(ACQUISITION_STATES newState);
+    void error();
     void onAcquisitionThreadStopped();
     void onProcessingThreadStopped();
+signals:
+    void onStateChanged(ACQUISITION_STATES newState);
+    void onStart();
 };
 
 #endif // ACQUISITION_H

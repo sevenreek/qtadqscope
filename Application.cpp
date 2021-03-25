@@ -53,7 +53,10 @@ int Application::start(int argc, char *argv[]) {
 
 void Application::setUI()
 {
-    this->mainWindow.ui->channelComboBox->setCurrentIndex(this->config.getCurrentChannel());
+    // This is a temporary(hopefully) hack.
+    int actualChannel = this->config.getCurrentChannel();
+    this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config.getCurrentChannel()+1)%MAX_NOF_CHANNELS);
+    this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
 }
 
 float ADCCodeToMV(float inputRange, int code)
@@ -198,18 +201,12 @@ void Application::linkSignals()
         this,
         &Application::changeSaveToFile
     );
-    // STREAM THREAD STOP
+    // ACQUSITION STATE CHANGED
     this->acquisition->connect(
         this->acquisition.get(),
-        &Acquisition::onAcquisitionThreadStopped,
+        &Acquisition::onStateChanged,
         this,
-        &Application::acquisitionHalting
-    );
-    this->acquisition->connect(
-        this->acquisition.get(),
-        &Acquisition::onProcessingThreadStopped,
-        this,
-        &Application::acquisitionHalting
+        &Application::acquisitionStateChanged
     );
     // PRIMARY BUTTON
     this->mainWindow.ui->streamStartStopButton->connect(
@@ -217,6 +214,14 @@ void Application::linkSignals()
         &QAbstractButton::pressed,
         this,
         &Application::primaryButtonPressed
+    );
+    // SCOPE UPDATE
+    this->scopeUpdater->connect(
+        this->scopeUpdater.get(),
+        &ScopeUpdater::onScopeUpdate,
+        this,
+        &Application::updateScope,
+        Qt::ConnectionType::BlockingQueuedConnection
     );
 }
 
@@ -529,12 +534,36 @@ void Application::primaryButtonPressed() {
         break;
     }
 }
-void Application::acquisitionHalting()
+void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
 {
-    if(!this->acquisition->getDMAThreadActive() && !this->acquisition->getProcessingThreadActive())
+    switch(newState)
     {
-        this->mainWindow.ui->streamStartStopButton->setEnabled(true);
-        this->mainWindow.ui->streamStartStopButton->setText("Start");
-        this->mainWindow.ui->analysisSettingsContainer->setEnabled(true);
+        case ACQUISITION_STATES::STOPPED:
+        {
+            this->mainWindow.ui->streamStartStopButton->setEnabled(true);
+            this->mainWindow.ui->streamStartStopButton->setText("Start");
+            this->mainWindow.ui->analysisSettingsContainer->setEnabled(true);
+        }
+        break;
+        case ACQUISITION_STATES::STOPPING:
+        {
+
+        }
+        break;
+        case ACQUISITION_STATES::RUNNING:
+        {
+
+        }
+        break;
+        default:
+        break;
     }
+}
+void Application::updateScope(QVector<double> &x, QVector<double> y)
+{
+    //return;
+    spdlog::debug("UpdateScope");
+    this->mainWindow.ui->plotArea->graph(0)->setData(x,y);
+    this->mainWindow.ui->plotArea->rescaleAxes();
+    this->mainWindow.ui->plotArea->replot();
 }

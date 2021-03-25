@@ -11,6 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 add_compile_definitions(LINUX)
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
@@ -68,6 +70,8 @@ set(PROJECT_SOURCES
         ScopeUpdater.h
         ApplicationConfiguration.cpp
         ApplicationConfiguration.h
+        AcquisitionThreads.cpp
+        AcquisitionThreads.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

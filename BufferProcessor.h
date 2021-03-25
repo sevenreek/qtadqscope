@@ -12,6 +12,7 @@ public:
     virtual void appendRecordProcessor(std::shared_ptr<RecordProcessor> processor) = 0;
     virtual bool removeRecordProcessor(std::shared_ptr<RecordProcessor> processor) = 0;
     virtual void clearRecordProcessors() = 0;
+    virtual bool reallocateBuffers(unsigned long recordLength) = 0;
 };
 
 class BaseBufferProcessor : public BufferProcessor {

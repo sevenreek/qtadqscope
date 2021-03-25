@@ -49,7 +49,8 @@ public slots:
     void changeSaveToFile(int state);
     void changeFiletype(int state);
     void primaryButtonPressed();
-    void acquisitionHalting();
+    void acquisitionStateChanged(ACQUISITION_STATES newState);
+    void updateScope(QVector<double> &x, QVector<double> y);
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);
