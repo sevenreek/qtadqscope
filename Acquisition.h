@@ -36,7 +36,6 @@ protected:
     bool processingLoopStopped = true;
 
     bool configured = false;
-    bool isTriggeredStreaming = false;
     QThread dmaCheckingThread;
     QThread bufferProcessingThread;
     ACQUISITION_STATES state = ACQUISITION_STATES::STOPPED;

@@ -89,9 +89,9 @@ bool Acquisition::configure()
         this->appConfig.deviceConfig.transferBufferCount,
         this->appConfig.deviceConfig.transferBufferSize)
     ) {spdlog::error("SetTransferBuffers failed."); return false;};
-    if(this->appConfig.getCurrentChannelConfig().recordLength <= 0) // continuous
+    this->bufferProcessorHandler->changeStreamingType(!this->appConfig.getCurrentChannelConfig().isContinuousStreaming);
+    if(this->appConfig.getCurrentChannelConfig().isContinuousStreaming) // continuous
     {
-        this->isTriggeredStreaming = false;
         /*
         this->bufferProcessor->reallocateBuffers(
                 appConfig.deviceConfig.transferBufferSize/sizeof(short)
@@ -102,7 +102,6 @@ bool Acquisition::configure()
     }
     else
     {
-        this->isTriggeredStreaming = true;
         this->bufferProcessor->reallocateBuffers(appConfig.getCurrentChannelConfig().recordLength);
         spdlog::info("Configuring triggered streaming.");
         if(!this->adqDevice.SetPreTrigSamples(this->appConfig.getCurrentChannelConfig().pretrigger)) {spdlog::error("SetPreTrigSamples failed."); return false;};

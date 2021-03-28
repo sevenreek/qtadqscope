@@ -242,7 +242,7 @@ void Application::changeChannel(int channel) {
     {
         case TRIGGER_MODES::SOFTWARE:
         {
-            if(this->config.getCurrentChannelConfig().recordCount <= 0)
+            if(this->config.getCurrentChannelConfig().isContinuousStreaming)
             {
                 this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_FREE_RUNNING);
             }
@@ -272,7 +272,15 @@ void Application::changeChannel(int channel) {
         }
         break;
     }
-    this->mainWindow.ui->recordCountInput->setValue(this->config.getCurrentChannelConfig().recordCount);
+    if(this->config.getCurrentChannelConfig().recordCount>MAX_FINITE_RECORD_COUNT)
+    {
+        this->mainWindow.ui->limitRecordsCB->setCheckState(Qt::CheckState::Unchecked);
+    }
+    else
+    {
+        this->mainWindow.ui->limitRecordsCB->setCheckState(Qt::CheckState::Checked);
+        this->mainWindow.ui->recordCountInput->setValue(this->config.getCurrentChannelConfig().recordCount);
+    }
     this->mainWindow.ui->pretriggerInput->setValue(this->config.getCurrentChannelConfig().pretrigger);
     this->mainWindow.ui->recordLengthInput->setValue(this->config.getCurrentChannelConfig().recordLength);
     this->mainWindow.ui->recordLengthInput->setValue(this->config.getCurrentChannelConfig().triggerDelay);
@@ -412,6 +420,14 @@ void Application::changeTriggerMode(int index) {
         this->adqDevice->SetTriggerMode(this->config.getCurrentChannelConfig().triggerMode);
         this->config.getCurrentChannelConfig().isContinuousStreaming = false;
     }
+    else if (txt == "EXTERNAL")
+    {
+        spdlog::warn("Trigger mode set to EXTERNAL. This feature is experimental.");
+        this->mainWindow.ui->limitRecordsCB->setEnabled(true);
+        this->config.getCurrentChannelConfig().triggerMode = TRIGGER_MODES::EXTERNAL;
+        this->adqDevice->SetTriggerMode(this->config.getCurrentChannelConfig().triggerMode);
+        this->config.getCurrentChannelConfig().isContinuousStreaming = false;
+    }
     else
     {
         spdlog::error("{} trigger mode is currently unsupported.", txt.toStdString());
@@ -419,8 +435,9 @@ void Application::changeTriggerMode(int index) {
 }
 void Application::changeLimitRecords(int state)
 {
-    if(state)
+    if(state) // Checked or Partially checked
     {
+
         this->config.getCurrentChannelConfig().recordCount = this->mainWindow.ui->recordCountInput->value();
         this->mainWindow.ui->recordCountInput->setEnabled(true);
     }

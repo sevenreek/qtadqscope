@@ -2,6 +2,7 @@
 #define ADQDEVICECONFIGURATION_H
 #define MAX_NOF_CHANNELS 4
 #define MAX_SAMPLING_RATE (1000000000)
+#define MAX_FINITE_RECORD_COUNT (0x7FFFFFFF)
 #define DEFAULT_DIGITAL_USER_GAIN (1024)
 #define DEFAULT_DIGITAL_USER_OFFSET (0)
 const char UNIT_PREFIXES[4]  = {' ', 'k', 'M', 'G'};
@@ -68,7 +69,7 @@ public:
     int triggerLevelCode = 0;
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     TRIGGER_MODES triggerMode = TRIGGER_MODES::SOFTWARE;
-    unsigned long recordLength = 0; // 0 is continous stream
+    unsigned long recordLength = 128;
     unsigned int recordCount = -1;  // -1 is infty
     unsigned long pretrigger = 0;
     unsigned long triggerDelay = 0;
