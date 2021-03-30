@@ -3,27 +3,31 @@
 
 StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char channelMask)
 {
-  this->reallocate(bufferSize, channelMask);
+    this->reallocate(bufferSize, channelMask);
+    this->bufferSize = bufferSize;
 }
 void StreamingBuffers::reallocate(unsigned long bufferSize, unsigned char channelMask)
 {
-    this->channelMask = channelMask;
-    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    if(this->bufferSize != bufferSize || this->channelMask != channelMask)
     {
-      if((channelMask & (1<<ch)) == (1<<ch))
-      {
-        this->data[ch] = (short*)std::realloc(this->data[ch], bufferSize);
-        //spdlog::debug("Allocated {} for channel {} in pointer {}", bufferSize, ch+1, fmt::ptr(this->data[ch]));
-        if(this->data[ch] == nullptr)
+        this->channelMask = channelMask;
+        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
         {
-          spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
+          if((channelMask & (1<<ch)) == (1<<ch))
+          {
+            this->data[ch] = (short*)std::realloc(this->data[ch], bufferSize);
+            //spdlog::debug("Allocated {} for channel {} in pointer {}", bufferSize, ch+1, fmt::ptr(this->data[ch]));
+            if(this->data[ch] == nullptr)
+            {
+              spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
+            }
+            this->headers[ch] = (StreamingHeader_t*)std::realloc(this->headers[ch], bufferSize);
+            if(this->headers[ch] == nullptr)
+            {
+              spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
+            }
+          }
         }
-        this->headers[ch] = (StreamingHeader_t*)std::realloc(this->headers[ch], bufferSize);
-        if(this->headers[ch] == nullptr)
-        {
-          spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
-        }
-      }
     }
 }
 StreamingBuffers::~StreamingBuffers()

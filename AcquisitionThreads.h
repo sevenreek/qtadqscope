@@ -23,6 +23,7 @@ public slots:
 signals:
     void onLoopStopped();
     void onBuffersFilled(unsigned long buffersFilled);
+    void onBufferWritten(unsigned long count);
     void onError();
 };
 

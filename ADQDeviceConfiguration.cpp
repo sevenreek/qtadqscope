@@ -33,3 +33,35 @@ void ChannelConfiguration::log()
         isContinuousStreaming
     );
 }
+json ChannelConfiguration::toJSON()
+{
+    json j = {
+        {"ul_bypass",           this->userLogicBypass},
+        {"sample_skip",         this->sampleSkip},
+        {"base_offset",         this->baseDcBiasOffset},
+        {"offset",              this->dcBiasCode},
+        {"input_range",         this->inputRangeEnum},
+        {"trigger_mode",        this->triggerMode},
+        {"trigger_level",       this->triggerLevelCode},
+        {"trigger_edge",        this->triggerEdge},
+        {"record_length",       this->recordLength},
+        {"record_count",        this->recordCount},
+        {"pretrigger",          this->pretrigger},
+        {"trigger_delay",       this->triggerDelay},
+        {"digital_offset",      this->digitalOffset},
+        {"digital_gain",        this->digitalGain},
+        {"stream_type",         this->isContinuousStreaming},
+        {"file_size_limit",     this->fileSizeLimit}
+
+    };
+    return j;
+}
+json ADQDeviceConfiguration::toJSON()
+{
+    json j = {
+        {"buffer_count", this->transferBufferCount},
+        {"buffer_size",  this->transferBufferSize}
+
+    };
+    return j;
+}

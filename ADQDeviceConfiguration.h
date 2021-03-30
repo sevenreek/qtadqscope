@@ -6,6 +6,9 @@
 #define DEFAULT_DIGITAL_USER_GAIN (1024)
 #define DEFAULT_DIGITAL_USER_OFFSET (0)
 const char UNIT_PREFIXES[4]  = {' ', 'k', 'M', 'G'};
+#include "json.hpp"
+using json = nlohmann::json;
+
 
 enum LOGGING_LEVELS
 {
@@ -77,19 +80,21 @@ public:
     int digitalGain = DEFAULT_DIGITAL_USER_GAIN;
     bool updateScope = true;
     bool isContinuousStreaming = true;
+    unsigned long long fileSizeLimit = 16ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
     void log();
+    json toJSON();
 };
 
 class ADQDeviceConfiguration
 {
 public:
 
-    unsigned long long fileSizeLimit = 16ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
+
     unsigned long transferBufferCount = 64;
     unsigned long transferBufferSize = 1ul*1024ul;//1024ul * 1024ul;
-    CLOCK_SOURCES clockSource = CLOCK_SOURCES::INTSRC_INTREF_10MHZ;
 
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
+    json toJSON();
 };
 
 

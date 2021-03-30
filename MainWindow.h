@@ -13,6 +13,11 @@ enum TRIGGER_MODE_SELECTOR {
     S_LEVEL = 2,
     S_EXTERNAL = 3
 };
+enum FILE_TYPE_SELECTOR {
+    S_BINARY,
+    S_ASCII,
+    S_HDF5
+};
 
 class MainWindow : public QMainWindow
 {

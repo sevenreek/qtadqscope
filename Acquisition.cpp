@@ -2,21 +2,25 @@
 #include "spdlog/spdlog.h"
 #include <iostream>
 #include <chrono>
+#include <algorithm>
 Acquisition::Acquisition(
     ApplicationConfiguration& appConfig,
-    ADQInterface& adqDevice,
-    std::shared_ptr<ScopeUpdater> scopeUpdater):
+    ADQInterface& adqDevice):
         appConfig(appConfig),
         adqDevice(adqDevice),
-        scopeUpdater(scopeUpdater),
         writeBuffers{
             appConfig.writeBufferCount,
             appConfig.deviceConfig.transferBufferSize,
             (unsigned char)(1<<(appConfig.getCurrentChannel()))
         },
-        bufferProcessor(new BaseBufferProcessor(appConfig.deviceConfig.transferBufferSize/sizeof(short)))
+        bufferProcessor(
+            new BaseBufferProcessor(
+                this->recordProcessors,
+                appConfig.deviceConfig.transferBufferSize/sizeof(short)
+                )
+            )
 {
-    scopeUpdater->moveToThread(&this->bufferProcessingThread);
+    //scopeUpdater->moveToThread(&this->bufferProcessingThread);
 
     bufferProcessorHandler = new LoopBufferProcessor{writeBuffers, *bufferProcessor.get()};
     bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
@@ -31,11 +35,13 @@ Acquisition::Acquisition(
     connect(this, &Acquisition::onStart, dmaChecker, &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker, &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
     connect(dmaChecker, &DMAChecker::onError, this, &Acquisition::error);
+    connect(dmaChecker, &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled);
 
     bufferProcessingThread.start();
     dmaCheckingThread.start();
 }
 Acquisition::~Acquisition() {
+    // bufferProcessorHandler and dmaChecker get deleted via a QThread::finished signal->slot
     this->joinThreads();
 }
 
@@ -90,6 +96,10 @@ bool Acquisition::configure()
         this->appConfig.deviceConfig.transferBufferSize)
     ) {spdlog::error("SetTransferBuffers failed."); return false;};
     this->bufferProcessorHandler->changeStreamingType(!this->appConfig.getCurrentChannelConfig().isContinuousStreaming);
+    for(auto rp : this->recordProcessors)
+    {
+        rp->startNewStream(this->appConfig);
+    }
     if(this->appConfig.getCurrentChannelConfig().isContinuousStreaming) // continuous
     {
         /*
@@ -98,7 +108,6 @@ bool Acquisition::configure()
         );*/
         spdlog::info("Configuring continuous streaming with mask {:#b}.", channelMask);
         if(!this->adqDevice.ContinuousStreamingSetup(channelMask)) {spdlog::error("ContinuousStreamingSetup failed."); return false;};
-        this->scopeUpdater->reallocate(this->appConfig.deviceConfig.transferBufferSize/sizeof(short));
     }
     else
     {
@@ -115,7 +124,6 @@ bool Acquisition::configure()
             this->appConfig.getCurrentChannelConfig().triggerDelay,
             channelMask
         )) {spdlog::error("TriggeredStreamingSetup failed."); return false;};
-        this->scopeUpdater->reallocate(this->appConfig.getCurrentChannelConfig().recordLength);
     }
     spdlog::info("Configured acquisition successfully.");
     this->writeBuffers.reconfigure(
@@ -123,11 +131,7 @@ bool Acquisition::configure()
         this->appConfig.deviceConfig.transferBufferSize,
         channelMask
     );
-    this->bufferProcessor->clearRecordProcessors();
-    if(this->appConfig.getCurrentChannelConfig().updateScope)
-    {
-        this->bufferProcessor->appendRecordProcessor(this->scopeUpdater);
-    }
+
     this->configured = true;
     return this->configured;
 }
@@ -161,6 +165,10 @@ bool Acquisition::stop()
     {
         this->setState(ACQUISITION_STATES::STOPPED);
     }
+    for(auto rp : this->recordProcessors)
+    {
+        rp->finish();
+    }
     return true;
 }
 void Acquisition::error()
@@ -193,4 +201,40 @@ void Acquisition::onProcessingThreadStopped()
     {
         this->setState(ACQUISITION_STATES::STOPPED);
     }
+}
+
+void Acquisition::appendRecordProcessor(std::shared_ptr<RecordProcessor> rp)
+{
+    spdlog::debug("Append record Processor");
+    unsigned int countBefore = this->recordProcessors.size();
+    if(std::find(this->recordProcessors.begin(), this->recordProcessors.end(), rp) != this->recordProcessors.end())
+    {
+        spdlog::warn("Tried to duplicate record processor in list.");
+        return;
+    }
+    this->recordProcessors.push_back(rp);
+    if(this->recordProcessors.size() != countBefore+1)
+    {
+        spdlog::warn("Adding record processor failed");
+    }
+}
+void Acquisition::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
+{
+    spdlog::debug("Remvoe record Processor");
+    if(rp == nullptr)
+    {
+        spdlog::error("Tried to remove null record processor in list.");
+        return;
+    }
+    unsigned int countBefore = this->recordProcessors.size();
+    this->recordProcessors.remove(rp);
+    if(this->recordProcessors.size() != countBefore-1)
+    {
+        spdlog::warn("Removing record processor failed");
+    }
+}
+
+void Acquisition::buffersFilled(unsigned long filled)
+{
+    this->lastBuffersFilled = (this->lastBuffersFilled + filled)/2; // take average of 2 measurements
 }

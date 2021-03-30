@@ -11,7 +11,7 @@ class StreamingBuffers {
   ~StreamingBuffers();
 
   void reallocate(unsigned long bufferSize, unsigned char channelMask);
-
+  unsigned long bufferSize;
   unsigned char     channelMask;
   unsigned int      nof_headers[MAX_NOF_CHANNELS];
   unsigned int      nof_samples[MAX_NOF_CHANNELS];
@@ -33,7 +33,6 @@ public:
   Semaphore sWrite;
   Semaphore sRead;
   Semaphore sFile;
-  bool stopWriteThreads = false;
   StreamingBuffers* awaitWrite();
   StreamingBuffers* awaitRead();
   void notifyWritten();

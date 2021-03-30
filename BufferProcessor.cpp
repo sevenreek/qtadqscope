@@ -4,23 +4,31 @@
 #include "spdlog/spdlog.h"
 
 BufferProcessor::~BufferProcessor() = default;
-BaseBufferProcessor::BaseBufferProcessor(unsigned long recordLength)
+BaseBufferProcessor::BaseBufferProcessor(
+    std::list<std::shared_ptr<RecordProcessor>> &recordProcessors,
+    unsigned long recordLength
+):
+    recordProcessors(recordProcessors)
 {
     this->reallocateBuffers(recordLength);
 }
 bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
 {
-    this->recordLength = recordLength;
-    for(int i = 0; i < MAX_NOF_CHANNELS; i++)
+    if(recordLength != this->recordLength)
     {
-        //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-        recordBuffer[i] = (short*)std::realloc(recordBuffer[i], recordLength*sizeof(short));
-        if(recordBuffer[i] == nullptr)
+        this->recordLength = recordLength;
+        for(int i = 0; i < MAX_NOF_CHANNELS; i++)
         {
-            spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
-            return false;
+            //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
+            recordBuffer[i] = (short*)std::realloc(recordBuffer[i], recordLength*sizeof(short));
+            if(recordBuffer[i] == nullptr)
+            {
+                spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
+                return false;
+            }
         }
     }
+    this->resetBuffers();
     return true;
 }
 bool BaseBufferProcessor::completeRecord(StreamingHeader_t *header, short *buffer, unsigned long sampleCount)
@@ -28,7 +36,7 @@ bool BaseBufferProcessor::completeRecord(StreamingHeader_t *header, short *buffe
     bool success = true;
     for(auto rp : this->recordProcessors)
     {
-        spdlog::debug("Processing record");
+        //spdlog::debug("Processing record");
         success &= rp->processRecord(header, buffer, sampleCount);
     }
     return success;
@@ -45,7 +53,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
         unsigned long unparsedSamplesInBuffer = buffers.nof_samples[ch];
         if(!isTriggeredStreaming)
         {
-            spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
+            //spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
             this->completeRecord(NULL, buffers.data[ch], buffers.nof_samples[ch]);
             continue;
         }
@@ -59,18 +67,26 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             if(completedHeaders > 0)
             {
                 unsigned long samplesToCompleteRecord = buffers.headers[ch][0].RecordLength - this->recordBufferLength[ch];
-                std::memcpy(
-                    (void*)&(recordBuffer[ch][this->recordBufferLength[ch]]),
-                    buffers.data[ch],
-                    samplesToCompleteRecord*sizeof(short)
-                );
-                success &= this->completeRecord(
-                    &(buffers.headers[ch][0]),
-                    this->recordBuffer[ch],
-                    buffers.headers[ch][0].RecordLength
-                );
-                unparsedSamplesInBuffer -= samplesToCompleteRecord;
-                this->recordBufferLength[ch] = 0;
+                if(buffers.headers[ch][0].RecordLength <= this->recordLength)
+                {
+                    std::memcpy(
+                        &(this->recordBuffer[ch][this->recordBufferLength[ch]]),
+                        buffers.data[ch],
+                        samplesToCompleteRecord*sizeof(short)
+                    );
+                    success &= this->completeRecord(
+                        &(buffers.headers[ch][0]),
+                        this->recordBuffer[ch],
+                        buffers.headers[ch][0].RecordLength
+                    );
+                    unparsedSamplesInBuffer -= samplesToCompleteRecord;
+                    this->recordBufferLength[ch] = 0;
+                }
+                else
+                {
+                    spdlog::warn("Recieved a record longer than buffer({}). Data mangled or buffer set incorrectly.", buffers.headers[ch][0].RecordLength);
+                    return false;
+                }
             }
             for(unsigned int recordIndex = 1; recordIndex < completedHeaders; recordIndex++)
             {
@@ -104,18 +120,13 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
     }
     return success;
 }
-void BaseBufferProcessor::appendRecordProcessor(std::shared_ptr<RecordProcessor> processor)
+
+void BaseBufferProcessor::resetBuffers()
 {
-    this->recordProcessors.push_back(processor);
-}
-bool BaseBufferProcessor::removeRecordProcessor(std::shared_ptr<RecordProcessor> processor)
-{
-    this->recordProcessors.remove(processor);
-    return true;
-}
-void BaseBufferProcessor::clearRecordProcessors()
-{
-    this->recordProcessors.clear();
+    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        this->recordBufferLength[ch] = 0;
+    }
 }
 BaseBufferProcessor::~BaseBufferProcessor()
 {

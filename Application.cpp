@@ -4,6 +4,7 @@
 #include "./ui_MainWindow.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
+#include "BinaryFileWriter.h"
 #include <limits>
 Application::Application( MainWindow& mainWindow) : mainWindow(mainWindow)
 {
@@ -42,12 +43,12 @@ int Application::start(int argc, char *argv[]) {
     this->acquisition = std::unique_ptr<Acquisition>(
         new Acquisition(
             this->config,
-            *this->adqDevice,
-            this->scopeUpdater
+            *this->adqDevice
         )
     );
     this->linkSignals();
     this->setUI();
+    //this->config.toFile("test_json.scfg");
 }
 
 
@@ -57,6 +58,7 @@ void Application::setUI()
     int actualChannel = this->config.getCurrentChannel();
     this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config.getCurrentChannel()+1)%MAX_NOF_CHANNELS);
     this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
+    this->changeDMABufferCount(this->config.deviceConfig.transferBufferCount);
 }
 
 float ADCCodeToMV(float inputRange, int code)
@@ -245,9 +247,11 @@ void Application::changeChannel(int channel) {
             if(this->config.getCurrentChannelConfig().isContinuousStreaming)
             {
                 this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_FREE_RUNNING);
+                this->mainWindow.ui->limitRecordsCB->setEnabled(false);
             }
             else
             {
+                this->mainWindow.ui->limitRecordsCB->setEnabled(true);
                 this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_SOFTWARE);
             }
 
@@ -500,12 +504,47 @@ void Application::changeLevelTriggerMV(double val) {
 }
 
 void Application::changeUpdateScope(int state) {
+    if(state)
+    {
+        this->acquisition->appendRecordProcessor(this->scopeUpdater);
+    }
+    else
+    {
+        this->acquisition->removeRecordProcessor(this->scopeUpdater);
+    }
 
 }
 void Application::changeAnalyse(int state) {
 
 }
 void Application::changeSaveToFile(int state) {
+    if(state)
+    {
+        switch(this->mainWindow.ui->fileTypeSelector->currentIndex())
+        {
+            case FILE_TYPE_SELECTOR::S_BINARY:{
+                this->fileWriter = std::make_shared<BinaryFileWriter>();
+            }break;
+            case FILE_TYPE_SELECTOR::S_ASCII:{
+                spdlog::error("ASCII is an unsupported file mode");
+                return;
+            }break;
+            case FILE_TYPE_SELECTOR::S_HDF5:{
+                spdlog::error("HDF5 is an unsupported file mode");
+                return;
+            }break;
+            default:{
+                spdlog::critical("Unsupported file mode (default)");
+                return;
+            }break;
+        }
+        this->acquisition->appendRecordProcessor(this->fileWriter);
+    }
+    else if(this->fileWriter != nullptr)
+    {
+        this->acquisition->removeRecordProcessor(this->fileWriter);
+        this->fileWriter.reset();
+    }
 
 }
 void Application::changeFiletype(int state) {
@@ -578,9 +617,15 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
 }
 void Application::updateScope(QVector<double> &x, QVector<double> y)
 {
-    //return;
-    spdlog::debug("UpdateScope");
     this->mainWindow.ui->plotArea->graph(0)->setData(x,y);
     this->mainWindow.ui->plotArea->rescaleAxes();
     this->mainWindow.ui->plotArea->replot();
+}
+void Application::changeDMABufferCount(unsigned long count)
+{
+    this->mainWindow.ui->DMAFillStatus->setMaximum(count);
+}
+void Application::changeBufferQueueCount(unsigned long count)
+{
+    this->mainWindow.ui->RAMFillStatus->setMaximum(count);
 }

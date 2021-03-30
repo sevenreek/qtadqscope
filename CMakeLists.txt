@@ -42,9 +42,10 @@ find_package(spdlog)
 find_package(adq)
 
 add_subdirectory(include/spdlog-1.8.2)
-
+include_directories(include/nlohmann_json)
 include_directories(include/qcustomplot)
-include_directories(include/fastsave)
+
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 set(PROJECT_SOURCES
         main.cpp
@@ -72,6 +73,8 @@ set(PROJECT_SOURCES
         ApplicationConfiguration.h
         AcquisitionThreads.cpp
         AcquisitionThreads.h
+        BinaryFileWriter.cpp
+        BinaryFileWriter.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

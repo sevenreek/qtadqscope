@@ -16,6 +16,7 @@ private:
     ApplicationConfiguration config;
     ADQInterface* adqDevice;
     std::shared_ptr<ScopeUpdater> scopeUpdater;
+    std::shared_ptr<RecordProcessor> fileWriter;
     std::unique_ptr<Acquisition> acquisition;
     bool streamActive = false;
     void linkSignals();
@@ -51,6 +52,9 @@ public slots:
     void primaryButtonPressed();
     void acquisitionStateChanged(ACQUISITION_STATES newState);
     void updateScope(QVector<double> &x, QVector<double> y);
+
+    void changeDMABufferCount(unsigned long size);
+    void changeBufferQueueCount(unsigned long size);
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);

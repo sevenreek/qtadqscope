@@ -11,6 +11,7 @@ private:
     QCustomPlot &plot;
     QVector<double> x, y;
 public:
+    void startNewStream(ApplicationConfiguration& config);
     ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot);
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
     unsigned long long finish();

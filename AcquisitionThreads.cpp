@@ -45,10 +45,10 @@ void DMAChecker::runLoop()
         {
             emit this->onBuffersFilled(buffersFilled);
         }
-        for(int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
+        for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
         {
             StreamingBuffers* sbuf = this->writeBuffers.awaitWrite();
-            spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
+            //spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
             if(!this->loopActive)
             {
                 //this->writeBuffers.notifyWritten(); maybe?
@@ -62,13 +62,17 @@ void DMAChecker::runLoop()
                 sbuf->nof_headers,
                 sbuf->header_status
             )) {
-                spdlog::error("Could not get data stream. Stopping.");
-                emit this->onError(); // stop if error
+                if(this->loopActive)
+                {
+                    spdlog::error("Could not get data stream. Stopping.");
+                    emit this->onError(); // stop if error
+                }
                 break;
             }
-            spdlog::debug("Wrote buffers. Notifying.");
+            //spdlog::debug("Wrote buffers. Notifying.");
             this->writeBuffers.notifyWritten();
-            spdlog::debug("Notify written");
+            emit this->onBufferWritten(this->writeBuffers.sWrite.getCount());
+            //spdlog::debug("Notify written");
         }
         if(buffersFilled == 0)
         {
@@ -82,6 +86,7 @@ void DMAChecker::runLoop()
 void DMAChecker::stopLoop()
 {
     this->loopActive = false;
+    //this->writeBuffers.notifyRead();
 }
 
 void DMAChecker::setTransferBufferCount(unsigned long count)
@@ -103,8 +108,8 @@ void LoopBufferProcessor::runLoop()
     while(this->loopActive)
     {
         StreamingBuffers * b = this->writeBuffers.awaitRead();
-        spdlog::debug("Got read lock on {}", fmt::ptr(b));
-        if(this->writeBuffers.stopWriteThreads)
+        //spdlog::debug("Got read lock on {}", fmt::ptr(b));
+        if(!this->loopActive)
         {
             //this->writeBuffers.notifyRead(); maybe?
             break; // break if we want to join the thread
@@ -114,9 +119,9 @@ void LoopBufferProcessor::runLoop()
             emit this->onError();
             break;
         }
-        spdlog::debug("Read succeful");
+        //spdlog::debug("Read succeful");
         this->writeBuffers.notifyRead();
-        spdlog::debug("Read notify");
+        //spdlog::debug("Read notify");
     }
     this->loopActive = false;
     emit this->onLoopStopped();
@@ -124,6 +129,7 @@ void LoopBufferProcessor::runLoop()
 void LoopBufferProcessor::stopLoop()
 {
     this->loopActive = false;
+    //this->writeBuffers.notifyWritten();
 }
 void LoopBufferProcessor::changeStreamingType(bool isTriggered)
 {

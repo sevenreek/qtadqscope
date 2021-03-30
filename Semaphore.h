@@ -33,6 +33,10 @@ public:
   {
       this->count = count;
   }
+  int getCount()
+  {
+      return count;
+  }
 
 private:
 
