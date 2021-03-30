@@ -138,6 +138,15 @@ bool Acquisition::configure()
 bool Acquisition::start()
 {
     this->setState(ACQUISITION_STATES::RUNNING);
+    /*
+    if(!this->adqDevice.FlushDMA())
+    {
+        spdlog::debug("Flush DMA failed.");
+    }
+    if(!this->adqDevice.CollectDataNextPage())
+    {
+        spdlog::debug("Collect next page failed.");
+    }*/
     this->writeBuffers.resetSemaphores();
     this->appConfig.getCurrentChannelConfig().log();
     spdlog::info("API: Stream start");
@@ -146,6 +155,8 @@ bool Acquisition::start()
         spdlog::error("Stream failed to start!");
         return false;
     }
+    this->dmaLoopStopped = false;
+    this->processingLoopStopped = false;
     emit this->onStart();
     if(this->appConfig.getCurrentChannelConfig().isContinuousStreaming)
     {

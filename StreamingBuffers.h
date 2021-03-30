@@ -33,8 +33,8 @@ public:
   Semaphore sWrite;
   Semaphore sRead;
   Semaphore sFile;
-  StreamingBuffers* awaitWrite();
-  StreamingBuffers* awaitRead();
+  StreamingBuffers* awaitWrite(int timeout);
+  StreamingBuffers* awaitRead(int timeout);
   void notifyWritten();
   void notifyRead();
   void resetSemaphores();

@@ -47,13 +47,17 @@ void DMAChecker::runLoop()
         }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
         {
-            StreamingBuffers* sbuf = this->writeBuffers.awaitWrite();
+            StreamingBuffers* sbuf = nullptr;
+            do{
+             sbuf = this->writeBuffers.awaitWrite(1000);
+             if(!this->loopActive)
+             {
+                 //this->writeBuffers.notifyWritten(); maybe?
+                 goto DMA_CHECKER_LOOP_EXIT;
+             }
+            } while(sbuf == nullptr);
             //spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
-            if(!this->loopActive)
-            {
-                //this->writeBuffers.notifyWritten(); maybe?
-                break;
-            }
+
             if(!this->adqDevice.GetDataStreaming(
                 (void**)(sbuf->data),
                 (void**)(sbuf->headers),
@@ -79,8 +83,10 @@ void DMAChecker::runLoop()
             QThread::msleep(SLEEP_TIME);
         }
     }
+DMA_CHECKER_LOOP_EXIT:
     this->loopActive = false;
     emit this->onLoopStopped();
+    spdlog::debug("DMA loop exit");
 }
 
 void DMAChecker::stopLoop()
@@ -107,13 +113,17 @@ void LoopBufferProcessor::runLoop()
     spdlog::debug("Processor thread active");
     while(this->loopActive)
     {
-        StreamingBuffers * b = this->writeBuffers.awaitRead();
+        StreamingBuffers * b = nullptr;
+        do{
+            b = this->writeBuffers.awaitRead(1000);
+            if(!this->loopActive)
+            {
+                //this->writeBuffers.notifyRead(); maybe?
+                goto BUFFER_PROCESSOR_LOOP_EXIT; // break if we want to join the thread
+            }
+        } while(b==nullptr);
         //spdlog::debug("Got read lock on {}", fmt::ptr(b));
-        if(!this->loopActive)
-        {
-            //this->writeBuffers.notifyRead(); maybe?
-            break; // break if we want to join the thread
-        }
+
         if(!this->processor.processBuffers(*b, this->isTriggeredStreaming)) {
             spdlog::error("Could not process buffers. Stopping.");
             emit this->onError();
@@ -123,8 +133,10 @@ void LoopBufferProcessor::runLoop()
         this->writeBuffers.notifyRead();
         //spdlog::debug("Read notify");
     }
+BUFFER_PROCESSOR_LOOP_EXIT:
     this->loopActive = false;
     emit this->onLoopStopped();
+    spdlog::debug("Buffer loop exit");
 }
 void LoopBufferProcessor::stopLoop()
 {

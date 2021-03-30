@@ -71,17 +71,17 @@ WriteBuffers::~WriteBuffers()
   }
   //this->buffers.clear();
 }
-StreamingBuffers* WriteBuffers::awaitWrite()
+StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
 {
-  this->sWrite.wait();
+  if(!this->sWrite.tryAcquire(timeout)) return nullptr;
   //spdlog::debug("Lock on write buffer {} obtained.", this->writePosition);
   unsigned int returnWritePos = this->writePosition;
   this->writePosition = (this->writePosition+1)%this->bufferCount;
   return this->buffers[returnWritePos];
 }
-StreamingBuffers* WriteBuffers::awaitRead()
+StreamingBuffers* WriteBuffers::awaitRead(int timeout=-1)
 {
-  this->sRead.wait();
+  if(!this->sRead.tryAcquire(timeout)) return nullptr;
   //spdlog::debug("Lock on read buffer {} obtained.", this->readPosition);
   unsigned int returnReadPos = this->readPosition;
   this->readPosition = (this->readPosition+1)%this->bufferCount;
@@ -122,6 +122,8 @@ void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSiz
 }
 void WriteBuffers::resetSemaphores()
 {
+    this->writePosition = 0;
+    this->readPosition = 0;
     this->sRead.reset(0);
     this->sFile.reset(1);
     this->sWrite.reset(this->bufferCount);
