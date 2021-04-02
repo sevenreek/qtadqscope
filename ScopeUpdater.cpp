@@ -21,7 +21,7 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
 bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount)
 {
 
-    spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
+    //spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
     for(unsigned long s = 0; s < sampleCount; s++)
     {
         this->y[s] = (double)(buffer[s]);
@@ -43,4 +43,8 @@ void ScopeUpdater::startNewStream(ApplicationConfiguration& config)
 unsigned long long ScopeUpdater::finish()
 {
     return 0;
+}
+const char* ScopeUpdater::getName()
+{
+    return "ScopeUpdater";
 }

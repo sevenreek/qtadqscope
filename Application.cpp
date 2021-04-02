@@ -518,20 +518,22 @@ void Application::changeAnalyse(int state) {
 
 }
 void Application::changeSaveToFile(int state) {
+
+
     if(state)
     {
+        if(this->fileWriter != nullptr)
+        {
+            this->acquisition->removeRecordProcessor(this->fileWriter);
+            this->fileWriter.reset();
+        }
         switch(this->mainWindow.ui->fileTypeSelector->currentIndex())
         {
             case FILE_TYPE_SELECTOR::S_BINARY:{
-                this->fileWriter = std::make_shared<BinaryFileWriter>();
+                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
             }break;
-            case FILE_TYPE_SELECTOR::S_ASCII:{
-                spdlog::error("ASCII is an unsupported file mode");
-                return;
-            }break;
-            case FILE_TYPE_SELECTOR::S_HDF5:{
-                spdlog::error("HDF5 is an unsupported file mode");
-                return;
+            case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
+                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
             }break;
             default:{
                 spdlog::critical("Unsupported file mode (default)");
@@ -546,8 +548,32 @@ void Application::changeSaveToFile(int state) {
         this->fileWriter.reset();
     }
 
+
 }
-void Application::changeFiletype(int state) {
+void Application::changeFiletype(int state)
+{
+    if(this->mainWindow.ui->saveToFileCB->checkState())
+    {
+        if(this->fileWriter != nullptr)
+        {
+            this->acquisition->removeRecordProcessor(this->fileWriter);
+            this->fileWriter.reset();
+        }
+        switch(state)
+        {
+            case FILE_TYPE_SELECTOR::S_BINARY:{
+                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+            }break;
+            case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
+                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+            }break;
+            default:{
+                spdlog::critical("Unsupported file mode (default)");
+                return;
+            }break;
+        }
+        this->acquisition->appendRecordProcessor(this->fileWriter);
+    }
 
 }
 void Application::primaryButtonPressed() {

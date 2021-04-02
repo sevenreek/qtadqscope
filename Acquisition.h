@@ -12,6 +12,7 @@
 #include <QThread>
 #include <iostream>
 #include <list>
+#include <chrono>
 #include "AcquisitionThreads.h"
 enum ACQUISITION_STATES {
     STOPPED,
@@ -49,7 +50,6 @@ protected:
     void joinThreads();
     void setState(ACQUISITION_STATES state);
     unsigned long lastBuffersFilled;
-
 public:
     ~Acquisition();
     Acquisition(
@@ -60,6 +60,9 @@ public:
     bool configure();
     bool start();
     unsigned long checkDMA();
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeStarted;
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeStopped;
+
 public slots:
     void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
     void removeRecordProcessor(std::shared_ptr<RecordProcessor> rp);
@@ -68,6 +71,8 @@ public slots:
     void onAcquisitionThreadStopped();
     void onProcessingThreadStopped();
     void buffersFilled(unsigned long filled);
+    void finishRecordProcessors();
+    void setStoppedState();
 signals:
     void onStateChanged(ACQUISITION_STATES newState);
     void onStart();

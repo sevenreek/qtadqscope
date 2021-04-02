@@ -11,6 +11,11 @@ DMAChecker::DMAChecker(WriteBuffers &writeBuffers, ADQInterface &adqDevice, unsi
 
 void DMAChecker::runLoop()
 {
+    if(this->loopActive)
+    {
+        spdlog::critical("DMA Checker loop already active.");
+        return;
+    }
     this->loopActive = true;
     while(this->loopActive)
     {
@@ -109,6 +114,11 @@ LoopBufferProcessor::LoopBufferProcessor(WriteBuffers &writeBuffers, BufferProce
 void LoopBufferProcessor::runLoop()
 {
 
+    if(this->loopActive)
+    {
+        spdlog::critical("Buffer Processor loop already active.");
+        return;
+    }
     this->loopActive = true;
     spdlog::debug("Processor thread active");
     while(this->loopActive)

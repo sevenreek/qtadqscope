@@ -16,6 +16,7 @@ public:
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
     unsigned long long finish();
     void reallocate(unsigned long long sampleCount);
+    const char* getName();
 signals:
     void onScopeUpdate(QVector<double> &x, QVector<double> y);
 };

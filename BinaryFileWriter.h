@@ -9,12 +9,31 @@ class BinaryFileWriter: public RecordProcessor {
     unsigned long long bytesSaved;
     unsigned long long sizeLimit;
     public:
-    BinaryFileWriter();
+    BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
     bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
     bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
+    const char* getName();
+};
+
+class BufferedBinaryFileWriter: public RecordProcessor {
+    private:
+    std::ofstream dataStream;
+    unsigned long long bytesSaved;
+    unsigned long long sizeLimit;
+    short* dataBuffer;
+    unsigned long long samplesSaved = 0;
+    public:
+    BufferedBinaryFileWriter(unsigned long long sizeLimit);
+    ~BufferedBinaryFileWriter();
+    void startNewStream(ApplicationConfiguration& config);
+    bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
+    bool writeContinuousBuffer(short* buffer, unsigned int length);
+    unsigned long long finish();
+    const char* getName();
 };
 #endif // BINARYFILEWRITER_H

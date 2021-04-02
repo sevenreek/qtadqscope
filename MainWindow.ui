@@ -65,7 +65,7 @@
            <item row="0" column="2">
             <widget class="QCheckBox" name="saveToFileCB">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="font">
               <font>
@@ -94,7 +94,7 @@
            <item row="1" column="2">
             <widget class="QComboBox" name="fileTypeSelector">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <item>
               <property name="text">
@@ -103,12 +103,7 @@
              </item>
              <item>
               <property name="text">
-               <string>ASCII</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>HDF5</string>
+               <string>BINARY (BUFFERED)</string>
               </property>
              </item>
             </widget>
@@ -712,7 +707,7 @@
            <item row="1" column="0" colspan="2">
             <widget class="QTabWidget" name="tabWidget">
              <property name="currentIndex">
-              <number>0</number>
+              <number>1</number>
              </property>
              <property name="tabsClosable">
               <bool>false</bool>
@@ -879,6 +874,22 @@
                   <double>5000.000000000000000</double>
                  </property>
                 </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_16">
+                 <property name="font">
+                  <font>
+                   <family>Calibri Light</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>Reset offset</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QSpinBox" name="levelTriggerResetOffsetInput"/>
                </item>
               </layout>
              </widget>

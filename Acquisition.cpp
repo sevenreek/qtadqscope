@@ -27,14 +27,14 @@ Acquisition::Acquisition(
     connect(&this->bufferProcessingThread, &QThread::finished, bufferProcessorHandler, &QObject::deleteLater);
     connect(this, &Acquisition::onStart, bufferProcessorHandler, &LoopBufferProcessor::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(bufferProcessorHandler, &LoopBufferProcessor::onLoopStopped, this, &Acquisition::onProcessingThreadStopped);
-    connect(bufferProcessorHandler, &LoopBufferProcessor::onError, this, &Acquisition::error);
+    connect(bufferProcessorHandler, &LoopBufferProcessor::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
 
     dmaChecker = new DMAChecker{writeBuffers, adqDevice, appConfig.deviceConfig.transferBufferCount};
     dmaChecker->moveToThread(&this->dmaCheckingThread);
     connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker, &QObject::deleteLater);
     connect(this, &Acquisition::onStart, dmaChecker, &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker, &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
-    connect(dmaChecker, &DMAChecker::onError, this, &Acquisition::error);
+    connect(dmaChecker, &DMAChecker::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
     connect(dmaChecker, &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled);
 
     bufferProcessingThread.start();
@@ -94,7 +94,7 @@ bool Acquisition::configure()
     if(!this->adqDevice.SetTransferBuffers(
         this->appConfig.deviceConfig.transferBufferCount,
         this->appConfig.deviceConfig.transferBufferSize)
-    ) {spdlog::error("SetTransferBuffers failed."); return false;};
+    ) {spdlog::critical("SetTransferBuffers failed."); return false;};
     this->bufferProcessorHandler->changeStreamingType(!this->appConfig.getCurrentChannelConfig().isContinuousStreaming);
     for(auto rp : this->recordProcessors)
     {
@@ -150,6 +150,7 @@ bool Acquisition::start()
     this->writeBuffers.resetSemaphores();
     this->appConfig.getCurrentChannelConfig().log();
     spdlog::info("API: Stream start");
+    this->timeStarted = std::chrono::high_resolution_clock::now();
     if(!this->adqDevice.StartStreaming())
     {
         spdlog::error("Stream failed to start!");
@@ -172,13 +173,10 @@ bool Acquisition::stop()
     this->setState(ACQUISITION_STATES::STOPPING);
     this->stopDMAChecker();
     this->stopProcessor();
+    this->timeStopped = std::chrono::high_resolution_clock::now();
     if(this->dmaLoopStopped && this->processingLoopStopped)
     {
-        this->setState(ACQUISITION_STATES::STOPPED);
-    }
-    for(auto rp : this->recordProcessors)
-    {
-        rp->finish();
+        this->setStoppedState();
     }
     return true;
 }
@@ -202,7 +200,7 @@ void Acquisition::onAcquisitionThreadStopped()
     this->dmaLoopStopped = true;
     if(this->dmaLoopStopped && this->processingLoopStopped)
     {
-        this->setState(ACQUISITION_STATES::STOPPED);
+        this->setStoppedState();
     }
 }
 void Acquisition::onProcessingThreadStopped()
@@ -210,12 +208,17 @@ void Acquisition::onProcessingThreadStopped()
     this->processingLoopStopped = true;
     if(this->dmaLoopStopped && this->processingLoopStopped)
     {
-        this->setState(ACQUISITION_STATES::STOPPED);
+        this->setStoppedState();
     }
 }
 
 void Acquisition::appendRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 {
+    if(rp == nullptr)
+    {
+        spdlog::error("Tried appending null record processor");
+        return;
+    }
     spdlog::debug("Append record Processor");
     unsigned int countBefore = this->recordProcessors.size();
     if(std::find(this->recordProcessors.begin(), this->recordProcessors.end(), rp) != this->recordProcessors.end())
@@ -231,7 +234,7 @@ void Acquisition::appendRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 }
 void Acquisition::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 {
-    spdlog::debug("Remvoe record Processor");
+    //spdlog::debug("Remvoe record Processor");
     if(rp == nullptr)
     {
         spdlog::error("Tried to remove null record processor in list.");
@@ -248,4 +251,21 @@ void Acquisition::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 void Acquisition::buffersFilled(unsigned long filled)
 {
     this->lastBuffersFilled = (this->lastBuffersFilled + filled)/2; // take average of 2 measurements
+}
+
+void Acquisition::finishRecordProcessors()
+{
+    std::chrono::duration<double> elapsed = this->timeStopped - this->timeStarted;
+    for(auto rp : this->recordProcessors)
+    {
+       unsigned long long processedBytes = rp->finish();
+       spdlog::info(
+            "{} processed {} bytes over {:.2f} seconds. Data rate {} MB/s.",
+            rp->getName(), processedBytes, elapsed.count(), processedBytes/1000000.0/elapsed.count());
+    }
+}
+void Acquisition::setStoppedState()
+{
+    this->setState(ACQUISITION_STATES::STOPPED);
+    this->finishRecordProcessors();
 }

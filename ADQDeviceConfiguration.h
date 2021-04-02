@@ -80,7 +80,7 @@ public:
     int digitalGain = DEFAULT_DIGITAL_USER_GAIN;
     bool updateScope = true;
     bool isContinuousStreaming = true;
-    unsigned long long fileSizeLimit = 16ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
+    unsigned long long fileSizeLimit = 4ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
     void log();
     json toJSON();
 };
@@ -90,8 +90,8 @@ class ADQDeviceConfiguration
 public:
 
 
-    unsigned long transferBufferCount = 64;
-    unsigned long transferBufferSize = 1ul*1024ul;//1024ul * 1024ul;
+    unsigned long transferBufferCount = 32;
+    unsigned long transferBufferSize = 1ul*1024ul*1024ul;//1024ul * 1024ul;
 
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
     json toJSON();

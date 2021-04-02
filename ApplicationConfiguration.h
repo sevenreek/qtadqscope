@@ -13,7 +13,7 @@ public:
     ChannelConfiguration channelConfig[MAX_NOF_CHANNELS];
     ChannelConfiguration& getCurrentChannelConfig();
     ADQDeviceConfiguration deviceConfig;
-    unsigned int writeBufferCount = 16;
+    unsigned int writeBufferCount = 64;
     unsigned int deviceNumber = 1;
     bool settingsValid = true;
 

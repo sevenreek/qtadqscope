@@ -15,8 +15,7 @@ enum TRIGGER_MODE_SELECTOR {
 };
 enum FILE_TYPE_SELECTOR {
     S_BINARY,
-    S_ASCII,
-    S_HDF5
+    S_BINARY_BUFFERED
 };
 
 class MainWindow : public QMainWindow
