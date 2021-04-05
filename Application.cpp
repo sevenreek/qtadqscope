@@ -6,6 +6,7 @@
 #include "spdlog/fmt/fmt.h"
 #include "BinaryFileWriter.h"
 #include <limits>
+#include <memory>
 Application::Application( MainWindow& mainWindow) : mainWindow(mainWindow)
 {
 
@@ -48,17 +49,26 @@ int Application::start(int argc, char *argv[]) {
     );
     this->linkSignals();
     this->setUI();
+    this->createPeriodicUpdateTimer(this->config.periodicUpdatePeriod);
     //this->config.toFile("test_json.scfg");
+    return 0;
 }
 
 
 void Application::setUI()
 {
+
     // This is a temporary(hopefully) hack.
     int actualChannel = this->config.getCurrentChannel();
     this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config.getCurrentChannel()+1)%MAX_NOF_CHANNELS);
     this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
     this->changeDMABufferCount(this->config.deviceConfig.transferBufferCount);
+
+    /*
+    this->mainWindow.ui->DMAFillStatus->setMaximum(this->config.deviceConfig.transferBufferCount);
+    this->mainWindow.ui->RAMFillStatus->setMaximum(this->config.writeBufferCount);
+    this->mainWindow.ui->FileFillStatus->setMaximum(this->config.getCurrentChannelConfig().fileSizeLimit);
+    */
 }
 
 float ADCCodeToMV(float inputRange, int code)
@@ -655,3 +665,29 @@ void Application::changeBufferQueueCount(unsigned long count)
 {
     this->mainWindow.ui->RAMFillStatus->setMaximum(count);
 }
+void Application::updatePeriodicUIElements()
+{
+    unsigned long buffersFill = this->acquisition->getBuffersFill();
+    int queueFill = this->acquisition->getWriteQueueFill();
+    unsigned long long fileFill = 0;
+    if(this->fileWriter != nullptr) {
+        fileFill = this->fileWriter->getProcessedBytes();
+    }
+    this->mainWindow.ui->DMAFillStatus->setValue(100ULL*buffersFill / (this->config.deviceConfig.transferBufferCount - 1));
+    // for some reason the api refuses to fill all buffers, GetDataStreaming will always return bufferCount-1 even when nearly overflowing
+    this->mainWindow.ui->RAMFillStatus->setValue(100ULL*queueFill / this->config.writeBufferCount);
+    this->mainWindow.ui->FileFillStatus->setValue(100ULL*fileFill / this->config.getCurrentChannelConfig().fileSizeLimit);
+}
+void Application::createPeriodicUpdateTimer(unsigned long period)
+{
+    this->updateTimer = std::unique_ptr<QTimer>(new QTimer(this));
+    this->updateTimer->connect(
+        this->updateTimer.get(),
+        &QTimer::timeout,
+        this,
+        &Application::updatePeriodicUIElements
+    );
+    this->updateTimer->start();
+}
+
+

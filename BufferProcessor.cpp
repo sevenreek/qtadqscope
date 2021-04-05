@@ -51,12 +51,18 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
         if(buffers.nof_samples[ch] == 0)
             continue;
         unsigned long unparsedSamplesInBuffer = buffers.nof_samples[ch];
+        // if the ADC is not configured in triggered streaming mode
+        // buffer processor will pass the whole buffer to the record processors
+        // and pass NULL as the header
         if(!isTriggeredStreaming)
         {
             //spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
             this->completeRecord(NULL, buffers.data[ch], buffers.nof_samples[ch]);
             continue;
         }
+        // when triggered streaming is used the buffer has to be spliced into
+        // multiple records (window of samples after trigger)
+        // each record comes with a header
         unsigned long completedHeaders = 0;
         if(buffers.nof_headers[ch]>0) {
             completedHeaders = (buffers.header_status[ch] ?
@@ -67,6 +73,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             if(completedHeaders > 0)
             {
                 unsigned long samplesToCompleteRecord = buffers.headers[ch][0].RecordLength - this->recordBufferLength[ch];
+                // the sanity check below can likely be removed for a tiny performance boost, as its cause was pinpointed to be a fixed bug in WriteBuffers
                 if(buffers.headers[ch][0].RecordLength <= this->recordLength)
                 {
                     std::memcpy(
@@ -97,8 +104,15 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
                 );
                 unparsedSamplesInBuffer -= buffers.headers[ch][recordIndex].RecordLength;
             }
+            // it may happen that an incomplete record is obtained, e.g.
+            // the record length is 100 but only 80 samples are collected
+            // at the moment of the function call
+            // in this case the incomplete header has to be copied to the beginning
+            // of the buffer so that it can be filled on the next call(s) together with
+            // the remaining 20 samples that still need to be obtained
             if(unparsedSamplesInBuffer>0)
             {
+                // store the leftover samples in a buffer
                 std::memcpy(
                     (void*)&(this->recordBuffer[ch][this->recordBufferLength[ch]]),
                     &(buffers.data[ch][buffers.nof_samples[ch]-unparsedSamplesInBuffer]),
@@ -109,6 +123,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             }
             if(completedHeaders<buffers.nof_headers[ch])
             {
+                // copy the incomplete header
                 std::memcpy(
                     &(buffers.headers[ch][0]),
                     &(buffers.headers[ch][completedHeaders]),

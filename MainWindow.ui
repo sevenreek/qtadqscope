@@ -536,7 +536,7 @@
            <item row="1" column="1">
             <widget class="QProgressBar" name="DMAFillStatus">
              <property name="maximum">
-              <number>31</number>
+              <number>100</number>
              </property>
              <property name="value">
               <number>24</number>
@@ -602,8 +602,11 @@
            </item>
            <item row="1" column="3">
             <widget class="QProgressBar" name="FileFillStatus">
+             <property name="maximum">
+              <number>100</number>
+             </property>
              <property name="value">
-              <number>24</number>
+              <number>0</number>
              </property>
             </widget>
            </item>

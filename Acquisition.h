@@ -23,6 +23,7 @@ enum FILE_WRITERS {
     NONE,
     BINARY,
 };
+
 class Acquisition : public QObject
 {
     Q_OBJECT
@@ -62,6 +63,9 @@ public:
     unsigned long checkDMA();
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStarted;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStopped;
+    unsigned long getBuffersFill();
+    int getReadQueueFill();
+    int getWriteQueueFill();
 
 public slots:
     void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
@@ -76,7 +80,6 @@ public slots:
 signals:
     void onStateChanged(ACQUISITION_STATES newState);
     void onStart();
-    void periodicUpdate(unsigned long averageBuffersFilled, unsigned long queueFill);
 };
 
 #endif // ACQUISITION_H

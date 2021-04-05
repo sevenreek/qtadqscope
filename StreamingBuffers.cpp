@@ -45,7 +45,7 @@ StreamingBuffers::~StreamingBuffers()
 }
 
 WriteBuffers::WriteBuffers(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask) :
-  sWrite(bufferCount), sRead(0), sFile(1)
+  sWrite(bufferCount), sRead(0)
 {
   this->bufferCount = bufferCount;
   for(unsigned int b = 0; b < this->bufferCount; b++)
@@ -125,6 +125,13 @@ void WriteBuffers::resetSemaphores()
     this->writePosition = 0;
     this->readPosition = 0;
     this->sRead.reset(0);
-    this->sFile.reset(1);
     this->sWrite.reset(this->bufferCount);
+}
+int WriteBuffers::getWriteCount()
+{
+    return this->sWrite.getCount();
+}
+int WriteBuffers::getReadCount()
+{
+    return this->sRead.getCount();
 }

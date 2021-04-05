@@ -3,7 +3,10 @@
 #include "RecordProcessor.h"
 #include <iostream>
 #include <fstream>
-class BinaryFileWriter: public RecordProcessor {
+
+
+
+class BinaryFileWriter: public FileWriter {
     private:
     std::ofstream dataStream;
     unsigned long long bytesSaved;
@@ -17,9 +20,10 @@ class BinaryFileWriter: public RecordProcessor {
     bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();
+    unsigned long long getProcessedBytes();
 };
 
-class BufferedBinaryFileWriter: public RecordProcessor {
+class BufferedBinaryFileWriter: public FileWriter {
     private:
     std::ofstream dataStream;
     unsigned long long bytesSaved;
@@ -35,5 +39,6 @@ class BufferedBinaryFileWriter: public RecordProcessor {
     bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();
+    unsigned long long getProcessedBytes();
 };
 #endif // BINARYFILEWRITER_H

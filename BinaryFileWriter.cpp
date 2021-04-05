@@ -10,6 +10,10 @@ BinaryFileWriter::~BinaryFileWriter()
 {
 
 }
+unsigned long long BinaryFileWriter::getProcessedBytes()
+{
+    return this->bytesSaved;
+}
 void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
 {
     time_t rawtime;
@@ -161,4 +165,9 @@ unsigned long long BufferedBinaryFileWriter::finish(){
 const char* BufferedBinaryFileWriter::getName()
 {
     return "BufferedBinaryFileWriter";
+}
+
+unsigned long long BufferedBinaryFileWriter::getProcessedBytes()
+{
+    return this->bytesSaved;
 }

@@ -260,7 +260,7 @@ void Acquisition::finishRecordProcessors()
     {
        unsigned long long processedBytes = rp->finish();
        spdlog::info(
-            "{} processed {} bytes over {:.2f} seconds. Data rate {} MB/s.",
+            "{} processed {} bytes over {:.2f} seconds. Data rate {:.2f} MB/s.",
             rp->getName(), processedBytes, elapsed.count(), processedBytes/1000000.0/elapsed.count());
     }
 }
@@ -268,4 +268,17 @@ void Acquisition::setStoppedState()
 {
     this->setState(ACQUISITION_STATES::STOPPED);
     this->finishRecordProcessors();
+}
+
+unsigned long Acquisition::getBuffersFill()
+{
+    return this->lastBuffersFilled;
+}
+int Acquisition::getReadQueueFill()
+{
+    return this->appConfig.writeBufferCount - this->writeBuffers.getReadCount();
+}
+int Acquisition::getWriteQueueFill()
+{
+    return this->appConfig.writeBufferCount - this->writeBuffers.getWriteCount();
 }

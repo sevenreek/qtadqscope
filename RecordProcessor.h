@@ -10,4 +10,9 @@ public:
     virtual const char* getName() = 0;
     virtual ~RecordProcessor() {}
 };
+class FileWriter : public RecordProcessor{
+public:
+   virtual unsigned long long getProcessedBytes() = 0;
+};
+
 #endif

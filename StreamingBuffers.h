@@ -32,9 +32,10 @@ public:
   std::vector<StreamingBuffers*> buffers = {nullptr};
   Semaphore sWrite;
   Semaphore sRead;
-  Semaphore sFile;
   StreamingBuffers* awaitWrite(int timeout);
   StreamingBuffers* awaitRead(int timeout);
+  int getWriteCount();
+  int getReadCount();
   void notifyWritten();
   void notifyRead();
   void resetSemaphores();
