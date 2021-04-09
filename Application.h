@@ -8,6 +8,7 @@
 #include "ScopeUpdater.h"
 #include "BinaryFileWriter.h"
 #include <QTimer>
+#include "BuffersDialog.h"
 class Application : public QObject
 {
     Q_OBJECT
@@ -25,6 +26,7 @@ private:
     std::shared_ptr<FileWriter> fileWriter;
     // Pointer to the helper object Acquisition.
     std::unique_ptr<Acquisition> acquisition;
+    std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */
@@ -40,7 +42,7 @@ public:
      * Create an Application object before entering Qt's main loop
      * and call the start function.
      */
-    Application(MainWindow& mainWindow);
+    explicit Application(MainWindow& mainWindow);
     /*
      * Populates the application object. Most importantly creates the helper
      * Acquisition object, which creates the DMA and processing threads.
@@ -86,6 +88,9 @@ public slots:
     void changeBufferQueueCount(unsigned long size);
 
     void updatePeriodicUIElements();
+
+    void configureDMABuffers();
+    void onDMADialogClosed();
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);

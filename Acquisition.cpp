@@ -35,7 +35,7 @@ Acquisition::Acquisition(
     connect(this, &Acquisition::onStart, dmaChecker, &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker, &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
     connect(dmaChecker, &DMAChecker::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
-    connect(dmaChecker, &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled);
+    connect(dmaChecker, &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled, Qt::ConnectionType::DirectConnection);
 
     bufferProcessingThread.start();
     dmaCheckingThread.start();

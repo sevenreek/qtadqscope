@@ -429,7 +429,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string>2.5 Vpp</string>
+                 <string>2 Vpp</string>
                 </property>
                </item>
                <item>
@@ -1010,6 +1010,7 @@
     </property>
     <addaction name="actionLoad"/>
     <addaction name="actionSave"/>
+    <addaction name="separator"/>
     <addaction name="actionConfigureDMA"/>
    </widget>
    <addaction name="menuConfiguration"/>
@@ -1019,15 +1020,30 @@
    <property name="text">
     <string>Load</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Calibri Light</family>
+    </font>
+   </property>
   </action>
   <action name="actionSave">
    <property name="text">
     <string>Save</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Calibri Light</family>
+    </font>
+   </property>
   </action>
   <action name="actionConfigureDMA">
    <property name="text">
     <string>DMA buffers</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Calibri Light</family>
+    </font>
    </property>
   </action>
  </widget>

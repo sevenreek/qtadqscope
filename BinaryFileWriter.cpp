@@ -27,7 +27,7 @@ void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     this->dataStream.open(bufferdata, std::ios_base::binary | std::ios_base::out);
     config.toFile(buffercfg);
     this->bytesSaved = 0;
-    this->sizeLimit = config.getCurrentChannelConfig().fileSizeLimit;
+    this->sizeLimit = config.fileSizeLimit;
 }
 bool BinaryFileWriter::writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length)
 {
@@ -109,7 +109,7 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     config.toFile(buffercfg);
     this->samplesSaved = 0;
     this->bytesSaved = 0;
-    this->sizeLimit = config.getCurrentChannelConfig().fileSizeLimit;
+    this->sizeLimit = config.fileSizeLimit;
 }
 bool BufferedBinaryFileWriter::writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length)
 {

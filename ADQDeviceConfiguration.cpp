@@ -50,8 +50,7 @@ json ChannelConfiguration::toJSON()
         {"trigger_delay",       this->triggerDelay},
         {"digital_offset",      this->digitalOffset},
         {"digital_gain",        this->digitalGain},
-        {"stream_type",         this->isContinuousStreaming},
-        {"file_size_limit",     this->fileSizeLimit}
+        {"stream_type",         this->isContinuousStreaming}
 
     };
     return j;

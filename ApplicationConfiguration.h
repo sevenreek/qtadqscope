@@ -17,6 +17,7 @@ public:
     unsigned int deviceNumber = 1;
     bool settingsValid = true;
     unsigned int periodicUpdatePeriod = 1000;
+    unsigned long long fileSizeLimit = 4ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
 
     LOGGING_LEVELS uiLoggingLevel = LOGGING_LEVELS::DEBUG;
     LOGGING_LEVELS fileLoggingLevel = LOGGING_LEVELS::DEBUG;

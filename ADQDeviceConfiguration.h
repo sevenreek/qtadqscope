@@ -80,7 +80,6 @@ public:
     int digitalGain = DEFAULT_DIGITAL_USER_GAIN;
     bool updateScope = true;
     bool isContinuousStreaming = true;
-    unsigned long long fileSizeLimit = 4ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
     void log();
     json toJSON();
 };

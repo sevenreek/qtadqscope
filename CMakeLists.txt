@@ -75,6 +75,9 @@ set(PROJECT_SOURCES
         AcquisitionThreads.h
         BinaryFileWriter.cpp
         BinaryFileWriter.h
+        BuffersDialog.cpp
+        BuffersDialog.h
+        BuffersDialog.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

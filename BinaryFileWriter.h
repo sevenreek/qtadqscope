@@ -12,7 +12,7 @@ class BinaryFileWriter: public FileWriter {
     unsigned long long bytesSaved;
     unsigned long long sizeLimit;
     public:
-    BinaryFileWriter(unsigned long long sizeLimit);
+    explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
     bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
@@ -31,7 +31,7 @@ class BufferedBinaryFileWriter: public FileWriter {
     short* dataBuffer;
     unsigned long long samplesSaved = 0;
     public:
-    BufferedBinaryFileWriter(unsigned long long sizeLimit);
+    explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     ~BufferedBinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
     bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);

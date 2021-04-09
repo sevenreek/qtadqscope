@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "Acquisition.h"
 #include "./ui_MainWindow.h"
+#include "./ui_BuffersDialog.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "BinaryFileWriter.h"
@@ -47,6 +48,7 @@ int Application::start(int argc, char *argv[]) {
             *this->adqDevice
         )
     );
+    this->buffersConfigurationDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog());
     this->linkSignals();
     this->setUI();
     this->createPeriodicUpdateTimer(this->config.periodicUpdatePeriod);
@@ -234,6 +236,20 @@ void Application::linkSignals()
         this,
         &Application::updateScope,
         Qt::ConnectionType::BlockingQueuedConnection
+    );
+    // ACTIONS
+    this->mainWindow.ui->actionConfigureDMA->connect(
+        this->mainWindow.ui->actionConfigureDMA,
+        &QAction::triggered,
+        this,
+        &Application::configureDMABuffers
+    );
+    // DMA DIALOG
+    this->buffersConfigurationDialog->ui->buttonBox->connect(
+        this->buffersConfigurationDialog->ui->buttonBox,
+        &QDialogButtonBox::accepted,
+        this,
+        &Application::onDMADialogClosed
     );
 }
 
@@ -540,10 +556,10 @@ void Application::changeSaveToFile(int state) {
         switch(this->mainWindow.ui->fileTypeSelector->currentIndex())
         {
             case FILE_TYPE_SELECTOR::S_BINARY:{
-                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.fileSizeLimit);
             }break;
             case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
-                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.fileSizeLimit);
             }break;
             default:{
                 spdlog::critical("Unsupported file mode (default)");
@@ -572,10 +588,10 @@ void Application::changeFiletype(int state)
         switch(state)
         {
             case FILE_TYPE_SELECTOR::S_BINARY:{
-                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config.fileSizeLimit);
             }break;
             case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
-                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.getCurrentChannelConfig().fileSizeLimit);
+                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config.fileSizeLimit);
             }break;
             default:{
                 spdlog::critical("Unsupported file mode (default)");
@@ -676,7 +692,7 @@ void Application::updatePeriodicUIElements()
     this->mainWindow.ui->DMAFillStatus->setValue(100ULL*buffersFill / (this->config.deviceConfig.transferBufferCount - 1));
     // for some reason the api refuses to fill all buffers, GetDataStreaming will always return bufferCount-1 even when nearly overflowing
     this->mainWindow.ui->RAMFillStatus->setValue(100ULL*queueFill / this->config.writeBufferCount);
-    this->mainWindow.ui->FileFillStatus->setValue(100ULL*fileFill / this->config.getCurrentChannelConfig().fileSizeLimit);
+    this->mainWindow.ui->FileFillStatus->setValue(100ULL*fileFill / this->config.fileSizeLimit);
 }
 void Application::createPeriodicUpdateTimer(unsigned long period)
 {
@@ -689,5 +705,22 @@ void Application::createPeriodicUpdateTimer(unsigned long period)
     );
     this->updateTimer->start();
 }
-
-
+void Application::configureDMABuffers()
+{
+    this->buffersConfigurationDialog->ui->dmaBufferCount->setValue(this->config.deviceConfig.transferBufferCount);
+    this->buffersConfigurationDialog->ui->dmaBufferSize->setValue(this->config.deviceConfig.transferBufferSize);
+    this->buffersConfigurationDialog->ui->writeBufferCount->setValue(this->config.writeBufferCount);
+    this->buffersConfigurationDialog->ui->maximumFileSize->setValue((double)this->config.fileSizeLimit/BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER);
+    this->buffersConfigurationDialog->show();
+}
+void Application::onDMADialogClosed()
+{
+    unsigned long newBufferCount = this->buffersConfigurationDialog->ui->dmaBufferCount->value();
+    unsigned long newBufferSize = this->buffersConfigurationDialog->ui->dmaBufferSize->value();
+    unsigned long newQueueCount = this->buffersConfigurationDialog->ui->writeBufferCount->value();
+    unsigned long long newFileLimit = (unsigned long long)this->buffersConfigurationDialog->ui->maximumFileSize->value()*BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER;
+    this->config.deviceConfig.transferBufferCount = newBufferCount;
+    this->config.deviceConfig.transferBufferSize = newBufferSize;
+    this->config.writeBufferCount = newQueueCount;
+    this->config.fileSizeLimit = newFileLimit;
+}
