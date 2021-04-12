@@ -78,6 +78,9 @@ set(PROJECT_SOURCES
         BuffersDialog.cpp
         BuffersDialog.h
         BuffersDialog.ui
+        RegisterDialog.cpp
+        RegisterDialog.h
+        RegisterDialog.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

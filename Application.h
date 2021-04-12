@@ -9,6 +9,7 @@
 #include "BinaryFileWriter.h"
 #include <QTimer>
 #include "BuffersDialog.h"
+#include "RegisterDialog.h"
 class Application : public QObject
 {
     Q_OBJECT
@@ -27,6 +28,7 @@ private:
     // Pointer to the helper object Acquisition.
     std::unique_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
+    std::unique_ptr<RegisterDialog> registerDialog;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */
@@ -91,6 +93,8 @@ public slots:
 
     void configureDMABuffers();
     void onDMADialogClosed();
+    void configureULRegisters();
+    void onRegisterDialogClosed();
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);

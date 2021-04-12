@@ -3,6 +3,7 @@
 #include "Acquisition.h"
 #include "./ui_MainWindow.h"
 #include "./ui_BuffersDialog.h"
+#include "./ui_RegisterDialog.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "BinaryFileWriter.h"
@@ -49,6 +50,7 @@ int Application::start(int argc, char *argv[]) {
         )
     );
     this->buffersConfigurationDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog());
+    this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog());
     this->linkSignals();
     this->setUI();
     this->createPeriodicUpdateTimer(this->config.periodicUpdatePeriod);
@@ -244,12 +246,25 @@ void Application::linkSignals()
         this,
         &Application::configureDMABuffers
     );
+    this->mainWindow.ui->actionUL_Registers->connect(
+        this->mainWindow.ui->actionUL_Registers,
+        &QAction::triggered,
+        this,
+        &Application::configureULRegisters
+    );
     // DMA DIALOG
     this->buffersConfigurationDialog->ui->buttonBox->connect(
         this->buffersConfigurationDialog->ui->buttonBox,
         &QDialogButtonBox::accepted,
         this,
         &Application::onDMADialogClosed
+    );
+    // REGISTERS DIALOG
+    this->registerDialog->ui->buttonBox->connect(
+        this->registerDialog->ui->buttonBox,
+        &QDialogButtonBox::accepted,
+        this,
+        &Application::onRegisterDialogClosed
     );
 }
 
@@ -723,4 +738,34 @@ void Application::onDMADialogClosed()
     this->config.deviceConfig.transferBufferSize = newBufferSize;
     this->config.writeBufferCount = newQueueCount;
     this->config.fileSizeLimit = newFileLimit;
+}
+void Application::configureULRegisters()
+{
+    this->registerDialog->show();
+}
+
+void Application::onRegisterDialogClosed()
+{
+    unsigned int algorithmMode = this->registerDialog->ui->triggerAlgoithmSelector->currentIndex();
+    unsigned int activeChannels =
+        (this->registerDialog->ui->activeChannel1->checkState()>0 ? 1<<0 : 0 ) |
+        (this->registerDialog->ui->activeChannel2->checkState()>0 ? 1<<1 : 0 ) |
+        (this->registerDialog->ui->activeChannel3->checkState()>0 ? 1<<2 : 0 ) |
+        (this->registerDialog->ui->activeChannel4->checkState()>0 ? 1<<3 : 0 );
+    unsigned int passthrough =
+        (this->registerDialog->ui->passthroughChannel1->checkState()>0 ? 1<<0 : 0 ) |
+        (this->registerDialog->ui->passthroughChannel2->checkState()>0 ? 1<<1 : 0 ) |
+        (this->registerDialog->ui->passthroughChannel3->checkState()>0 ? 1<<2 : 0 ) |
+        (this->registerDialog->ui->passthroughChannel4->checkState()>0 ? 1<<3 : 0 );
+
+    unsigned int retval;
+    this->adqDevice->WriteUserRegister(1, 0x10, 0, algorithmMode, &retval);
+    if(retval != algorithmMode) spdlog::debug("Failed to set algorithmMode");
+
+    this->adqDevice->WriteUserRegister(1, 0x11, 0, activeChannels, &retval);
+    if(retval != algorithmMode) spdlog::debug("Failed to set activeChannels");
+
+    this->adqDevice->WriteUserRegister(1, 0x12, 0, passthrough, &retval);
+    if(retval != algorithmMode) spdlog::debug("Failed to set passthrough");
+
 }

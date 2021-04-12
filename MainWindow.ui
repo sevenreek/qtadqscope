@@ -169,6 +169,9 @@
                  <pointsize>12</pointsize>
                 </font>
                </property>
+               <property name="toolTip">
+                <string>Bypass custom FPGA user logic designs. The board supports two user cores.</string>
+               </property>
                <property name="text">
                 <string>Bypass UL:</string>
                </property>
@@ -212,6 +215,9 @@
                  <pointsize>12</pointsize>
                 </font>
                </property>
+               <property name="toolTip">
+                <string>Analog offset in milivolts. The DAC does not have the full precision of the ADC so the values will not be exact.</string>
+               </property>
                <property name="text">
                 <string>Analog offset (mV)</string>
                </property>
@@ -250,19 +256,6 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_7">
-               <property name="font">
-                <font>
-                 <family>Calibri Light</family>
-                 <pointsize>12</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Digital offset</string>
-               </property>
-              </widget>
-             </item>
              <item row="3" column="1">
               <widget class="QSpinBox" name="digitalOffsetInput">
                <property name="minimum">
@@ -280,6 +273,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>User's digital gain setting. Default: 1024</string>
                </property>
                <property name="text">
                 <string>Digital gain</string>
@@ -299,6 +295,22 @@
                </property>
               </widget>
              </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_7">
+               <property name="font">
+                <font>
+                 <family>Calibri Light</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>User's digital offset setting. Default: 0.</string>
+               </property>
+               <property name="text">
+                <string>Digital offset</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item row="0" column="0">
@@ -310,6 +322,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>ADC channel to trigger and gather data from. 1=A, 2=B, 3=C, 4=D. </string>
                </property>
                <property name="text">
                 <string>Channel</string>
@@ -348,6 +363,9 @@
                  <pointsize>12</pointsize>
                 </font>
                </property>
+               <property name="toolTip">
+                <string>Sampling frequency is configured via sample skip (decimation).</string>
+               </property>
                <property name="text">
                 <string>Sample skip</string>
                </property>
@@ -371,6 +389,9 @@
                  <pointsize>12</pointsize>
                 </font>
                </property>
+               <property name="toolTip">
+                <string>Sampling frequency is configured via sample skip (decimation).</string>
+               </property>
                <property name="text">
                 <string>Frequency:</string>
                </property>
@@ -383,6 +404,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>Sampling frequency is configured via sample skip (decimation).</string>
                </property>
                <property name="layoutDirection">
                 <enum>Qt::LeftToRight</enum>
@@ -399,6 +423,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>Peak to peak voltage input range of the selected channel.</string>
                </property>
                <property name="text">
                 <string>Input range</string>
@@ -451,6 +478,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>The board only supports predefined levels that do differ slightly channel to channel due to factory gain and offset values.</string>
                </property>
                <property name="text">
                 <string>Range obtained</string>
@@ -641,6 +671,9 @@
                  <pointsize>12</pointsize>
                 </font>
                </property>
+               <property name="toolTip">
+                <string>Length of record, i.e. number of samples to collect after each trigger event. Must be a multiple of 32.</string>
+               </property>
                <property name="text">
                 <string>Record length</string>
                </property>
@@ -653,6 +686,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>Samples to wait after a trigger event before starting record acquisition. Delay and pretrigger cannot be both active at the same time.</string>
                </property>
                <property name="text">
                 <string>Trigger delay</string>
@@ -689,6 +725,9 @@
                  <family>Calibri Light</family>
                  <pointsize>12</pointsize>
                 </font>
+               </property>
+               <property name="toolTip">
+                <string>Samples before a trigger event to include in the record. Delay and pretrigger cannot be both active at the same time.</string>
                </property>
                <property name="text">
                 <string>Pretrigger</string>
@@ -962,6 +1001,9 @@
              </item>
              <item row="1" column="0">
               <widget class="QCheckBox" name="limitRecordsCB">
+               <property name="toolTip">
+                <string>The number of records to acquire might be limited. In that case set the Record count below to the desired value. Records cannot be limited in free running mode.</string>
+               </property>
                <property name="text">
                 <string>Limit records</string>
                </property>
@@ -1012,6 +1054,7 @@
     <addaction name="actionSave"/>
     <addaction name="separator"/>
     <addaction name="actionConfigureDMA"/>
+    <addaction name="actionUL_Registers"/>
    </widget>
    <addaction name="menuConfiguration"/>
   </widget>
@@ -1044,6 +1087,11 @@
     <font>
      <family>Calibri Light</family>
     </font>
+   </property>
+  </action>
+  <action name="actionUL_Registers">
+   <property name="text">
+    <string>UL Registers</string>
    </property>
   </action>
  </widget>

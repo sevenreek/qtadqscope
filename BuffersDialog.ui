@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>306</width>
-    <height>177</height>
+    <width>656</width>
+    <height>278</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -28,21 +28,21 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>DMA buffer count</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>DMA queue size</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QSpinBox" name="dmaBufferCount">
        <property name="minimum">
         <number>4</number>
@@ -52,14 +52,14 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
         <string>DMA buffer size</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QSpinBox" name="dmaBufferSize">
        <property name="minimum">
         <number>1024</number>
@@ -72,7 +72,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QSpinBox" name="writeBufferCount">
        <property name="minimum">
         <number>1</number>
@@ -82,14 +82,14 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>Maximum single file size [GB]</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QDoubleSpinBox" name="maximumFileSize">
        <property name="minimum">
         <double>0.100000000000000</double>
@@ -102,6 +102,16 @@
        </property>
        <property name="value">
         <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>DMA buffers are responsible for passing samples from the device to the PC's RAM. The number of these buffers must be defined (DMA buffer count). Each buffer has the same predefined size (DMA buffer size). Internally the program uses a ring buffer to process these buffers in separate threads (DMA queue size). To prevent users from accidentaly filling the whole hard drive, the size of the files that the program is allowed to create for storing samples can be limited.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
