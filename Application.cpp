@@ -685,7 +685,7 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
 void Application::updateScope(QVector<double> &x, QVector<double> y)
 {
     this->mainWindow.ui->plotArea->graph(0)->setData(x,y);
-    this->mainWindow.ui->plotArea->rescaleAxes();
+    //this->mainWindow.ui->plotArea->rescaleAxes();
     this->mainWindow.ui->plotArea->replot();
 }
 void Application::changeDMABufferCount(unsigned long count)

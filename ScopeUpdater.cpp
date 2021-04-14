@@ -3,6 +3,8 @@
 ScopeUpdater::ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot): plot(plot)
 {
     this->plot.addGraph();
+    this->plot.setInteraction(QCP::iRangeDrag, true);
+    this->plot.setInteraction(QCP::iRangeZoom, true);
     this->reallocate(sampleCount);
 }
 void ScopeUpdater::reallocate(unsigned long long sampleCount)
@@ -16,6 +18,8 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
     }
     this->y.resize(sampleCount);
     this->plot.graph(0)->setData(x,y);
+    this->plot.xAxis->setRange(0, sampleCount);
+    this->plot.yAxis->setRange(-(2<<15), 2<<15);
     this->plot.replot();
 }
 bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount)

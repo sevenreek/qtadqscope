@@ -34,12 +34,17 @@ StreamingBuffers::~StreamingBuffers()
 {
   for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
   {
-    if((channelMask & (1<<ch)) == (1<<ch))
+    if(this->data[ch])
     {
       //spdlog::debug("Freeing data for channel {} from pointer {}", ch+1, fmt::ptr(this->data[ch]));
       free(this->data[ch]);
+      this->data[ch] = nullptr;
+    }
+    if(this->headers[ch])
+    {
       //spdlog::debug("Freeing headers for channel {}", ch+1);
       free(this->headers[ch]);
+      this->headers[ch] = nullptr;
     }
   }
 }
