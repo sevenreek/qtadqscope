@@ -95,6 +95,8 @@ public slots:
     void onDMADialogClosed();
     void configureULRegisters();
     void onRegisterDialogClosed();
+
+    void triggerSoftwareTrig();
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);

@@ -250,9 +250,8 @@ void Acquisition::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 
 void Acquisition::buffersFilled(unsigned long filled)
 {
-    this->lastBuffersFilled = (this->lastBuffersFilled + filled)/2; // take average of 2 measurements
+    this->lastBuffersFilled = filled;
 }
-
 void Acquisition::finishRecordProcessors()
 {
     std::chrono::duration<double> elapsed = this->timeStopped - this->timeStarted;

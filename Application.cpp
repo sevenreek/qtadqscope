@@ -266,6 +266,13 @@ void Application::linkSignals()
         this,
         &Application::onRegisterDialogClosed
     );
+    // SWTRIG
+    this->mainWindow.ui->softwareTriggerButton->connect(
+        this->mainWindow.ui->softwareTriggerButton,
+        &QAbstractButton::pressed,
+        this,
+        &Application::triggerSoftwareTrig
+    );
 }
 
 ///// BEGIN UI SLOTS //////
@@ -768,4 +775,8 @@ void Application::onRegisterDialogClosed()
     this->adqDevice->WriteUserRegister(1, 0x12, 0, passthrough, &retval);
     if(retval != algorithmMode) spdlog::debug("Failed to set passthrough");
 
+}
+void Application::triggerSoftwareTrig()
+{
+    this->adqDevice->SWTrig();
 }

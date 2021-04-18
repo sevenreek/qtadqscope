@@ -16,7 +16,7 @@ public:
     unsigned int writeBufferCount = 64;
     unsigned int deviceNumber = 1;
     bool settingsValid = true;
-    unsigned int periodicUpdatePeriod = 1000;
+    unsigned int periodicUpdatePeriod = 200;
     unsigned long long fileSizeLimit = 4ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
 
     LOGGING_LEVELS uiLoggingLevel = LOGGING_LEVELS::DEBUG;
