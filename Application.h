@@ -72,6 +72,7 @@ public slots:
     void changeLevelTriggerEdge(int index);
     void changeLevelTriggerCode(int val);
     void changeLevelTriggerMV(double val);
+    void changeLevelTriggerReset(int val);
 
     void changeUpdateScope(int state);
     void changeAnalyse(int state);
@@ -97,6 +98,8 @@ public slots:
     void onRegisterDialogClosed();
 
     void triggerSoftwareTrig();
+    void loadConfig();
+    void saveConfig();
 };
 
 int mvToADCCode(float inputRange, float dcBiasFloat);

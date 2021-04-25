@@ -14,6 +14,8 @@ Application::Application( MainWindow& mainWindow) : mainWindow(mainWindow)
 
 }
 int Application::start(int argc, char *argv[]) {
+
+    this->config.fromFile("default_config.json");
     this->adqControlUnit = CreateADQControlUnit();
     if(this->adqControlUnit == NULL)
     {
@@ -22,7 +24,7 @@ int Application::start(int argc, char *argv[]) {
     }
 
     // parse args here
-    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.deviceConfig.adqLoggingLevel, 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
+    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.adqLoggingLevel, 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
     ADQControlUnit_FindDevices(this->adqControlUnit);
     int numberOfDevices = ADQControlUnit_NofADQ(adqControlUnit);
     if(numberOfDevices == 0)
@@ -66,7 +68,9 @@ void Application::setUI()
     int actualChannel = this->config.getCurrentChannel();
     this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config.getCurrentChannel()+1)%MAX_NOF_CHANNELS);
     this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
-    this->changeDMABufferCount(this->config.deviceConfig.transferBufferCount);
+    this->changeDMABufferCount(this->config.transferBufferCount);
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
+
 
     /*
     this->mainWindow.ui->DMAFillStatus->setMaximum(this->config.deviceConfig.transferBufferCount);
@@ -74,6 +78,8 @@ void Application::setUI()
     this->mainWindow.ui->FileFillStatus->setMaximum(this->config.getCurrentChannelConfig().fileSizeLimit);
     */
 }
+
+
 
 float ADCCodeToMV(float inputRange, int code)
 {
@@ -196,6 +202,12 @@ void Application::linkSignals()
         static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
         [=](double d){ this->changeLevelTriggerMV(d); }
     );
+    // LEVEL MV
+    this->mainWindow.ui->levelTriggerResetOffsetInput->connect(
+        this->mainWindow.ui->levelTriggerResetOffsetInput,
+        static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+        [=](int i){ this->changeLevelTriggerCode(i); }
+    );
     // SCOPE UPDATE
     this->mainWindow.ui->updateScopeCB->connect(
         this->mainWindow.ui->updateScopeCB,
@@ -251,6 +263,18 @@ void Application::linkSignals()
         &QAction::triggered,
         this,
         &Application::configureULRegisters
+    );
+    this->mainWindow.ui->actionLoad->connect(
+        this->mainWindow.ui->actionLoad,
+        &QAction::triggered,
+        this,
+        &Application::loadConfig
+    );
+    this->mainWindow.ui->actionSave->connect(
+        this->mainWindow.ui->actionSave,
+        &QAction::triggered,
+        this,
+        &Application::saveConfig
     );
     // DMA DIALOG
     this->buffersConfigurationDialog->ui->buttonBox->connect(
@@ -541,6 +565,8 @@ void Application::changeLevelTriggerCode(int val) {
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerVoltageInput->setValue(mvVal);
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(false);
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
+    this->mainWindow.ui->plotArea->replot();
 }
 void Application::changeLevelTriggerMV(double val) {
     int code = mvToADCCode(this->config.getCurrentChannelConfig().inputRangeFloat, val);
@@ -549,8 +575,14 @@ void Application::changeLevelTriggerMV(double val) {
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config.getCurrentChannelConfig().triggerLevelCode);
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(false);
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
+    this->mainWindow.ui->plotArea->replot();
 }
 
+void Application::changeLevelTriggerReset(int val) {
+    this->config.getCurrentChannelConfig().triggerLevelReset = val;
+    this->adqDevice->SetTrigLevelResetValue(val);
+}
 void Application::changeUpdateScope(int state) {
     if(state)
     {
@@ -711,7 +743,7 @@ void Application::updatePeriodicUIElements()
     if(this->fileWriter != nullptr) {
         fileFill = this->fileWriter->getProcessedBytes();
     }
-    this->mainWindow.ui->DMAFillStatus->setValue(100ULL*buffersFill / (this->config.deviceConfig.transferBufferCount - 1));
+    this->mainWindow.ui->DMAFillStatus->setValue(100ULL*buffersFill / (this->config.transferBufferCount - 1));
     // for some reason the api refuses to fill all buffers, GetDataStreaming will always return bufferCount-1 even when nearly overflowing
     this->mainWindow.ui->RAMFillStatus->setValue(100ULL*queueFill / this->config.writeBufferCount);
     this->mainWindow.ui->FileFillStatus->setValue(100ULL*fileFill / this->config.fileSizeLimit);
@@ -729,8 +761,8 @@ void Application::createPeriodicUpdateTimer(unsigned long period)
 }
 void Application::configureDMABuffers()
 {
-    this->buffersConfigurationDialog->ui->dmaBufferCount->setValue(this->config.deviceConfig.transferBufferCount);
-    this->buffersConfigurationDialog->ui->dmaBufferSize->setValue(this->config.deviceConfig.transferBufferSize);
+    this->buffersConfigurationDialog->ui->dmaBufferCount->setValue(this->config.transferBufferCount);
+    this->buffersConfigurationDialog->ui->dmaBufferSize->setValue(this->config.transferBufferSize);
     this->buffersConfigurationDialog->ui->writeBufferCount->setValue(this->config.writeBufferCount);
     this->buffersConfigurationDialog->ui->maximumFileSize->setValue((double)this->config.fileSizeLimit/BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER);
     this->buffersConfigurationDialog->show();
@@ -741,8 +773,8 @@ void Application::onDMADialogClosed()
     unsigned long newBufferSize = this->buffersConfigurationDialog->ui->dmaBufferSize->value();
     unsigned long newQueueCount = this->buffersConfigurationDialog->ui->writeBufferCount->value();
     unsigned long long newFileLimit = (unsigned long long)this->buffersConfigurationDialog->ui->maximumFileSize->value()*BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER;
-    this->config.deviceConfig.transferBufferCount = newBufferCount;
-    this->config.deviceConfig.transferBufferSize = newBufferSize;
+    this->config.transferBufferCount = newBufferCount;
+    this->config.transferBufferSize = newBufferSize;
     this->config.writeBufferCount = newQueueCount;
     this->config.fileSizeLimit = newFileLimit;
 }
@@ -770,13 +802,44 @@ void Application::onRegisterDialogClosed()
     if(retval != algorithmMode) spdlog::debug("Failed to set algorithmMode");
 
     this->adqDevice->WriteUserRegister(1, 0x11, 0, activeChannels, &retval);
-    if(retval != algorithmMode) spdlog::debug("Failed to set activeChannels");
+    if(retval != activeChannels) spdlog::debug("Failed to set activeChannels");
 
+    spdlog::debug("Setting passthrough to {:#b}", passthrough);
     this->adqDevice->WriteUserRegister(1, 0x12, 0, passthrough, &retval);
-    if(retval != algorithmMode) spdlog::debug("Failed to set passthrough");
+    if(retval != passthrough) spdlog::debug("Failed to set passthrough");
 
 }
 void Application::triggerSoftwareTrig()
 {
     this->adqDevice->SWTrig();
+}
+
+void Application::loadConfig()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+        &this->mainWindow,
+        "Open config",
+        "",
+        "JSON config (*.json);;All Files (*)"
+    );
+    if(!fileName.length()) return;
+    QByteArray ba = fileName.toLocal8Bit();
+    bool success = this->config.fromFile(ba.data());
+    if(!success)
+    {
+        spdlog::warn("Failed to load configuration from file {}", ba.data());
+    }
+}
+
+void Application::saveConfig()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+        &this->mainWindow,
+        "Save config",
+        "",
+        "JSON config (*.json);;All Files (*)"
+    );
+    if(!fileName.length()) return;
+    QByteArray ba = fileName.toLocal8Bit();
+    this->config.toFile(ba.data());
 }

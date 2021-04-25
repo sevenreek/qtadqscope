@@ -43,6 +43,7 @@ json ChannelConfiguration::toJSON()
         {"input_range",         this->inputRangeEnum},
         {"trigger_mode",        this->triggerMode},
         {"trigger_level",       this->triggerLevelCode},
+        {"trigger_reset",       this->triggerLevelReset},
         {"trigger_edge",        this->triggerEdge},
         {"record_length",       this->recordLength},
         {"record_count",        this->recordCount},
@@ -55,12 +56,22 @@ json ChannelConfiguration::toJSON()
     };
     return j;
 }
-json ADQDeviceConfiguration::toJSON()
+void ChannelConfiguration::loadFromJSON(json j)
 {
-    json j = {
-        {"buffer_count", this->transferBufferCount},
-        {"buffer_size",  this->transferBufferSize}
-
-    };
-    return j;
+    this->userLogicBypass =     j["ul_bypass"];
+    this->sampleSkip =          j["sample_skip"];
+    this->baseDcBiasOffset =    j["base_offset"];
+    this->dcBiasCode =          j["offset"];
+    this->inputRangeEnum =      j["input_range"];
+    this->triggerMode =         j["trigger_mode"];
+    this->triggerLevelCode =    j["trigger_level"];
+    this->triggerEdge =         j["trigger_edge"];
+    this->triggerLevelReset =   j["trigger_reset"];
+    this->recordLength =        j["record_length"];
+    this->recordCount =         j["record_count"];
+    this->pretrigger =          j["pretrigger"];
+    this->triggerDelay =        j["trigger_delay"];
+    this->digitalOffset =       j["digital_offset"];
+    this->digitalGain =         j["digital_gain"];
+    this->isContinuousStreaming = j["stream_type"];
 }

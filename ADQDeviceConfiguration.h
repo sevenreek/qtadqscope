@@ -70,6 +70,7 @@ public:
     float inputRangeFloat = 5000;
     float triggerLevel = 0;
     int triggerLevelCode = 0;
+    int triggerLevelReset = 0;
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     TRIGGER_MODES triggerMode = TRIGGER_MODES::SOFTWARE;
     unsigned long recordLength = 128;
@@ -82,19 +83,7 @@ public:
     bool isContinuousStreaming = true;
     void log();
     json toJSON();
+    void loadFromJSON(json data);
 };
-
-class ADQDeviceConfiguration
-{
-public:
-
-
-    unsigned long transferBufferCount = 32;
-    unsigned long transferBufferSize = 1ul*1024ul*1024ul;//1024ul * 1024ul;
-
-    LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
-    json toJSON();
-};
-
 
 #endif // ADQDEVICECONFIGURATION_H

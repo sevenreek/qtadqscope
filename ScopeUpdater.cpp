@@ -1,14 +1,17 @@
 #include "ScopeUpdater.h"
 #include "spdlog/spdlog.h"
-ScopeUpdater::ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot): plot(plot)
+ScopeUpdater::ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot): plot(plot), arrow(&plot)
 {
+    this->sampleCount = sampleCount;
     this->plot.addGraph();
     this->plot.setInteraction(QCP::iRangeDrag, true);
     this->plot.setInteraction(QCP::iRangeZoom, true);
     this->reallocate(sampleCount);
+    this->arrow.setPen(QPen(Qt::red));
 }
 void ScopeUpdater::reallocate(unsigned long long sampleCount)
 {
+    this->sampleCount = sampleCount;
     this->x.clear();
     this->y.clear();
     this->x.resize(sampleCount);
@@ -37,7 +40,7 @@ void ScopeUpdater::startNewStream(ApplicationConfiguration& config)
 {
     if(config.getCurrentChannelConfig().isContinuousStreaming) // continuous
     {
-        this->reallocate(config.deviceConfig.transferBufferSize/sizeof(short));
+        this->reallocate(config.transferBufferSize/sizeof(short));
     }
     else
     {
@@ -51,4 +54,13 @@ unsigned long long ScopeUpdater::finish()
 const char* ScopeUpdater::getName()
 {
     return "ScopeUpdater";
+}
+
+
+void ScopeUpdater::changePlotTriggerLine(short pos, unsigned long sampleCount)
+{
+    if(sampleCount == 0)
+        sampleCount = this->sampleCount;
+    this->arrow.start->setCoords(0, pos);
+    this->arrow.end->setCoords(sampleCount-1, pos);
 }

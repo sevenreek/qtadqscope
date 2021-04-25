@@ -10,13 +10,13 @@ Acquisition::Acquisition(
         adqDevice(adqDevice),
         writeBuffers{
             appConfig.writeBufferCount,
-            appConfig.deviceConfig.transferBufferSize,
+            appConfig.transferBufferSize,
             (unsigned char)(1<<(appConfig.getCurrentChannel()))
         },
         bufferProcessor(
             new BaseBufferProcessor(
                 this->recordProcessors,
-                appConfig.deviceConfig.transferBufferSize/sizeof(short)
+                appConfig.transferBufferSize/sizeof(short)
                 )
             )
 {
@@ -29,7 +29,7 @@ Acquisition::Acquisition(
     connect(bufferProcessorHandler, &LoopBufferProcessor::onLoopStopped, this, &Acquisition::onProcessingThreadStopped);
     connect(bufferProcessorHandler, &LoopBufferProcessor::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
 
-    dmaChecker = new DMAChecker{writeBuffers, adqDevice, appConfig.deviceConfig.transferBufferCount};
+    dmaChecker = new DMAChecker{writeBuffers, adqDevice, appConfig.transferBufferCount};
     dmaChecker->moveToThread(&this->dmaCheckingThread);
     connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker, &QObject::deleteLater);
     connect(this, &Acquisition::onStart, dmaChecker, &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
@@ -92,8 +92,8 @@ bool Acquisition::configure()
         this->appConfig.getCurrentChannelConfig().dcBiasCode + appConfig.getCurrentChannelConfig().baseDcBiasOffset)
     ) {spdlog::error("SetAdjustableBias failed."); return false;};
     if(!this->adqDevice.SetTransferBuffers(
-        this->appConfig.deviceConfig.transferBufferCount,
-        this->appConfig.deviceConfig.transferBufferSize)
+        this->appConfig.transferBufferCount,
+        this->appConfig.transferBufferSize)
     ) {spdlog::critical("SetTransferBuffers failed."); return false;};
     this->bufferProcessorHandler->changeStreamingType(!this->appConfig.getCurrentChannelConfig().isContinuousStreaming);
     for(auto rp : this->recordProcessors)
@@ -128,7 +128,7 @@ bool Acquisition::configure()
     spdlog::info("Configured acquisition successfully.");
     this->writeBuffers.reconfigure(
         this->appConfig.writeBufferCount,
-        this->appConfig.deviceConfig.transferBufferSize,
+        this->appConfig.transferBufferSize,
         channelMask
     );
 
