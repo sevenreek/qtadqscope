@@ -21,6 +21,8 @@ public:
     unsigned long transferBufferCount = 32;
     unsigned long transferBufferSize = 1ul*1024ul*1024ul;//1024ul * 1024ul;
 
+    unsigned long timedRunValue = 0;
+
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
     LOGGING_LEVELS uiLoggingLevel = LOGGING_LEVELS::DEBUG;
     LOGGING_LEVELS fileLoggingLevel = LOGGING_LEVELS::DEBUG;

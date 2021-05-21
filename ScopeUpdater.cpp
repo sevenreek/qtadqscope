@@ -63,4 +63,10 @@ void ScopeUpdater::changePlotTriggerLine(short pos, unsigned long sampleCount)
         sampleCount = this->sampleCount;
     this->arrow.start->setCoords(0, pos);
     this->arrow.end->setCoords(sampleCount-1, pos);
+    this->plot.replot();
+}
+
+void ScopeUpdater::changePlotTriggerLine(ChannelConfiguration& channelConfig)
+{
+    this->changePlotTriggerLine(channelConfig.getDCBiasedTriggerValue(), channelConfig.recordLength);
 }

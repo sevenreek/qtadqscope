@@ -52,6 +52,7 @@ public:
      */
     int start(int argc, char *argv[]);
 
+
 public slots:
     // UI SLOTS
     void changeChannel(int channel);
@@ -80,6 +81,8 @@ public slots:
     void changeFiletype(int state);
     void primaryButtonPressed();
     void acquisitionStateChanged(ACQUISITION_STATES newState);
+    void changeTimedRunEnabled(int state);
+    void changeTimedRunValue(int val);
 
     /*
      * Connect to this signal using QueuedConnection from the ScopeUpdater unless

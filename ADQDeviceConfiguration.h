@@ -84,6 +84,7 @@ public:
     void log();
     json toJSON();
     void loadFromJSON(json data);
+    short getDCBiasedTriggerValue();
 };
 
 #endif // ADQDEVICECONFIGURATION_H

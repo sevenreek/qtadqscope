@@ -1,5 +1,6 @@
 #include "ADQDeviceConfiguration.h"
 #include "spdlog/spdlog.h"
+#include <climits>
 
 void ChannelConfiguration::log()
 {
@@ -74,4 +75,15 @@ void ChannelConfiguration::loadFromJSON(json j)
     this->digitalOffset =       j["digital_offset"];
     this->digitalGain =         j["digital_gain"];
     this->isContinuousStreaming = j["stream_type"];
+}
+short ChannelConfiguration::getDCBiasedTriggerValue()
+{
+
+    int value =  this->baseDcBiasOffset+this->dcBiasCode+this->triggerLevelCode;
+    int clamped = std::max(SHRT_MIN, std::min(value, SHRT_MAX));
+    if(clamped != value)
+    {
+        spdlog::warn("The specified trigger level is impossible to achieve. {} was clamped to {}.", value, clamped);
+    }
+    return (short)clamped;
 }

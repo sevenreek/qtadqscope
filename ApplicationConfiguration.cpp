@@ -36,7 +36,8 @@ void ApplicationConfiguration::toFile(const char* str)
          }
         },
         {"buffer_count", this->transferBufferCount},
-        {"buffer_size",  this->transferBufferSize}
+        {"buffer_size",  this->transferBufferSize},
+        {"timed_run",  this->timedRunValue}
     };
     configStream << j;
     configStream.close();
@@ -55,6 +56,7 @@ bool ApplicationConfiguration::fromFile(const char* str)
     this->clockSource = j["clock_source"];
     this->transferBufferCount = j["buffer_count"];
     this->transferBufferSize = j["buffer_size"];
+    this->timedRunValue = j["timed_run"];
     for(int i = 0; i < MAX_NOF_CHANNELS; i++) {
         this->channelConfig[i].loadFromJSON(j["channel_configs"][i]);
     }

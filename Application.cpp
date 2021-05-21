@@ -69,14 +69,8 @@ void Application::setUI()
     this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config.getCurrentChannel()+1)%MAX_NOF_CHANNELS);
     this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
     this->changeDMABufferCount(this->config.transferBufferCount);
-    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
 
 
-    /*
-    this->mainWindow.ui->DMAFillStatus->setMaximum(this->config.deviceConfig.transferBufferCount);
-    this->mainWindow.ui->RAMFillStatus->setMaximum(this->config.writeBufferCount);
-    this->mainWindow.ui->FileFillStatus->setMaximum(this->config.getCurrentChannelConfig().fileSizeLimit);
-    */
 }
 
 
@@ -206,7 +200,7 @@ void Application::linkSignals()
     this->mainWindow.ui->levelTriggerResetOffsetInput->connect(
         this->mainWindow.ui->levelTriggerResetOffsetInput,
         static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        [=](int i){ this->changeLevelTriggerCode(i); }
+        [=](int i){ this->changeLevelTriggerReset(i); }
     );
     // SCOPE UPDATE
     this->mainWindow.ui->updateScopeCB->connect(
@@ -297,19 +291,33 @@ void Application::linkSignals()
         this,
         &Application::triggerSoftwareTrig
     );
+    // TIMED RUN
+    this->mainWindow.ui->timedRunCheckbox->connect(
+        this->mainWindow.ui->timedRunCheckbox,
+        &QCheckBox::stateChanged,
+        this,
+        &Application::changeTimedRunEnabled
+    );
+    this->mainWindow.ui->timedRunValue->connect(
+        this->mainWindow.ui->timedRunValue,
+        static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            [=](int i){ this->changeTimedRunValue(i); }
+    );
+
 }
 
 ///// BEGIN UI SLOTS //////
 
 void Application::changeChannel(int channel) {
     this->config.setCurrentChannel(channel);
+    this->config.getCurrentChannelConfig().log();
     this->mainWindow.ui->sampleSkipInput->setValue(this->config.getCurrentChannelConfig().sampleSkip);
     this->mainWindow.ui->inputRangeSelector->setCurrentIndex(this->config.getCurrentChannelConfig().inputRangeEnum);
     this->mainWindow.ui->ulBypass1->setCheckState(
         this->config.getCurrentChannelConfig().userLogicBypass&0b01?Qt::CheckState::Checked:Qt::CheckState::Unchecked);
     this->mainWindow.ui->ulBypass2->setCheckState(
         this->config.getCurrentChannelConfig().userLogicBypass&0b10?Qt::CheckState::Checked:Qt::CheckState::Unchecked);
-    this->mainWindow.ui->analogOffsetInput->setValue(this->config.getCurrentChannelConfig().dcBias);
+    this->mainWindow.ui->analogOffsetCodeInput->setValue(this->config.getCurrentChannelConfig().dcBiasCode);
     this->mainWindow.ui->digitalOffsetInput->setValue(this->config.getCurrentChannelConfig().digitalOffset);
     this->mainWindow.ui->digitalGainInput->setValue(this->config.getCurrentChannelConfig().digitalGain);
     switch(this->config.getCurrentChannelConfig().triggerMode)
@@ -331,15 +339,14 @@ void Application::changeChannel(int channel) {
         break;
         case TRIGGER_MODES::LEVEL:
         {
-            if(this->config.getCurrentChannelConfig().recordCount <= 0)
-            {
-                this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_FREE_RUNNING);
-            }
-            else
-            {
-                this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_SOFTWARE);
-            }
-
+            this->mainWindow.ui->limitRecordsCB->setEnabled(true);
+            this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_LEVEL);
+        }
+        break;
+        case TRIGGER_MODES::EXTERNAL:
+        {
+            this->mainWindow.ui->limitRecordsCB->setEnabled(true);
+            this->mainWindow.ui->triggerModeSelector->setCurrentIndex(TRIGGER_MODE_SELECTOR::S_EXTERNAL);
         }
         break;
         default:
@@ -359,8 +366,11 @@ void Application::changeChannel(int channel) {
     }
     this->mainWindow.ui->pretriggerInput->setValue(this->config.getCurrentChannelConfig().pretrigger);
     this->mainWindow.ui->recordLengthInput->setValue(this->config.getCurrentChannelConfig().recordLength);
-    this->mainWindow.ui->recordLengthInput->setValue(this->config.getCurrentChannelConfig().triggerDelay);
+    this->mainWindow.ui->triggerDelayInput->setValue(this->config.getCurrentChannelConfig().triggerDelay);
     this->mainWindow.ui->levelTriggerEdgeSelector->setCurrentIndex(this->config.getCurrentChannelConfig().triggerEdge);
+    this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config.getCurrentChannelConfig().triggerLevelCode);
+    this->mainWindow.ui->levelTriggerResetOffsetInput->setValue(this->config.getCurrentChannelConfig().triggerLevelReset);
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig());
 }
 void Application::changeSampleSkip(int val) {
     if(val==3)
@@ -418,6 +428,7 @@ void Application::changeUL2Bypass(int state) {
     this->adqDevice->BypassUserLogic(2, state?1:0);
 }
 void Application::changeAnalogOffset(int val) {
+    spdlog::debug("AnalogoffsetChange");
     int code = mvToADCCode(this->config.getCurrentChannelConfig().inputRangeFloat, val);
     this->mainWindow.ui->analogOffsetCodeInput->blockSignals(true);
     this->mainWindow.ui->analogOffsetCodeInput->setValue(code);
@@ -428,8 +439,10 @@ void Application::changeAnalogOffset(int val) {
         this->config.getCurrentChannel()+1,
         this->config.getCurrentChannelConfig().dcBiasCode
     );
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig());
 }
 void Application::changeAnalogOffsetCode(int val) {
+    spdlog::debug("AnalogoffsetCodeChange");
     int flt = ADCCodeToMV(this->config.getCurrentChannelConfig().inputRangeFloat, val);
     this->mainWindow.ui->analogOffsetInput->blockSignals(true);
     this->mainWindow.ui->analogOffsetInput->setValue(flt);
@@ -440,6 +453,8 @@ void Application::changeAnalogOffsetCode(int val) {
         this->config.getCurrentChannel()+1,
         this->config.getCurrentChannelConfig().dcBiasCode
     );
+
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig());
 }
 void Application::changeInputRange(int index) {
     this->config.getCurrentChannelConfig().inputRangeEnum = static_cast<INPUT_RANGES>(index);
@@ -559,24 +574,26 @@ void Application::changeLevelTriggerEdge(int index) {
     this->adqDevice->SetLvlTrigEdge(index);
 }
 void Application::changeLevelTriggerCode(int val) {
+    spdlog::debug("changeLevelTriggerCode");
     this->config.getCurrentChannelConfig().triggerLevelCode = val;
-    this->adqDevice->SetLvlTrigLevel(val);
+    this->adqDevice->SetLvlTrigLevel(this->config.getCurrentChannelConfig().getDCBiasedTriggerValue());
     double mvVal = ADCCodeToMV(this->config.getCurrentChannelConfig().inputRangeFloat, val);
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerVoltageInput->setValue(mvVal);
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(false);
-    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
-    this->mainWindow.ui->plotArea->replot();
+
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig());
 }
 void Application::changeLevelTriggerMV(double val) {
+    spdlog::debug("changeLevelTriggerMV");
     int code = mvToADCCode(this->config.getCurrentChannelConfig().inputRangeFloat, val);
     this->config.getCurrentChannelConfig().triggerLevelCode = code;
-    this->adqDevice->SetLvlTrigLevel(this->config.getCurrentChannelConfig().triggerLevelCode);
+    this->adqDevice->SetLvlTrigLevel(this->config.getCurrentChannelConfig().getDCBiasedTriggerValue());
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config.getCurrentChannelConfig().triggerLevelCode);
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(false);
-    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig().triggerLevelCode, this->config.getCurrentChannelConfig().recordLength);
-    this->mainWindow.ui->plotArea->replot();
+
+    this->scopeUpdater->changePlotTriggerLine(this->config.getCurrentChannelConfig());
 }
 
 void Application::changeLevelTriggerReset(int val) {
@@ -669,7 +686,13 @@ void Application::primaryButtonPressed() {
         {
             bool success = true;
             success &= this->acquisition->configure();
-            success &= this->acquisition->start();
+            if(this->config.timedRunValue > 0)
+            {
+                success &= this->acquisition->startTimed(this->config.timedRunValue);
+            }
+            else {
+                success &= this->acquisition->start();
+            }
             if(success) {
                 this->mainWindow.ui->streamStartStopButton->setText("Stop");
                 this->mainWindow.ui->analysisSettingsContainer->setEnabled(false);
@@ -709,7 +732,8 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
         break;
         case ACQUISITION_STATES::STOPPING:
         {
-
+            this->mainWindow.ui->streamStartStopButton->setEnabled(false);
+            this->mainWindow.ui->streamStartStopButton->setText("Stopping");
         }
         break;
         case ACQUISITION_STATES::RUNNING:
@@ -808,6 +832,11 @@ void Application::onRegisterDialogClosed()
     this->adqDevice->WriteUserRegister(1, 0x12, 0, passthrough, &retval);
     if(retval != passthrough) spdlog::debug("Failed to set passthrough");
 
+    short dcOffsetValue = this->registerDialog->ui->algorithmParamInput0->value();
+    spdlog::debug("Setting DC offset register to {}", dcOffsetValue);
+    this->adqDevice->WriteUserRegister(1, 0x13, 0, dcOffsetValue, &retval);
+    if(dcOffsetValue != (short)retval) spdlog::debug("Failed to set DC offset register");
+
 }
 void Application::triggerSoftwareTrig()
 {
@@ -842,4 +871,23 @@ void Application::saveConfig()
     if(!fileName.length()) return;
     QByteArray ba = fileName.toLocal8Bit();
     this->config.toFile(ba.data());
+}
+
+void Application::changeTimedRunEnabled(int state)
+{
+    if(state)
+    {
+        this->config.timedRunValue = this->mainWindow.ui->timedRunValue->value();
+    }
+    else
+    {
+        this->config.timedRunValue = 0;
+    }
+}
+void Application::changeTimedRunValue(int val)
+{
+    if(this->mainWindow.ui->timedRunCheckbox->checkState())
+    {
+        this->config.timedRunValue = this->mainWindow.ui->timedRunValue->value();
+    }
 }

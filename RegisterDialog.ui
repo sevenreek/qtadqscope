@@ -46,6 +46,11 @@
          <string>SmoothDerivative</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Trapezoidal v1</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="0">
@@ -132,7 +137,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Param 0</string>
+        <string>DC offset</string>
        </property>
       </widget>
      </item>
@@ -151,7 +156,11 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QSpinBox" name="algorithmParamInput0"/>
+      <widget class="QSpinBox" name="algorithmParamInput0">
+       <property name="maximum">
+        <number>32767</number>
+       </property>
+      </widget>
      </item>
      <item row="4" column="1">
       <widget class="QSpinBox" name="algorithmParamInput1"/>

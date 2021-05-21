@@ -28,6 +28,7 @@ class Acquisition : public QObject
 {
     Q_OBJECT
 protected:
+    std::unique_ptr<QTimer> acqusitionTimer;
     ApplicationConfiguration& appConfig;
     ADQInterface& adqDevice;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
@@ -60,6 +61,7 @@ public:
     ACQUISITION_STATES getState();
     bool configure();
     bool start();
+    bool startTimed(unsigned long msDuration);
     unsigned long checkDMA();
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStarted;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStopped;

@@ -39,6 +39,9 @@ Acquisition::Acquisition(
 
     bufferProcessingThread.start();
     dmaCheckingThread.start();
+    this->acqusitionTimer = std::unique_ptr<QTimer>(new QTimer(this));
+    this->acqusitionTimer->setSingleShot(true);
+    connect(this->acqusitionTimer.get(), &QTimer::timeout, this, [=](){this->stop();});
 }
 Acquisition::~Acquisition() {
     // bufferProcessorHandler and dmaChecker get deleted via a QThread::finished signal->slot
@@ -114,7 +117,7 @@ bool Acquisition::configure()
         this->bufferProcessor->reallocateBuffers(appConfig.getCurrentChannelConfig().recordLength);
         spdlog::info("Configuring triggered streaming.");
         if(!this->adqDevice.SetPreTrigSamples(this->appConfig.getCurrentChannelConfig().pretrigger)) {spdlog::error("SetPreTrigSamples failed."); return false;};
-        if(!this->adqDevice.SetLvlTrigLevel(this->appConfig.getCurrentChannelConfig().triggerLevelCode)) {spdlog::error("SetLvlTrigLevel failed."); return false;};
+        if(!this->adqDevice.SetLvlTrigLevel(this->appConfig.getCurrentChannelConfig().getDCBiasedTriggerValue())) {spdlog::error("SetLvlTrigLevel failed."); return false;};
         if(!this->adqDevice.SetLvlTrigChannel(channelMask)) {spdlog::error("SetLvlTrigChannel failed."); return false;};
         if(!this->adqDevice.SetLvlTrigEdge(this->appConfig.getCurrentChannelConfig().triggerEdge)) {spdlog::error("SetLvlTrigEdge failed"); return false;};
         if(!this->adqDevice.TriggeredStreamingSetup(
@@ -134,6 +137,12 @@ bool Acquisition::configure()
 
     this->configured = true;
     return this->configured;
+}
+bool Acquisition::startTimed(unsigned long msDuration)
+{
+    this->acqusitionTimer->setInterval(msDuration);
+    this->acqusitionTimer->start();
+    this->start();
 }
 bool Acquisition::start()
 {
@@ -169,6 +178,7 @@ bool Acquisition::start()
 bool Acquisition::stop()
 {
     this->adqDevice.StopStreaming();
+    this->acqusitionTimer->stop();
     spdlog::info("API: Stream stop");
     this->setState(ACQUISITION_STATES::STOPPING);
     this->stopDMAChecker();

@@ -20,6 +20,7 @@ public:
     void reallocate(unsigned long long sampleCount);
     const char* getName();
     void changePlotTriggerLine(short pos, unsigned long sampleCount);
+    void changePlotTriggerLine(ChannelConfiguration& channelConfig);
 signals:
     void onScopeUpdate(QVector<double> &x, QVector<double> y);
 };
