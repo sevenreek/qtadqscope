@@ -256,7 +256,23 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_7">
+               <property name="font">
+                <font>
+                 <family>Calibri Light</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>User's digital offset setting. Default: 0.</string>
+               </property>
+               <property name="text">
+                <string>Digital offset</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
               <widget class="QSpinBox" name="digitalOffsetInput">
                <property name="minimum">
                 <number>-32768</number>
@@ -266,7 +282,7 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="0">
+             <item row="5" column="0">
               <widget class="QLabel" name="label_8">
                <property name="font">
                 <font>
@@ -282,7 +298,7 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="1">
+             <item row="5" column="1">
               <widget class="QSpinBox" name="digitalGainInput">
                <property name="minimum">
                 <number>-32768</number>
@@ -296,20 +312,14 @@
               </widget>
              </item>
              <item row="3" column="0">
-              <widget class="QLabel" name="label_7">
-               <property name="font">
-                <font>
-                 <family>Calibri Light</family>
-                 <pointsize>12</pointsize>
-                </font>
-               </property>
-               <property name="toolTip">
-                <string>User's digital offset setting. Default: 0.</string>
-               </property>
+              <widget class="QPushButton" name="baseOffsetAutoCalibrateButton">
                <property name="text">
-                <string>Digital offset</string>
+                <string>Calibrate base offset</string>
                </property>
               </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="baseOffsetCalibrationValue"/>
              </item>
             </layout>
            </item>

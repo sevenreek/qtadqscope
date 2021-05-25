@@ -81,6 +81,8 @@ set(PROJECT_SOURCES
         RegisterDialog.cpp
         RegisterDialog.h
         RegisterDialog.ui
+        CalibrationAcquisition.cpp
+        CalibrationAcquisition.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

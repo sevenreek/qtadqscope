@@ -68,7 +68,6 @@ void Acquisition::stopProcessor()
 }
 bool Acquisition::configure()
 {
-
     int adqChannelIndex = this->appConfig.getCurrentChannel()+1;
     unsigned int channelMask = 1<<this->appConfig.getCurrentChannel();
     if(!this->adqDevice.SetClockSource(this->appConfig.clockSource)) {spdlog::error("SetClockSource failed."); return false;};
