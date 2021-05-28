@@ -10,11 +10,11 @@ class DMAChecker : public QObject
     Q_OBJECT
 private:
     bool loopActive = false;
-    WriteBuffers &writeBuffers;
-    ADQInterface &adqDevice;
+    std::shared_ptr<WriteBuffers> writeBuffers;
+    std::shared_ptr<ADQInterface> adqDevice;
     unsigned long transferBufferCount;
 public:
-    DMAChecker(WriteBuffers &writeBuffers, ADQInterface &adqDevice, unsigned long transferBufferCount);
+    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
 
 public slots:
     void setTransferBufferCount(unsigned long count);
@@ -32,12 +32,12 @@ class LoopBufferProcessor : public QObject
     Q_OBJECT
 private:
     bool loopActive = false;
-    WriteBuffers &writeBuffers;
+    std::shared_ptr<WriteBuffers> writeBuffers;
     unsigned long transferBufferCount;
-    BufferProcessor& processor;
+    std::shared_ptr<BufferProcessor> processor;
     bool isTriggeredStreaming;
 public:
-    LoopBufferProcessor(WriteBuffers &writeBuffers, BufferProcessor& processor);
+    LoopBufferProcessor(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<BufferProcessor> processor);
 
 public slots:
     void changeStreamingType(bool isTriggered);

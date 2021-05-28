@@ -87,3 +87,13 @@ short ChannelConfiguration::getDCBiasedTriggerValue()
     }
     return (short)clamped;
 }
+float ADCCodeToMV(float inputRange, int code)
+{
+    return (float)code * (inputRange/2) / std::pow(2,15);
+}
+
+
+int mvToADCCode(float inputRange, float value)
+{
+    return std::round ( value / ( inputRange / 2 ) * std::pow(2,15) );
+}

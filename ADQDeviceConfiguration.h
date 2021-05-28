@@ -86,5 +86,6 @@ public:
     void loadFromJSON(json data);
     short getDCBiasedTriggerValue();
 };
-
+float ADCCodeToMV(float inputRange, int code);
+int mvToADCCode(float inputRange, float value);
 #endif // ADQDEVICECONFIGURATION_H

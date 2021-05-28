@@ -81,8 +81,11 @@ set(PROJECT_SOURCES
         RegisterDialog.cpp
         RegisterDialog.h
         RegisterDialog.ui
-        CalibrationAcquisition.cpp
-        CalibrationAcquisition.h
+        AutoCalibrateDialog.cpp
+        AutoCalibrateDialog.h
+        AutoCalibrateDialog.ui
+        SignalParameterComputer.cpp
+        SignalParameterComputer.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -10,6 +10,7 @@
 #include <QTimer>
 #include "BuffersDialog.h"
 #include "RegisterDialog.h"
+#include "AutoCalibrateDialog.h"
 class Application : public QObject
 {
     Q_OBJECT
@@ -18,17 +19,19 @@ private:
     MainWindow& mainWindow;
     // Control unit created by the appropriate ADQAPI function.
     void* adqControlUnit;
-    ApplicationConfiguration config;
-    ADQInterface* adqDevice;
+    std::shared_ptr<ApplicationConfiguration> config;
+    std::shared_ptr<ADQInterface> adqDevice;
     std::unique_ptr<QTimer> updateTimer;
     // Instance of object responsible for updating the plot in real time.
     std::shared_ptr<ScopeUpdater> scopeUpdater;
     // Currently used instance of file writer object that stores the incoming data.
     std::shared_ptr<FileWriter> fileWriter;
     // Pointer to the helper object Acquisition.
-    std::unique_ptr<Acquisition> acquisition;
+    std::shared_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
+    std::unique_ptr<AutoCalibrateDialog> autoCalibrateDialog;
+    std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */
@@ -59,7 +62,7 @@ public slots:
     void changeSampleSkip(int sampleSkip);
     void changeUL1Bypass(int state);
     void changeUL2Bypass(int state);
-    void changeAnalogOffset(int val);
+    void changeAnalogOffset(double val);
     void changeAnalogOffsetCode(int val);
     void changeInputRange(int index);
     void changeDigitalOffset(int val);
@@ -103,9 +106,13 @@ public slots:
     void triggerSoftwareTrig();
     void loadConfig();
     void saveConfig();
+
+    void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
+    void removeRecordProcessor(std::shared_ptr<RecordProcessor> rp);
+
+    void openCalibrateDialog();
+    void useCalculatedOffset(CALIBRATION_MODES mode, int offset);
 };
 
-int mvToADCCode(float inputRange, float dcBiasFloat);
-float ADCCodeToMV(float inputRange, int code);
 #endif // APPLICATION_H
 

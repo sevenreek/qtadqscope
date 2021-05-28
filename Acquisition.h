@@ -29,13 +29,13 @@ class Acquisition : public QObject
     Q_OBJECT
 protected:
     std::unique_ptr<QTimer> acqusitionTimer;
-    ApplicationConfiguration& appConfig;
-    ADQInterface& adqDevice;
+    std::shared_ptr<ApplicationConfiguration> appConfig;
+    std::shared_ptr<ADQInterface> adqDevice;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
-    WriteBuffers writeBuffers;
-    DMAChecker *dmaChecker;
-    std::unique_ptr<BufferProcessor> bufferProcessor;
-    LoopBufferProcessor *bufferProcessorHandler;
+    std::shared_ptr<WriteBuffers> writeBuffers;
+    std::unique_ptr<DMAChecker> dmaChecker;
+    std::shared_ptr<BufferProcessor> bufferProcessor;
+    std::unique_ptr<LoopBufferProcessor> bufferProcessorHandler;
 
     bool dmaCheckingActive = false;
     bool bufferProcessingActive = false;
@@ -52,16 +52,17 @@ protected:
     void joinThreads();
     void setState(ACQUISITION_STATES state);
     unsigned long lastBuffersFilled;
+    void initialize();
 public:
-    ~Acquisition();
+    virtual ~Acquisition();
     Acquisition(
-        ApplicationConfiguration& appConfig,
-        ADQInterface& adqDevice
+        std::shared_ptr<ApplicationConfiguration> appConfig,
+        std::shared_ptr<ADQInterface> adqDevice
     );
     ACQUISITION_STATES getState();
-    bool configure();
-    bool start();
-    bool startTimed(unsigned long msDuration);
+    bool configure(std::shared_ptr<ApplicationConfiguration> providedConfig, std::list<std::shared_ptr<RecordProcessor>> recordProcessors);
+    bool start(bool needSwTrig);
+    bool startTimed(unsigned long msDuration, bool needSwTrig);
     unsigned long checkDMA();
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStarted;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStopped;
@@ -70,8 +71,6 @@ public:
     int getWriteQueueFill();
 
 public slots:
-    void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
-    void removeRecordProcessor(std::shared_ptr<RecordProcessor> rp);
     bool stop();
     void error();
     void onAcquisitionThreadStopped();
