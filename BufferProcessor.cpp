@@ -57,7 +57,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
         if(!isTriggeredStreaming)
         {
             //spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
-            this->completeRecord(NULL, buffers.data[ch], buffers.nof_samples[ch]);
+            this->completeRecord(&buffers.headers[ch][0], buffers.data[ch], buffers.nof_samples[ch]);
             continue;
         }
         // when triggered streaming is used the buffer has to be spliced into

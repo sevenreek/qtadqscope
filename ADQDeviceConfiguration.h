@@ -5,6 +5,9 @@
 #define MAX_FINITE_RECORD_COUNT (0x7FFFFFFF)
 #define DEFAULT_DIGITAL_USER_GAIN (1024)
 #define DEFAULT_DIGITAL_USER_OFFSET (0)
+
+
+
 const char UNIT_PREFIXES[4]  = {' ', 'k', 'M', 'G'};
 #include "json.hpp"
 using json = nlohmann::json;

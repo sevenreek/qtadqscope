@@ -22,6 +22,7 @@ void ApplicationConfiguration::toFile(const char* str)
     std::ofstream configStream(str, std::ios_base::out);
     json j = {
         {"channel",             this->channel},
+        {"second_channel",      this->secondChannel},
         {"write_buffer_count",  this->writeBufferCount},
         {"device_number",       this->deviceNumber},
         {"log_level_ui",        this->uiLoggingLevel},
@@ -57,6 +58,7 @@ bool ApplicationConfiguration::fromFile(const char* str)
     this->transferBufferCount = j["buffer_count"];
     this->transferBufferSize = j["buffer_size"];
     this->timedRunValue = j["timed_run"];
+    this->secondChannel = j["second_channel"];
     for(int i = 0; i < MAX_NOF_CHANNELS; i++) {
         this->channelConfig[i].loadFromJSON(j["channel_configs"][i]);
     }

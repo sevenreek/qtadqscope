@@ -1,7 +1,11 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 #include "MainWindow.h"
-#include "ADQAPI.h"
+#ifdef MOCK_ADQAPI
+    #include "MockADQAPI.h"
+#else
+    #include "ADQAPI.h"
+#endif
 #include "Acquisition.h"
 #include <memory>
 #include "ApplicationConfiguration.h"
@@ -59,6 +63,7 @@ public:
 public slots:
     // UI SLOTS
     void changeChannel(int channel);
+    void changeSecondChannel(int channel);
     void changeSampleSkip(int sampleSkip);
     void changeUL1Bypass(int state);
     void changeUL2Bypass(int state);
@@ -86,7 +91,7 @@ public slots:
     void acquisitionStateChanged(ACQUISITION_STATES newState);
     void changeTimedRunEnabled(int state);
     void changeTimedRunValue(int val);
-
+    void changeBaseDCBias(int val);
     /*
      * Connect to this signal using QueuedConnection from the ScopeUpdater unless
      * it ScopeUpdater is running on the same thread as the UI

@@ -13,7 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-add_compile_definitions(LINUX)
+#add_compile_definitions(LINUX)
+set(MOCK_ADQAPI ON)
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check https://doc.qt.io/qt/deployment-android.html for more information.
@@ -36,10 +37,6 @@ if(${QT_VERSION_MAJOR} GREATER 4)
 else()
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 endif()
-
-
-find_package(spdlog)
-find_package(adq)
 
 add_subdirectory(include/spdlog-1.8.2)
 include_directories(include/nlohmann_json)
@@ -86,6 +83,8 @@ set(PROJECT_SOURCES
         AutoCalibrateDialog.ui
         SignalParameterComputer.cpp
         SignalParameterComputer.h
+        MockADQAPI.cpp
+        MockADQAPI.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -103,20 +102,36 @@ else()
         )
     endif()
 endif()
-
-if(${QT_VERSION_MAJOR} GREATER 4)
-    set(PROJECT_LIBRARIES
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Qt5::PrintSupport
-        spdlog
-        adq
-    )
+if(MOCK_ADQAPI)
+    message(STATUS "Using MockADQ API")
+    add_compile_definitions(MOCK_ADQAPI)
+    if(${QT_VERSION_MAJOR} GREATER 4)
+        set(PROJECT_LIBRARIES
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt5::PrintSupport
+            spdlog
+        )
+    else()
+        set(PROJECT_LIBRARIES
+            Qt${QT_VERSION_MAJOR}::Widgets
+            spdlog
+        )
+    endif()
 else()
-    set(PROJECT_LIBRARIES
-        Qt${QT_VERSION_MAJOR}::Widgets
-        spdlog
-        adq
-    )
+    message(STATUS "Using real libADQ PI")
+    if(${QT_VERSION_MAJOR} GREATER 4)
+        set(PROJECT_LIBRARIES
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt5::PrintSupport
+            spdlog
+            adq
+        )
+    else()
+        set(PROJECT_LIBRARIES
+            Qt${QT_VERSION_MAJOR}::Widgets
+            spdlog
+            adq
+        )
+    endif()
 endif()
-
 target_link_libraries(qtadqscope PRIVATE ${PROJECT_LIBRARIES})

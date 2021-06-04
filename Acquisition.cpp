@@ -73,6 +73,11 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
         providedConfig = this->appConfig;
     int adqChannelIndex = providedConfig->getCurrentChannel()+1;
     unsigned int channelMask = 1<<providedConfig->getCurrentChannel();
+    unsigned int trigChannelMask = channelMask;
+    if(providedConfig->secondChannel != CHANNEL_DISABLED)
+    {
+        channelMask = 1<<providedConfig->getCurrentChannel() | 1<<providedConfig->secondChannel;
+    }
     if(!this->adqDevice->SetClockSource(providedConfig->clockSource)) {spdlog::error("SetClockSource failed."); return false;};
     if(!this->adqDevice->SetTriggerMode(providedConfig->getCurrentChannelConfig().triggerMode)) {spdlog::error("SetTriggerMode failed."); return false;};
     if(!this->adqDevice->SetSampleSkip(providedConfig->getCurrentChannelConfig().sampleSkip)) {spdlog::error("SetSampleSkip failed."); return false;};
@@ -120,7 +125,7 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
         spdlog::info("Configuring triggered streaming.");
         if(!this->adqDevice->SetPreTrigSamples(providedConfig->getCurrentChannelConfig().pretrigger)) {spdlog::error("SetPreTrigSamples failed."); return false;};
         if(!this->adqDevice->SetLvlTrigLevel(providedConfig->getCurrentChannelConfig().getDCBiasedTriggerValue())) {spdlog::error("SetLvlTrigLevel failed."); return false;};
-        if(!this->adqDevice->SetLvlTrigChannel(channelMask)) {spdlog::error("SetLvlTrigChannel failed."); return false;};
+        if(!this->adqDevice->SetLvlTrigChannel(trigChannelMask)) {spdlog::error("SetLvlTrigChannel failed."); return false;};
         if(!this->adqDevice->SetLvlTrigEdge(providedConfig->getCurrentChannelConfig().triggerEdge)) {spdlog::error("SetLvlTrigEdge failed"); return false;};
         if(!this->adqDevice->TriggeredStreamingSetup(
             providedConfig->getCurrentChannelConfig().recordCount,

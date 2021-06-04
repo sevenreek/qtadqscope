@@ -8,16 +8,15 @@
 
 class BinaryFileWriter: public FileWriter {
     private:
-    std::ofstream dataStream;
+    unsigned char channelMask;
+    std::ofstream dataStream[MAX_NOF_CHANNELS];
     unsigned long long bytesSaved;
     unsigned long long sizeLimit;
     public:
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
-    bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -25,18 +24,17 @@ class BinaryFileWriter: public FileWriter {
 
 class BufferedBinaryFileWriter: public FileWriter {
     private:
-    std::ofstream dataStream;
+    unsigned char channelMask;
+    std::ofstream dataStream[MAX_NOF_CHANNELS];
     unsigned long long bytesSaved;
     unsigned long long sizeLimit;
-    short* dataBuffer;
-    unsigned long long samplesSaved = 0;
+    short * dataBuffer[MAX_NOF_CHANNELS];
+    unsigned long long samplesSaved[MAX_NOF_CHANNELS] = {0};
     public:
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     ~BufferedBinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
     bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
-    bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();

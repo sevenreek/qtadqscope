@@ -2,7 +2,11 @@
 #define ACQUISITION_H
 #include "ADQDeviceConfiguration.h"
 #include "ApplicationConfiguration.h"
-#include "ADQAPI.h"
+#ifdef MOCK_ADQAPI
+    #include "MockADQAPI.h"
+#else
+    #include "ADQAPI.h"
+#endif
 #include "MainWindow.h"
 #include "./ui_MainWindow.h"
 #include "BufferProcessor.h"

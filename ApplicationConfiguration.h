@@ -4,12 +4,13 @@
 #include "ADQDeviceConfiguration.h"
 
 
-
+#define CHANNEL_DISABLED (-1)
 class ApplicationConfiguration
 {
 private:
     unsigned int channel = 0; // 0-indexed; 0 is channel 1/A
 public:
+    signed int secondChannel = CHANNEL_DISABLED;
     ChannelConfiguration channelConfig[MAX_NOF_CHANNELS];
     ChannelConfiguration& getCurrentChannelConfig();
     unsigned int writeBufferCount = 64;

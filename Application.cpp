@@ -116,6 +116,12 @@ void Application::linkSignals()
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [=](int index){ this->changeChannel(index); }
     );
+    // 2NDCHANNEL
+    this->mainWindow.ui->channelComboBox->connect(
+        this->mainWindow.ui->channelComboBox,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            [=](int index){ this->changeSecondChannel(index); }
+    );
     // SAMPLE SKIP
     this->mainWindow.ui->sampleSkipInput->connect(
         this->mainWindow.ui->sampleSkipInput,
@@ -325,6 +331,12 @@ void Application::linkSignals()
         static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
             [=](int i){ this->changeTimedRunValue(i); }
     );
+    // BASE DC BIAS
+    this->mainWindow.ui->baseOffsetCalibrationValue->connect(
+        this->mainWindow.ui->baseOffsetCalibrationValue,
+        static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            [=](int i){ this->changeBaseDCBias(i); }
+    );
     // AUTOCALIBRATE
     this->mainWindow.ui->baseOffsetAutoCalibrateButton->connect(
         this->mainWindow.ui->baseOffsetAutoCalibrateButton,
@@ -406,6 +418,11 @@ void Application::changeChannel(int channel) {
     this->mainWindow.ui->levelTriggerResetOffsetInput->setValue(this->config->getCurrentChannelConfig().triggerLevelReset);
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
 }
+void Application::changeSecondChannel(int channel) {
+    channel -= 1; // -1 is disabled
+    this->config->secondChannel = channel;
+}
+
 void Application::changeSampleSkip(int val) {
     if(val==3)
     {
@@ -927,6 +944,10 @@ void Application::changeTimedRunValue(int val)
         this->config->timedRunValue = this->mainWindow.ui->timedRunValue->value();
     }
 }
+void Application::changeBaseDCBias(int val)
+{
+    this->config->getCurrentChannelConfig().baseDcBiasOffset = val;
+}
 void Application::openCalibrateDialog()
 {
     this->autoCalibrateDialog->showDialog();
@@ -939,7 +960,7 @@ void Application::useCalculatedOffset(CALIBRATION_MODES mode, int offset)
             this->config->getCurrentChannelConfig().baseDcBiasOffset = offset;
         break;
         case CALIBRATION_MODES::FINE_DIGITAL: case CALIBRATION_MODES::DIGITAL:
-            this->config->getCurrentChannelConfig().digitalOffset = offset;
+            this->config->getCurrentChannelConfig().digitalOffset = -offset;
         break;
     }
     spdlog::debug("Should update offsets to {} {}", this->config->getCurrentChannelConfig().baseDcBiasOffset, this->config->getCurrentChannelConfig().digitalOffset);
