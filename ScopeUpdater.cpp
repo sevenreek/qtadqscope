@@ -25,7 +25,7 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
     this->plot.yAxis->setRange(-(2<<15), 2<<15);
     this->plot.replot();
 }
-bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount)
+bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel)
 {
     //spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
     for(unsigned long s = 0; s < sampleCount; s++)

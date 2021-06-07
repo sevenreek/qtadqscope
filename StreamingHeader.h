@@ -1,5 +1,11 @@
 #ifndef STREAMINGHEADER_H
 #define STREAMINGHEADER_H
+
+
+#ifndef MOCK_ADQAPI
+#include "ADQAPI.h"
+typedef struct ADQRecordHeader StreamingHeader_t;
+#else
 typedef struct
 {
   unsigned char          OverRange     : 1;  // Record status byte                   X
@@ -18,5 +24,6 @@ typedef struct
   unsigned short         GeneralPurpose0;    // Moving average (16 bits)             X
   unsigned short         GeneralPurpose1;    // Gate counter (16 bits)               X
 } StreamingHeader_t;
+#endif
 
 #endif // STREAMINGHEADER_H

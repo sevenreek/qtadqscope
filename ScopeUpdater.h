@@ -15,7 +15,7 @@ private:
 public:
     void startNewStream(ApplicationConfiguration& config);
     ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount=0);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     void reallocate(unsigned long long sampleCount);
     const char* getName();

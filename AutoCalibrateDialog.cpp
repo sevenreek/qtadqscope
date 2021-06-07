@@ -135,6 +135,7 @@ void AutoCalibrateDialog::configure()
     this->calibrationConfiguration->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
     this->calibrationConfiguration->getCurrentChannelConfig().updateScope = false;
     this->calibrationConfiguration->getCurrentChannelConfig().userLogicBypass = 0b1111;
+    this->calibrationConfiguration->secondChannel = CHANNEL_DISABLED;
 }
 void AutoCalibrateDialog::apply()
 {

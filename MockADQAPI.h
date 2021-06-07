@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fstream>
 #include "StreamingHeader.h"
-#define BUFFER_SIZE (4096UL)
 
 class ADQInterface
 {
@@ -18,6 +17,7 @@ private:
     unsigned long recordLength = 0;
     short *sourceData[4];
 public:
+    static const unsigned long DEFAULT_BUFFER_SIZE;
     ADQInterface();
     virtual ~ADQInterface();
     int StopStreaming();

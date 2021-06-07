@@ -25,13 +25,13 @@ Acquisition::Acquisition(
 }
 void Acquisition::initialize()
 {
-    connect(&this->bufferProcessingThread, &QThread::finished, bufferProcessorHandler.get(), &QObject::deleteLater);
+    //connect(&this->bufferProcessingThread, &QThread::finished, bufferProcessorHandler.get(), &QObject::deleteLater);
     connect(this, &Acquisition::onStart, bufferProcessorHandler.get(), &LoopBufferProcessor::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onLoopStopped, this, &Acquisition::onProcessingThreadStopped);
     connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
 
     dmaChecker->moveToThread(&this->dmaCheckingThread);
-    connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker.get(), &QObject::deleteLater);
+    //connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker.get(), &QObject::deleteLater);
     connect(this, &Acquisition::onStart, dmaChecker.get(), &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker.get(), &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
     connect(dmaChecker.get(), &DMAChecker::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
@@ -44,7 +44,8 @@ void Acquisition::initialize()
     connect(this->acqusitionTimer.get(), &QTimer::timeout, this, [=](){this->stop();});
 }
 Acquisition::~Acquisition() {
-    // bufferProcessorHandler and dmaChecker get deleted via a QThread::finished signal->slot
+    stopDMAChecker();
+    stopProcessor();
     this->joinThreads();
 }
 

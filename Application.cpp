@@ -17,12 +17,15 @@ int Application::start(int argc, char *argv[]) {
 
     this->config->fromFile("default_config.json");
     this->adqControlUnit = CreateADQControlUnit();
+#ifdef MOCK_ADQAPI
+    spdlog::warn("Using mock ADQAPI");
+#else
     if(this->adqControlUnit == NULL)
     {
         spdlog::error("Failed to create ADQControlUnit. Exiting...");
         return -1;
     }
-
+#endif
     // parse args here
     ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config->adqLoggingLevel, 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
     ADQControlUnit_FindDevices(this->adqControlUnit);
@@ -117,8 +120,8 @@ void Application::linkSignals()
             [=](int index){ this->changeChannel(index); }
     );
     // 2NDCHANNEL
-    this->mainWindow.ui->channelComboBox->connect(
-        this->mainWindow.ui->channelComboBox,
+    this->mainWindow.ui->secondChannelComboBox->connect(
+        this->mainWindow.ui->secondChannelComboBox,
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [=](int index){ this->changeSecondChannel(index); }
     );
@@ -250,6 +253,12 @@ void Application::linkSignals()
         &QCheckBox::stateChanged,
         this,
         &Application::changeSaveToFile
+    );
+    // FILE SAVE MODE
+    this->mainWindow.ui->fileTypeSelector->connect(
+        this->mainWindow.ui->fileTypeSelector,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+            [=](int index){ this->changeFiletype(index); }
     );
     // ACQUSITION STATE CHANGED
     this->acquisition->connect(

@@ -17,6 +17,7 @@ class BaseBufferProcessor : public BufferProcessor {
 private:
     // buffer for storing incomplete record's samples
     short* recordBuffer[MAX_NOF_CHANNELS] = {nullptr};
+
     // count of samples stored from the last incomplete header
     unsigned long recordBufferLength[MAX_NOF_CHANNELS] = {0};
     // expected record length, used for sanity checks and debugging only, the real record length is pulled from headers
@@ -24,7 +25,7 @@ private:
     // record completion listeners
     std::list<std::shared_ptr<RecordProcessor>> &recordProcessors;
     // notify record listeners (processors)
-    bool completeRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
+    bool completeRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, char channel);
 public:
     BaseBufferProcessor(std::list<std::shared_ptr<RecordProcessor>> &recordProcessors, unsigned long recordLength);
     ~BaseBufferProcessor();

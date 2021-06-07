@@ -21,14 +21,14 @@ void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     std::string s_cfg = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     int baseChannel = config.getCurrentChannel();
-    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel);
+    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
     this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
     this->channelMask = 1<<baseChannel;
     int additionalChannel = config.secondChannel;
     if(additionalChannel != CHANNEL_DISABLED)
     {
-        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel);
-        this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
+        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
+        this->dataStream[additionalChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
         this->channelMask = 1<<baseChannel | 1<<additionalChannel;
     }
     config.toFile(s_cfg.c_str());
@@ -37,7 +37,7 @@ void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
 
 }
 
-bool BinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length)
+bool BinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved > this->sizeLimit)
     {
@@ -46,7 +46,7 @@ bool BinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, u
     else
     {
         this->bytesSaved += length*sizeof(short);
-        this->dataStream[header->Channel-1].write((char*)buffer, sizeof(short)*length);
+        this->dataStream[channel].write((char*)buffer, sizeof(short)*length);
         return true;
     }
 }
@@ -69,10 +69,21 @@ BufferedBinaryFileWriter::BufferedBinaryFileWriter(unsigned long long sizeLimit)
 {
     this->sizeLimit = sizeLimit;
     this->bytesSaved = 0;
+    for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
+    {
+        this->dataBuffer[ch] = nullptr;
+    }
 }
 BufferedBinaryFileWriter::~BufferedBinaryFileWriter()
 {
-    std::free(this->dataBuffer);
+    for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
+    {
+        if(this->dataBuffer[ch] != nullptr)
+        {
+            std::free(this->dataBuffer[ch]);
+            this->dataBuffer[ch] = nullptr;
+        }
+    }
 }
 void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
 {
@@ -82,14 +93,14 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     std::string s_cfg = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     int baseChannel = config.getCurrentChannel();
-    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel);
+    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
     this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
     this->channelMask = 1<<baseChannel;
     int additionalChannel = config.secondChannel;
     if(additionalChannel != CHANNEL_DISABLED)
     {
-        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel);
-        this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
+        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, additionalChannel+1);
+        this->dataStream[additionalChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
         this->channelMask = 1<<baseChannel | 1<<additionalChannel;
     }
     config.toFile(s_cfg.c_str());
@@ -99,30 +110,36 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
         if(1<<ch & this->channelMask)
         {
             if(this->dataBuffer[ch] != nullptr)
+            {
                 free(this->dataBuffer[ch]);
-            this->dataBuffer[ch] = (short*)std::malloc(sizeof(short)*this->sizeLimit);
+                this->dataBuffer[ch] = nullptr;
+            }
+            this->dataBuffer[ch] = (short*)std::malloc(this->sizeLimit);
+            //spdlog::debug("Allocated buffer for ch{}; size:{}",ch, this->sizeLimit);
         }
     }
     this->bytesSaved = 0;
     this->sizeLimit = config.fileSizeLimit;
 }
 
-bool BufferedBinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length)
+bool BufferedBinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
     // a header has a constant size of 40 bytes
     // so it would be possible to read how many samples to read
     // from the header
-    if(this->bytesSaved > this->sizeLimit)
+    if(this->bytesSaved >= this->sizeLimit)
     {
         return false;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
-        this->samplesSaved[header->Channel] += length;
-        std::memcpy(&this->dataBuffer[header->Channel][this->samplesSaved[header->Channel]], buffer, length*sizeof(short));
+        int ch = channel;
+        //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
+        std::memcpy(&(this->dataBuffer[ch][this->samplesSaved[ch]]), buffer, length*sizeof(short));
+        this->samplesSaved[ch] += length;
         return true;
     }
 }

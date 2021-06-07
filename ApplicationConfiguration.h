@@ -16,11 +16,11 @@ public:
     unsigned int writeBufferCount = 64;
     unsigned int deviceNumber = 1;
     bool settingsValid = true;
-    unsigned int periodicUpdatePeriod = 200;
-    unsigned long long fileSizeLimit = 4ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
+    unsigned int periodicUpdatePeriod = 100;
+    unsigned long long fileSizeLimit = 1ull*1024ull*1024ull*1024ull; //16*1024ull;  // bytes
 
     unsigned long transferBufferCount = 32;
-    unsigned long transferBufferSize = 1ul*1024ul*1024ul;//1024ul * 1024ul;
+    unsigned long transferBufferSize = 2ul*1024ul;//1024ul * 1024ul;
 
     unsigned long timedRunValue = 0;
 

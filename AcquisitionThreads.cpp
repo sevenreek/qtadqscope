@@ -130,13 +130,14 @@ void LoopBufferProcessor::runLoop()
                 goto BUFFER_PROCESSOR_LOOP_EXIT; // break if we want to join the thread
             }
         } while(b==nullptr);
-        //spdlog::debug("Got read lock on {}", fmt::ptr(b));
 
+        //spdlog::debug("Got read lock on {}", fmt::ptr(b));
         if(!this->processor->processBuffers(*b, this->isTriggeredStreaming)) {
             spdlog::error("Could not process buffers. Stopping.");
             emit this->onError();
             break;
         }
+
         //spdlog::debug("Read succeful");
         this->writeBuffers->notifyRead();
         //spdlog::debug("Read notify");

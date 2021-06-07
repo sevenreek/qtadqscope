@@ -31,6 +31,8 @@ signals:
     void onError();
 };
 
+
+
 class LoopBufferProcessor : public QObject
 {
     Q_OBJECT

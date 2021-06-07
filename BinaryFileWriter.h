@@ -16,7 +16,7 @@ class BinaryFileWriter: public FileWriter {
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -34,7 +34,7 @@ class BufferedBinaryFileWriter: public FileWriter {
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     ~BufferedBinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();

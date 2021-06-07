@@ -19,7 +19,7 @@ public:
     ~SignalParameterComputer();
     void startNewStream(ApplicationConfiguration& config);
     bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
     bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();
