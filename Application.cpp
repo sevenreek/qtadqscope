@@ -881,7 +881,8 @@ void Application::onRegisterDialogClosed()
         (this->registerDialog->ui->passthroughChannel1->checkState()>0 ? 1<<0 : 0 ) |
         (this->registerDialog->ui->passthroughChannel2->checkState()>0 ? 1<<1 : 0 ) |
         (this->registerDialog->ui->passthroughChannel3->checkState()>0 ? 1<<2 : 0 ) |
-        (this->registerDialog->ui->passthroughChannel4->checkState()>0 ? 1<<3 : 0 );
+        (this->registerDialog->ui->passthroughChannel4->checkState()>0 ? 1<<3 : 0 ) |
+        (this->registerDialog->ui->moduloPassthrough->checkState()>0 ? 1<<4 : 0 )    ;
 
     unsigned int retval;
     this->adqDevice->WriteUserRegister(1, 0x10, 0, algorithmMode, &retval);
