@@ -885,20 +885,19 @@ void Application::onRegisterDialogClosed()
         (this->registerDialog->ui->moduloPassthrough->checkState()>0 ? 1<<4 : 0 )    ;
 
     unsigned int retval;
-    this->adqDevice->WriteUserRegister(1, 0x10, 0, algorithmMode, &retval);
-    if(retval != algorithmMode) spdlog::debug("Failed to set algorithmMode");
-
-    this->adqDevice->WriteUserRegister(1, 0x11, 0, activeChannels, &retval);
-    if(retval != activeChannels) spdlog::debug("Failed to set activeChannels");
-
-    spdlog::debug("Setting passthrough to {:#b}", passthrough);
-    this->adqDevice->WriteUserRegister(1, 0x12, 0, passthrough, &retval);
-    if(retval != passthrough) spdlog::debug("Failed to set passthrough");
+    this->adqDevice->WriteUserRegister(1, 0x10, 0, ( algorithmMode | (activeChannels << 4) | ( passthrough << 8 )), &retval);
+    if(retval != algorithmMode) spdlog::debug("Failed to set algorithm configuration");
 
     short dcOffsetValue = this->registerDialog->ui->algorithmParamInput0->value();
     spdlog::debug("Setting DC offset register to {}", dcOffsetValue);
-    this->adqDevice->WriteUserRegister(1, 0x13, 0, dcOffsetValue, &retval);
+    this->adqDevice->WriteUserRegister(1, 0x11, 0, dcOffsetValue, &retval);
     if(dcOffsetValue != (short)retval) spdlog::debug("Failed to set DC offset register");
+
+
+    short algParam1 = this->registerDialog->ui->algorithmParamInput1->value();
+    spdlog::debug("Setting alg_param1 register to {}", algParam1);
+    this->adqDevice->WriteUserRegister(1, 0x12, 0, algParam1, &retval);
+    if(algParam1 != (short)retval) spdlog::debug("Failed to set algParam1 register");
 
 }
 void Application::triggerSoftwareTrig()

@@ -51,6 +51,16 @@
          <string>Trapezoidal v1</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>2nd Order Differential</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Order Test (Debug)</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="0">
