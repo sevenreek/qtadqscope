@@ -100,7 +100,7 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
     ) {spdlog::error("SetInputRange failed."); return false;};
     if(!this->adqDevice->SetAdjustableBias(
         adqChannelIndex,
-        providedConfig->getCurrentChannelConfig().dcBiasCode + providedConfig->getCurrentChannelConfig().baseDcBiasOffset)
+        providedConfig->getCurrentChannelConfig().dcBiasCode + providedConfig->getCurrentChannelConfig().getCurrentBaseDCOffset())
     ) {spdlog::error("SetAdjustableBias failed."); return false;};
     if(!this->adqDevice->SetTransferBuffers(
         providedConfig->transferBufferCount,

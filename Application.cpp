@@ -51,7 +51,7 @@ int Application::start(int argc, char *argv[]) {
     this->acquisition = std::make_shared<Acquisition>(this->config,this->adqDevice);
     this->buffersConfigurationDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog());
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog());
-    this->autoCalibrateDialog = std::unique_ptr<AutoCalibrateDialog>(new AutoCalibrateDialog(this->config, this->acquisition));
+    this->autoCalibrateDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this->config, this->acquisition));
     this->linkSignals();
     this->setUI();
     this->createPeriodicUpdateTimer(this->config->periodicUpdatePeriod);
@@ -353,12 +353,6 @@ void Application::linkSignals()
         this,
         &Application::openCalibrateDialog
     );
-    this->autoCalibrateDialog->connect(
-        this->autoCalibrateDialog.get(),
-        &AutoCalibrateDialog::offsetCalculated,
-        this,
-        &Application::useCalculatedOffset
-    );
 }
 
 ///// BEGIN UI SLOTS //////
@@ -373,7 +367,7 @@ void Application::changeChannel(int channel) {
     this->mainWindow.ui->ulBypass2->setCheckState(
         this->config->getCurrentChannelConfig().userLogicBypass&0b10?Qt::CheckState::Checked:Qt::CheckState::Unchecked);
     this->mainWindow.ui->analogOffsetCodeInput->setValue(this->config->getCurrentChannelConfig().dcBiasCode);
-    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().digitalOffset);
+    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
     this->mainWindow.ui->digitalGainInput->setValue(this->config->getCurrentChannelConfig().digitalGain);
     switch(this->config->getCurrentChannelConfig().triggerMode)
     {
@@ -531,11 +525,11 @@ void Application::changeInputRange(int index) {
     this->changeLevelTriggerCode(this->config->getCurrentChannelConfig().triggerLevelCode);
 }
 void Application::changeDigitalOffset(int val) {
-    this->config->getCurrentChannelConfig().digitalOffset = val;
+    this->config->getCurrentChannelConfig().setCurrentDigitalOffset(val);
     this->adqDevice->SetGainAndOffset(
         this->config->getCurrentChannel()+1,
         this->config->getCurrentChannelConfig().digitalGain,
-        this->config->getCurrentChannelConfig().digitalOffset
+        this->config->getCurrentChannelConfig().getCurrentDigitalOffset()
     );
 }
 void Application::changeDigitalGain(int val) {
@@ -543,7 +537,7 @@ void Application::changeDigitalGain(int val) {
     this->adqDevice->SetGainAndOffset(
         this->config->getCurrentChannel()+1,
         this->config->getCurrentChannelConfig().digitalGain,
-        this->config->getCurrentChannelConfig().digitalOffset
+        this->config->getCurrentChannelConfig().getCurrentDigitalOffset()
     );
 }
 void Application::changeTriggerMode(int index) {
@@ -758,6 +752,14 @@ void Application::primaryButtonPressed() {
             if(success) {
                 this->mainWindow.ui->streamStartStopButton->setText("Stop");
                 this->mainWindow.ui->analysisSettingsContainer->setEnabled(false);
+                if(this->mainWindow.ui->resetPlot->checkState())
+                {
+                    if(this->config->getCurrentChannelConfig().isContinuousStreaming)
+                        this->mainWindow.ui->plotArea->xAxis->setRange(0, this->config->transferBufferSize / sizeof(short));
+                    else
+                        this->mainWindow.ui->plotArea->xAxis->setRange(0, this->config->getCurrentChannelConfig().recordLength);
+                    this->mainWindow.ui->plotArea->yAxis->setRange(-(2<<15), 2<<15);
+                }
             }
             else
             {
@@ -885,8 +887,9 @@ void Application::onRegisterDialogClosed()
         (this->registerDialog->ui->moduloPassthrough->checkState()>0 ? 1<<4 : 0 )    ;
 
     unsigned int retval;
-    this->adqDevice->WriteUserRegister(1, 0x10, 0, ( algorithmMode | (activeChannels << 4) | ( passthrough << 8 )), &retval);
-    if(retval != algorithmMode) spdlog::debug("Failed to set algorithm configuration");
+    unsigned int algorithmConfig = ( algorithmMode | (activeChannels << 4) | ( passthrough << 8 ));
+    this->adqDevice->WriteUserRegister(1, 0x10, 0, algorithmConfig, &retval);
+    if(retval != algorithmConfig) spdlog::debug("Failed to set algorithm configuration");
 
     short dcOffsetValue = this->registerDialog->ui->algorithmParamInput0->value();
     spdlog::debug("Setting DC offset register to {}", dcOffsetValue);
@@ -955,24 +958,24 @@ void Application::changeTimedRunValue(int val)
 }
 void Application::changeBaseDCBias(int val)
 {
-    this->config->getCurrentChannelConfig().baseDcBiasOffset = val;
+    this->config->getCurrentChannelConfig().setCurrentBaseDCOffset(val);
 }
 void Application::openCalibrateDialog()
 {
-    this->autoCalibrateDialog->showDialog();
+    this->autoCalibrateDialog->show();
 }
 void Application::useCalculatedOffset(CALIBRATION_MODES mode, int offset)
 {
     switch(mode)
     {
         case CALIBRATION_MODES::ANALOG:
-            this->config->getCurrentChannelConfig().baseDcBiasOffset = offset;
+            this->config->getCurrentChannelConfig().setCurrentBaseDCOffset(offset);
         break;
         case CALIBRATION_MODES::FINE_DIGITAL: case CALIBRATION_MODES::DIGITAL:
-            this->config->getCurrentChannelConfig().digitalOffset = -offset;
+            this->config->getCurrentChannelConfig().setCurrentDigitalOffset(-offset);
         break;
     }
-    spdlog::debug("Should update offsets to {} {}", this->config->getCurrentChannelConfig().baseDcBiasOffset, this->config->getCurrentChannelConfig().digitalOffset);
-    this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().baseDcBiasOffset);
-    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().digitalOffset);
+    spdlog::debug("Should update offsets to {} {}", this->config->getCurrentChannelConfig().getCurrentBaseDCOffset(), this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
+    this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().getCurrentBaseDCOffset());
+    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
 }

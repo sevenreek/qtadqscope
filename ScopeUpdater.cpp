@@ -1,13 +1,14 @@
 #include "ScopeUpdater.h"
 #include "spdlog/spdlog.h"
-ScopeUpdater::ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot): plot(plot), arrow(&plot)
+ScopeUpdater::ScopeUpdater(unsigned long long sampleCount, QCustomPlot &plot): plot(plot)
 {
     this->sampleCount = sampleCount;
     this->plot.addGraph();
     this->plot.setInteraction(QCP::iRangeDrag, true);
     this->plot.setInteraction(QCP::iRangeZoom, true);
     this->reallocate(sampleCount);
-    this->arrow.setPen(QPen(Qt::red));
+    this->arrow = new QCPItemLine(&plot);
+    this->arrow->setPen(QPen(Qt::red));
 }
 void ScopeUpdater::reallocate(unsigned long long sampleCount)
 {
@@ -21,8 +22,6 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
     }
     this->y.resize(sampleCount);
     this->plot.graph(0)->setData(x,y);
-    this->plot.xAxis->setRange(0, sampleCount);
-    this->plot.yAxis->setRange(-(2<<15), 2<<15);
     this->plot.replot();
 }
 bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel)
@@ -60,8 +59,8 @@ void ScopeUpdater::changePlotTriggerLine(short pos, unsigned long sampleCount)
 {
     if(sampleCount == 0)
         sampleCount = this->sampleCount;
-    this->arrow.start->setCoords(0, pos);
-    this->arrow.end->setCoords(sampleCount-1, pos);
+    this->arrow->start->setCoords(0, pos);
+    this->arrow->end->setCoords(sampleCount-1, pos);
     this->plot.replot();
 }
 

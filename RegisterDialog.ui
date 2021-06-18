@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>297</width>
+    <width>310</width>
     <height>268</height>
    </rect>
   </property>
@@ -58,7 +58,7 @@
        </item>
        <item>
         <property name="text">
-         <string>Order Test (Debug)</string>
+         <string>2nd order ZCD</string>
         </property>
        </item>
       </widget>
@@ -167,16 +167,33 @@
      </item>
      <item row="4" column="1">
       <widget class="QSpinBox" name="algorithmParamInput0">
+       <property name="minimum">
+        <number>-32768</number>
+       </property>
        <property name="maximum">
         <number>32767</number>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QSpinBox" name="algorithmParamInput1"/>
+      <widget class="QSpinBox" name="algorithmParamInput1">
+       <property name="minimum">
+        <number>-32768</number>
+       </property>
+       <property name="maximum">
+        <number>32767</number>
+       </property>
+      </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QSpinBox" name="algorithmParamInput2"/>
+      <widget class="QSpinBox" name="algorithmParamInput2">
+       <property name="minimum">
+        <number>-32768</number>
+       </property>
+       <property name="maximum">
+        <number>32767</number>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="label_7">

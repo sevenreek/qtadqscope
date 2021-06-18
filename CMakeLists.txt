@@ -78,14 +78,16 @@ set(PROJECT_SOURCES
         RegisterDialog.cpp
         RegisterDialog.h
         RegisterDialog.ui
-        AutoCalibrateDialog.cpp
-        AutoCalibrateDialog.h
-        AutoCalibrateDialog.ui
         SignalParameterComputer.cpp
         SignalParameterComputer.h
         MockADQAPI.cpp
         MockADQAPI.h
-)
+        FullCalibrationDialog.cpp
+        FullCalibrationDialog.h
+        FullCalibrationDialog.ui
+        CalibrationTable.h
+        CalibrationTable.cpp
+        )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(qtadqscope

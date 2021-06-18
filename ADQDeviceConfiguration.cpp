@@ -21,7 +21,7 @@ void ChannelConfiguration::log()
         "\tSTREAM CONTINUOUS: {}\n\r",
         userLogicBypass,
         sampleSkip,
-        dcBiasCode, baseDcBiasOffset,
+        dcBiasCode, getCurrentBaseDCOffset(),
         inputRangeFloat,
         triggerLevelCode,
         triggerEdge,
@@ -30,16 +30,18 @@ void ChannelConfiguration::log()
         recordCount,
         pretrigger,
         triggerDelay,
-        digitalGain, digitalOffset,
+        digitalGain, getCurrentDigitalOffset(),
         isContinuousStreaming
     );
 }
 json ChannelConfiguration::toJSON()
 {
+    std::vector<int> vBaseOffset(std::begin(this->baseDcBiasOffset), std::end(this->baseDcBiasOffset));
+    std::vector<int> vDigitalOffset(std::begin(this->digitalOffset), std::end(this->digitalOffset));
     json j = {
         {"ul_bypass",           this->userLogicBypass},
         {"sample_skip",         this->sampleSkip},
-        {"base_offset",         this->baseDcBiasOffset},
+        {"base_offset",         vBaseOffset},
         {"offset",              this->dcBiasCode},
         {"input_range",         this->inputRangeEnum},
         {"trigger_mode",        this->triggerMode},
@@ -50,7 +52,7 @@ json ChannelConfiguration::toJSON()
         {"record_count",        this->recordCount},
         {"pretrigger",          this->pretrigger},
         {"trigger_delay",       this->triggerDelay},
-        {"digital_offset",      this->digitalOffset},
+        {"digital_offset",      vDigitalOffset},
         {"digital_gain",        this->digitalGain},
         {"stream_type",         this->isContinuousStreaming}
 
@@ -61,7 +63,12 @@ void ChannelConfiguration::loadFromJSON(json j)
 {
     this->userLogicBypass =     j["ul_bypass"];
     this->sampleSkip =          j["sample_skip"];
-    this->baseDcBiasOffset =    j["base_offset"];
+    int inputRangeIndex = 0;
+    for(auto &el : j["base_offset"])
+    {
+        this->baseDcBiasOffset[inputRangeIndex] = el.get<int>();
+        inputRangeIndex++;
+    }
     this->dcBiasCode =          j["offset"];
     this->inputRangeEnum =      j["input_range"];
     this->triggerMode =         j["trigger_mode"];
@@ -72,14 +79,40 @@ void ChannelConfiguration::loadFromJSON(json j)
     this->recordCount =         j["record_count"];
     this->pretrigger =          j["pretrigger"];
     this->triggerDelay =        j["trigger_delay"];
-    this->digitalOffset =       j["digital_offset"];
+    inputRangeIndex = 0;
+    for(auto &el : j["digital_offset"])
+    {
+       this->digitalOffset[inputRangeIndex] = el.get<int>();
+       inputRangeIndex++;
+    }
     this->digitalGain =         j["digital_gain"];
     this->isContinuousStreaming = j["stream_type"];
+}
+short ChannelConfiguration::getCurrentBaseDCOffset()
+{
+    return this->baseDcBiasOffset[this->inputRangeEnum];
+}
+short ChannelConfiguration::getCurrentDigitalOffset()
+{
+    return this->digitalOffset[this->inputRangeEnum];
+}
+void ChannelConfiguration::setCurrentBaseDCOffset(int v)
+{
+    this->baseDcBiasOffset[this->inputRangeEnum] = v;
+}
+void ChannelConfiguration::setCurrentDigitalOffset(int v)
+{
+    this->digitalOffset[this->inputRangeEnum] = v;
+}
+void ChannelConfiguration::setInputRange(INPUT_RANGES e)
+{
+    this->inputRangeEnum = e;
+    this->inputRangeFloat = INPUT_RANGE_VALUES[e];
 }
 short ChannelConfiguration::getDCBiasedTriggerValue()
 {
 
-    int value =  this->baseDcBiasOffset+this->dcBiasCode+this->triggerLevelCode;
+    int value =  this->getCurrentDigitalOffset()+this->dcBiasCode+this->triggerLevelCode;
     int clamped = std::max(SHRT_MIN, std::min(value, SHRT_MAX));
     if(clamped != value)
     {

@@ -10,7 +10,7 @@ class ScopeUpdater : public QObject, public RecordProcessor
 private:
     QCustomPlot &plot;
     QVector<double> x, y;
-    QCPItemLine arrow;
+    QCPItemLine * arrow;
     unsigned long long sampleCount;
 public:
     void startNewStream(ApplicationConfiguration& config);

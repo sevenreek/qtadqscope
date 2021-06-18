@@ -117,7 +117,7 @@ void AutoCalibrateDialog::configure()
     CALIBRATION_MODES mode;
     if(this->ui->autoCalibrateAnalog->isChecked()) {
         mode = CALIBRATION_MODES::ANALOG;
-        this->calibrationConfiguration->getCurrentChannelConfig().baseDcBiasOffset = 0;
+        this->calibrationConfiguration->getCurrentChannelConfig(). = 0;
     } else if(this->ui->autoCalibrateDigital->isChecked()) {
         mode = CALIBRATION_MODES::DIGITAL;
         this->calibrationConfiguration->getCurrentChannelConfig().baseDcBiasOffset = 0;

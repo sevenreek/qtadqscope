@@ -705,20 +705,27 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="3">
-            <widget class="QCheckBox" name="timedRunCheckbox">
-             <property name="text">
-              <string>Timed run</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="4" colspan="2">
+           <item row="3" column="5">
             <widget class="QSpinBox" name="timedRunValue">
              <property name="suffix">
               <string>ms</string>
              </property>
              <property name="maximum">
               <number>2147483647</number>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="4">
+            <widget class="QCheckBox" name="timedRunCheckbox">
+             <property name="text">
+              <string>Timed run</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3">
+            <widget class="QCheckBox" name="resetPlot">
+             <property name="text">
+              <string>Reset plot</string>
              </property>
             </widget>
            </item>

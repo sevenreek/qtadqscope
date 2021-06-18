@@ -60,13 +60,13 @@ enum INPUT_RANGES
     MV_5000 = 5,
     MV_10000 = 6
 };
-
-const float INPUT_RANGE_VALUES[] = {100, 250, 500, 1000, 2000, 5000, 10000};
+const int INPUT_RANGE_COUNT = (7);
+const float INPUT_RANGE_VALUES[INPUT_RANGE_COUNT] = {100, 250, 500, 1000, 2000, 5000, 10000};
 class ChannelConfiguration {
 public:
     unsigned char userLogicBypass = 0b11;
     unsigned short sampleSkip = 10000;
-    int baseDcBiasOffset = 0;
+    int baseDcBiasOffset[INPUT_RANGE_COUNT] = {0};
     int dcBiasCode = 0;
     float dcBias = 0;
     INPUT_RANGES inputRangeEnum = INPUT_RANGES::MV_5000;
@@ -80,7 +80,7 @@ public:
     unsigned int recordCount = -1;  // -1 is infty
     unsigned long pretrigger = 0;
     unsigned long triggerDelay = 0;
-    int digitalOffset = DEFAULT_DIGITAL_USER_OFFSET;
+    int digitalOffset[INPUT_RANGE_COUNT] = {DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET};
     int digitalGain = DEFAULT_DIGITAL_USER_GAIN;
     bool updateScope = true;
     bool isContinuousStreaming = true;
@@ -88,6 +88,11 @@ public:
     json toJSON();
     void loadFromJSON(json data);
     short getDCBiasedTriggerValue();
+    short getCurrentBaseDCOffset();
+    short getCurrentDigitalOffset();
+    void setInputRange(INPUT_RANGES e);
+    void setCurrentBaseDCOffset(int v);
+    void setCurrentDigitalOffset(int v);
 };
 float ADCCodeToMV(float inputRange, int code);
 int mvToADCCode(float inputRange, float value);

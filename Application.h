@@ -14,7 +14,7 @@
 #include <QTimer>
 #include "BuffersDialog.h"
 #include "RegisterDialog.h"
-#include "AutoCalibrateDialog.h"
+#include "FullCalibrationDialog.h"
 class Application : public QObject
 {
     Q_OBJECT
@@ -34,7 +34,7 @@ private:
     std::shared_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
-    std::unique_ptr<AutoCalibrateDialog> autoCalibrateDialog;
+    std::unique_ptr<FullCalibrationDialog> autoCalibrateDialog;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
