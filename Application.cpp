@@ -367,7 +367,6 @@ void Application::changeChannel(int channel) {
     this->mainWindow.ui->ulBypass2->setCheckState(
         this->config->getCurrentChannelConfig().userLogicBypass&0b10?Qt::CheckState::Checked:Qt::CheckState::Unchecked);
     this->mainWindow.ui->analogOffsetCodeInput->setValue(this->config->getCurrentChannelConfig().dcBiasCode);
-    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
     this->mainWindow.ui->digitalGainInput->setValue(this->config->getCurrentChannelConfig().digitalGain);
     switch(this->config->getCurrentChannelConfig().triggerMode)
     {
@@ -420,6 +419,8 @@ void Application::changeChannel(int channel) {
     this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config->getCurrentChannelConfig().triggerLevelCode);
     this->mainWindow.ui->levelTriggerResetOffsetInput->setValue(this->config->getCurrentChannelConfig().triggerLevelReset);
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
+    this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().getCurrentBaseDCOffset());
+    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
 }
 void Application::changeSecondChannel(int channel) {
     channel -= 1; // -1 is disabled
@@ -523,6 +524,8 @@ void Application::changeInputRange(int index) {
     );
     this->changeAnalogOffsetCode(this->config->getCurrentChannelConfig().dcBiasCode);
     this->changeLevelTriggerCode(this->config->getCurrentChannelConfig().triggerLevelCode);
+    this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().getCurrentBaseDCOffset());
+    this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
 }
 void Application::changeDigitalOffset(int val) {
     this->config->getCurrentChannelConfig().setCurrentDigitalOffset(val);

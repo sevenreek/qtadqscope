@@ -81,7 +81,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
                     buffers.data[ch],
                     samplesToCompleteRecord*sizeof(short)
                 );
-                //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength);
+                spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{} , ts:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength, buffers.headers[ch][0].Timestamp);
                 success &= this->completeRecord(
                     &(buffers.headers[ch][0]),
                     this->recordBuffer[ch],
@@ -126,6 +126,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             this->recordBufferLength[ch] += unparsedSamplesInBuffer;
             unparsedSamplesInBuffer = 0;
         }
+        /*
         if(completedHeaders<buffers.nof_headers[ch])
         {
             // copy the incomplete header
@@ -133,6 +134,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             // WRITE BUFFERS. WHENEVER AN INCOMPLETE HEADER IS ADDED THE COMPLETED ONE WILL BE MANGLED
             // THERE MIGHT BE A CHANCE TO GET THIS WORKING IF IT IS IMPLEMENTED
             // SOMEWHERE NEAR THE WRITEBUFFERS CLASS
+
             std::memcpy(
                &(buffers.headers[ch][0]),
                &(buffers.headers[ch][completedHeaders]),
@@ -140,7 +142,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
            );
 
 
-        }
+        }*/
 
 
     }

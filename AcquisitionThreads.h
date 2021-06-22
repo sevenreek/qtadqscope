@@ -17,6 +17,8 @@ private:
     std::shared_ptr<WriteBuffers> writeBuffers;
     std::shared_ptr<ADQInterface> adqDevice;
     unsigned long transferBufferCount;
+    StreamingHeader_t lastHeaders[MAX_NOF_CHANNELS];
+    StreamingBuffers* lastBuffers = nullptr;
 public:
     DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
 

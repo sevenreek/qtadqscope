@@ -58,7 +58,12 @@
        </item>
        <item>
         <property name="text">
-         <string>2nd order ZCD</string>
+         <string>1st order ZCD</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>1st Order Differential</string>
         </property>
        </item>
       </widget>

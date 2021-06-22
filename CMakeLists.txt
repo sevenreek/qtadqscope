@@ -13,8 +13,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-#add_compile_definitions(LINUX)
-set(MOCK_ADQAPI ON)
+
+
+
+option(MOCK_ADQAPI "Use a mock ADQ library" ON)
+option(LINUX_BUILD "Build on Linux" OFF)
+
+
+if(LINUX_BUILD)
+    add_compile_definitions(LINUX)
+    message(STATUS "Linux build")
+endif()
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check https://doc.qt.io/qt/deployment-android.html for more information.
@@ -105,7 +114,7 @@ else()
     endif()
 endif()
 if(MOCK_ADQAPI)
-    message(STATUS "Using MockADQ API")
+    message(WARNING "Using MockADQ API")
     add_compile_definitions(MOCK_ADQAPI)
     if(${QT_VERSION_MAJOR} GREATER 4)
         set(PROJECT_LIBRARIES
@@ -120,7 +129,7 @@ if(MOCK_ADQAPI)
         )
     endif()
 else()
-    message(STATUS "Using real libADQ PI")
+    message(STATUS "Using real libADQ API")
     if(${QT_VERSION_MAJOR} GREATER 4)
         set(PROJECT_LIBRARIES
             Qt${QT_VERSION_MAJOR}::Widgets

@@ -13,9 +13,9 @@ class StreamingBuffers {
   void reallocate(unsigned long bufferSize, unsigned char channelMask);
   unsigned long bufferSize;
   unsigned char     channelMask;
-  unsigned int      nof_headers[MAX_NOF_CHANNELS];
-  unsigned int      nof_samples[MAX_NOF_CHANNELS];
-  unsigned int      header_status[MAX_NOF_CHANNELS];
+  unsigned int      nof_headers[MAX_NOF_CHANNELS] = {1,1,1,1};
+  unsigned int      nof_samples[MAX_NOF_CHANNELS] = {0,0,0,0};
+  unsigned int      header_status[MAX_NOF_CHANNELS] = {0,0,0,0};
   short             *data[MAX_NOF_CHANNELS] = {nullptr};
   StreamingHeader_t *headers[MAX_NOF_CHANNELS] = {nullptr};
 };

@@ -10,6 +10,7 @@ DMAChecker::DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_p
 
 void DMAChecker::runLoop()
 {
+    this->lastBuffers = this->writeBuffers->buffers[0];
     if(this->loopActive)
     {
         spdlog::critical("DMA Checker loop already active.");
@@ -61,7 +62,12 @@ void DMAChecker::runLoop()
              }
             } while(sbuf == nullptr);
             //spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
-
+            for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+            {
+                if(!(sbuf->channelMask & (1<<ch))) continue;
+                sbuf->headers[ch][0] = lastBuffers->headers[ch][lastBuffers->nof_headers[ch]-1];
+                // copy last header
+            }
             if(!this->adqDevice->GetDataStreaming(
                 (void**)(sbuf->data),
                 (void**)(sbuf->headers),
@@ -79,6 +85,7 @@ void DMAChecker::runLoop()
             }
             //spdlog::debug("Wrote buffers. Notifying.");
             this->writeBuffers->notifyWritten();
+            lastBuffers = sbuf;
             emit this->onBufferWritten(this->writeBuffers->sWrite.getCount());
             //spdlog::debug("Notify written");
         }

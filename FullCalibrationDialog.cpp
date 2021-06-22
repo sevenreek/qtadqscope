@@ -127,22 +127,28 @@ void FullCalibrationDialog::start()
     connect(this->acquisition.get(), &Acquisition::onStateChanged, this, &FullCalibrationDialog::onStateChanged);
     this->setups.clear();
     unsigned char channelMask =
-        this->ui->channelSelection0->checkState()?(1<<0):0 |
-        this->ui->channelSelection1->checkState()?(1<<1):0 |
-        this->ui->channelSelection2->checkState()?(1<<2):0 |
-        this->ui->channelSelection3->checkState()?(1<<3):0;
-    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+        (this->ui->channelSelection0->checkState()?(1<<0):0) |
+        (this->ui->channelSelection1->checkState()?(1<<1):0) |
+        (this->ui->channelSelection2->checkState()?(1<<2):0) |
+        (this->ui->channelSelection3->checkState()?(1<<3):0);
+    if(this->ui->rangeSingle->isChecked())
     {
-        if(!((1<<ch) & channelMask)) continue;
-        spdlog::debug("Building stages for ch{}", ch);
-        if(this->ui->rangeSingle->isChecked())
+        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
         {
+            if(!((1<<ch) & channelMask)) continue;
             this->appendStage(ch, this->ui->inputRangeView->currentIndex(), this->mode);
-            continue;
         }
+    }
+    else
+    {
         for(int inrange = 0; inrange < INPUT_RANGE_COUNT; inrange++)
         {
-            this->appendStage(ch, inrange, this->mode);
+            for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+            {
+                if(!((1<<ch) & channelMask)) continue;
+                this->appendStage(ch, inrange, this->mode);
+            }
+
         }
     }
     spdlog::debug("Running first stage");
@@ -226,7 +232,7 @@ void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
         int channel = this->setups[this->currentSetupIndex].channel;
 
         if(this->setups[this->currentSetupIndex].mode == CALIBRATION_MODES::ANALOG){
-            this->analogValues[channel]->setValue(sp->average);
+            this->analogValues[channel]->setValue(-sp->average);
         }
         else {
             this->digitalValues[channel]->setValue(sp->average);
@@ -235,7 +241,7 @@ void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
         if(this->setups[this->currentSetupIndex].mode == CALIBRATION_MODES::ANALOG)
         {
             this->calibrationTable->analogOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
-                = sp->average;
+                = -sp->average;
         }
         else
         {
@@ -279,10 +285,10 @@ void FullCalibrationDialog::unblockUI()
 void FullCalibrationDialog::apply()
 {
     unsigned char channelMask =
-        this->ui->channelSelection0->checkState()?(1<<0):0 |
-        this->ui->channelSelection1->checkState()?(1<<1):0 |
-        this->ui->channelSelection2->checkState()?(1<<2):0 |
-        this->ui->channelSelection3->checkState()?(1<<3):0;
+        (this->ui->channelSelection0->checkState()?(1<<0):0) |
+        (this->ui->channelSelection1->checkState()?(1<<1):0) |
+        (this->ui->channelSelection2->checkState()?(1<<2):0) |
+        (this->ui->channelSelection3->checkState()?(1<<3):0);
     for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
         if(!((1<<ch) & channelMask)) continue;
