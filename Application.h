@@ -58,7 +58,7 @@ public:
      * Call after creating an Application object.
      */
     int start(int argc, char *argv[]);
-
+    void setFileWriterType(FILE_TYPE_SELECTOR fts);
 
 public slots:
     // UI SLOTS
@@ -92,6 +92,8 @@ public slots:
     void changeTimedRunEnabled(int state);
     void changeTimedRunValue(int val);
     void changeBaseDCBias(int val);
+
+    void flushDMA();
     /*
      * Connect to this signal using QueuedConnection from the ScopeUpdater unless
      * it ScopeUpdater is running on the same thread as the UI

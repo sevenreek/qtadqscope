@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>933</width>
+    <width>964</width>
     <height>661</height>
    </rect>
   </property>
@@ -58,7 +58,12 @@
              </item>
              <item>
               <property name="text">
-               <string>BINARY (BUFFERED)</string>
+               <string>BUFF BINARY</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>VERBOSE BUFF BINARY</string>
               </property>
              </item>
             </widget>
@@ -838,7 +843,7 @@
            <item row="1" column="0" colspan="2">
             <widget class="QTabWidget" name="tabWidget">
              <property name="currentIndex">
-              <number>1</number>
+              <number>0</number>
              </property>
              <property name="tabsClosable">
               <bool>false</bool>
@@ -856,7 +861,7 @@
                  <property name="labelAlignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                  </property>
-                 <item row="0" column="0">
+                 <item row="1" column="0">
                   <widget class="QRadioButton" name="softwareTriggerAutomatic">
                    <property name="font">
                     <font>
@@ -869,7 +874,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
+                 <item row="3" column="0">
                   <widget class="QRadioButton" name="softwareTriggerPeriodic">
                    <property name="font">
                     <font>
@@ -882,14 +887,14 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="1">
+                 <item row="3" column="1">
                   <widget class="QSpinBox" name="softwareTriggerPeriodicInput">
                    <property name="minimum">
                     <number>1</number>
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="0">
+                 <item row="4" column="0">
                   <widget class="QRadioButton" name="softwareTriggerManual">
                    <property name="font">
                     <font>
@@ -902,19 +907,30 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="1">
-                  <widget class="QPushButton" name="softwareTriggerButton">
-                   <property name="text">
-                    <string>SWTRIG</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="1">
+                 <item row="1" column="1">
                   <widget class="QLabel" name="label_21">
                    <property name="text">
                     <string/>
                    </property>
                   </widget>
+                 </item>
+                 <item row="4" column="1">
+                  <layout class="QHBoxLayout" name="horizontalLayout_2">
+                   <item>
+                    <widget class="QPushButton" name="flushDMAButton">
+                     <property name="text">
+                      <string>Flush DMA</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="softwareTriggerButton">
+                     <property name="text">
+                      <string>SWTRIG</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </item>
@@ -1090,6 +1106,9 @@
              </item>
              <item row="2" column="1">
               <widget class="QSpinBox" name="recordCountInput">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="minimum">
                 <number>1</number>
                </property>
@@ -1141,7 +1160,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>933</width>
+     <width>964</width>
      <height>25</height>
     </rect>
    </property>

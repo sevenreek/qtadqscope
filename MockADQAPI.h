@@ -16,6 +16,7 @@ private:
     unsigned long bufferCount;
     unsigned long recordLength = 0;
     short *sourceData[4];
+    unsigned long long recordNumber = 0;
 public:
     static const unsigned long DEFAULT_BUFFER_SIZE;
     ADQInterface();
@@ -46,6 +47,7 @@ public:
     int GetDataStreaming(void **d, void **h, unsigned char channelMask, unsigned int* samplesAdded, unsigned int * headersAdded, unsigned int * headerStatus);
 
     void loadBuffersFromFile(int channel, const char* file);
+    int FlushDMA();
 };
 void * CreateADQControlUnit();
 void ADQControlUnit_EnableErrorTrace(void* adq_cu, unsigned int trace_level, const char *dir);

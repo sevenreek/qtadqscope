@@ -81,7 +81,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
                     buffers.data[ch],
                     samplesToCompleteRecord*sizeof(short)
                 );
-                spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{} , ts:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength, buffers.headers[ch][0].Timestamp);
+                //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{} , ts:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength, buffers.headers[ch][0].Timestamp);
                 success &= this->completeRecord(
                     &(buffers.headers[ch][0]),
                     this->recordBuffer[ch],

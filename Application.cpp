@@ -353,6 +353,13 @@ void Application::linkSignals()
         this,
         &Application::openCalibrateDialog
     );
+    // AUTOCALIBRATE
+    this->mainWindow.ui->flushDMAButton->connect(
+        this->mainWindow.ui->flushDMAButton,
+        &QAbstractButton::pressed,
+        this,
+        &Application::flushDMA
+    );
 }
 
 ///// BEGIN UI SLOTS //////
@@ -673,30 +680,35 @@ void Application::changeUpdateScope(int state) {
 void Application::changeAnalyse(int state) {
 
 }
+void Application::setFileWriterType(FILE_TYPE_SELECTOR fts)
+{
+    if(this->fileWriter != nullptr)
+    {
+        this->removeRecordProcessor(this->fileWriter);
+        this->fileWriter.reset();
+    }
+    switch(fts)
+    {
+        case FILE_TYPE_SELECTOR::S_BINARY:{
+            this->fileWriter = std::make_shared<BinaryFileWriter>(this->config->fileSizeLimit);
+        }break;
+        case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
+            this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config->fileSizeLimit);
+        }break;
+        case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED_VERBOSE:{
+            this->fileWriter = std::make_shared<VerboseBufferedBinaryWriter>(this->config->fileSizeLimit);
+        }break;
+        default:{
+            spdlog::critical("Unsupported file mode (default)");
+            return;
+        }break;
+    }
+    this->appendRecordProcessor(this->fileWriter);
+}
 void Application::changeSaveToFile(int state) {
-
-
     if(state)
     {
-        if(this->fileWriter != nullptr)
-        {
-            this->removeRecordProcessor(this->fileWriter);
-            this->fileWriter.reset();
-        }
-        switch(this->mainWindow.ui->fileTypeSelector->currentIndex())
-        {
-            case FILE_TYPE_SELECTOR::S_BINARY:{
-                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config->fileSizeLimit);
-            }break;
-            case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
-                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config->fileSizeLimit);
-            }break;
-            default:{
-                spdlog::critical("Unsupported file mode (default)");
-                return;
-            }break;
-        }
-        this->appendRecordProcessor(this->fileWriter);
+        this->setFileWriterType((FILE_TYPE_SELECTOR)this->mainWindow.ui->fileTypeSelector->currentIndex());
     }
     else if(this->fileWriter != nullptr)
     {
@@ -710,25 +722,7 @@ void Application::changeFiletype(int state)
 {
     if(this->mainWindow.ui->saveToFileCB->checkState())
     {
-        if(this->fileWriter != nullptr)
-        {
-            this->removeRecordProcessor(this->fileWriter);
-            this->fileWriter.reset();
-        }
-        switch(state)
-        {
-            case FILE_TYPE_SELECTOR::S_BINARY:{
-                this->fileWriter = std::make_shared<BinaryFileWriter>(this->config->fileSizeLimit);
-            }break;
-            case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
-                this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config->fileSizeLimit);
-            }break;
-            default:{
-                spdlog::critical("Unsupported file mode (default)");
-                return;
-            }break;
-        }
-        this->appendRecordProcessor(this->fileWriter);
+        this->setFileWriterType((FILE_TYPE_SELECTOR)state);
     }
 
 }
@@ -981,4 +975,8 @@ void Application::useCalculatedOffset(CALIBRATION_MODES mode, int offset)
     spdlog::debug("Should update offsets to {} {}", this->config->getCurrentChannelConfig().getCurrentBaseDCOffset(), this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
     this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().getCurrentBaseDCOffset());
     this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
+}
+void Application::flushDMA()
+{
+    this->adqDevice->FlushDMA();
 }

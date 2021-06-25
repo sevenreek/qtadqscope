@@ -49,6 +49,10 @@ void DMAChecker::runLoop()
         if(buffersFilled)
         {
             emit this->onBuffersFilled(buffersFilled);
+        } else if(this->lastFilledBufferCount == 0)
+        {
+            QThread::msleep(SLEEP_TIME);
+            //this->adqDevice->FlushDMA();
         }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
         {
@@ -65,7 +69,7 @@ void DMAChecker::runLoop()
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
-                sbuf->headers[ch][0] = lastBuffers->headers[ch][lastBuffers->nof_headers[ch]-1];
+                sbuf->headers[ch][0] = this->lastHeaders[ch];
                 // copy last header
             }
             if(!this->adqDevice->GetDataStreaming(
@@ -83,16 +87,18 @@ void DMAChecker::runLoop()
                 }
                 break;
             }
+            for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+            {
+                if(!(sbuf->channelMask & (1<<ch))) continue;
+                //spdlog::debug("Copying headers from channel {} should have {} headers", ch, sbuf->nof_headers[ch]);
+                this->lastHeaders[ch] = sbuf->headers[ch][sbuf->nof_headers[ch]==0?0:(sbuf->nof_headers[ch]-1)];
+            }
             //spdlog::debug("Wrote buffers. Notifying.");
             this->writeBuffers->notifyWritten();
-            lastBuffers = sbuf;
             emit this->onBufferWritten(this->writeBuffers->sWrite.getCount());
             //spdlog::debug("Notify written");
         }
-        if(buffersFilled == 0)
-        {
-            QThread::msleep(SLEEP_TIME);
-        }
+        this->lastFilledBufferCount = buffersFilled;
     }
 DMA_CHECKER_LOOP_EXIT:
     this->loopActive = false;

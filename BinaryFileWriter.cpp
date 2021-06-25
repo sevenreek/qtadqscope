@@ -1,6 +1,7 @@
 #include "BinaryFileWriter.h"
 #include "spdlog/spdlog.h"
 #include <ctime>
+#include "MinifiedRecordHeader.h"
 BinaryFileWriter::BinaryFileWriter(unsigned long long sizeLimit)
 {
     this->sizeLimit = sizeLimit;
@@ -34,6 +35,7 @@ void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     config.toFile(s_cfg.c_str());
     this->bytesSaved = 0;
     this->sizeLimit = config.fileSizeLimit;
+    this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 
 }
 
@@ -120,6 +122,7 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     }
     this->bytesSaved = 0;
     this->sizeLimit = config.fileSizeLimit;
+    this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 }
 
 bool BufferedBinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
@@ -128,7 +131,7 @@ bool BufferedBinaryFileWriter::processRecord(StreamingHeader_t* header, short* b
     // an alternative is to prefix every buffer with the header
     // a header has a constant size of 40 bytes
     // so it would be possible to read how many samples to read
-    // from the header
+    // from the header, this is done in the Verbose Writer
     if(this->bytesSaved >= this->sizeLimit)
     {
         return false;
@@ -164,4 +167,68 @@ const char* BufferedBinaryFileWriter::getName()
 unsigned long long BufferedBinaryFileWriter::getProcessedBytes()
 {
     return this->bytesSaved;
+}
+
+VerboseBufferedBinaryWriter::VerboseBufferedBinaryWriter(unsigned long long sizeLimit) : BufferedBinaryFileWriter(sizeLimit)
+{
+
+}
+VerboseBufferedBinaryWriter::~VerboseBufferedBinaryWriter()
+{
+
+}
+bool VerboseBufferedBinaryWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
+{
+    if(this->bytesSaved >= this->sizeLimit)
+    {
+        return false;
+    }
+    else if(this->isContinuousStream)
+    {
+        this->bytesSaved += length*sizeof(short);
+        int ch = channel;
+        //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
+        std::memcpy(&(this->dataBuffer[ch][this->samplesSaved[ch]]), buffer, length*sizeof(short));
+        this->samplesSaved[ch] += length;
+        return true;
+    }
+    else
+    {
+        int ch = channel;
+        //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
+        MinifiedRecordHeader mh = minifyRecordHeader(*header);
+        char* dataPointer = (char*)(this->dataBuffer[ch]);
+        std::memcpy(dataPointer + this->bytesSaved, &mh, sizeof(MinifiedRecordHeader));
+        this->bytesSaved += sizeof(MinifiedRecordHeader);
+
+        std::memcpy(dataPointer + this->bytesSaved, buffer, length*sizeof(short));
+        this->bytesSaved += length*sizeof(short);
+        this->samplesSaved[ch] += length;
+        return true;
+    }
+}
+unsigned long long VerboseBufferedBinaryWriter::finish() {
+
+    for(int i = 0; i< MAX_NOF_CHANNELS; i++)
+    {
+        if(1<<i & this->channelMask)
+        {
+            this->dataStream[i].write((char*)this->dataBuffer[i], this->samplesSaved[i]*sizeof(char));
+            this->dataStream[i].close();
+        }
+    }
+    return this->bytesSaved;
+}
+void VerboseBufferedBinaryWriter::startNewStream(ApplicationConfiguration& config)
+{
+    BufferedBinaryFileWriter::startNewStream(config); // call super
+    for(int i = 0; i< MAX_NOF_CHANNELS; i++)
+    {
+        if((1<<i) & this->channelMask)
+        {
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
+            MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
+            this->dataStream[i].write((char*)&m,sizeof(MinifiedChannelConfiguration));
+        }
+    }
 }

@@ -96,6 +96,7 @@ set(PROJECT_SOURCES
         FullCalibrationDialog.ui
         CalibrationTable.h
         CalibrationTable.cpp
+        MinifiedRecordHeader.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

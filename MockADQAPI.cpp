@@ -106,6 +106,7 @@ int ADQInterface::TriggeredStreamingSetup(unsigned long recordCount, unsigned lo
 {
     this->recordLength = recordLength;
     this->channelMask = channelMask;
+    this->recordNumber = 0;
     return 1;
 }
 int ADQInterface::SWTrig()
@@ -130,6 +131,10 @@ int ADQInterface::SetTrigLevelResetValue(int val)
 {
     return 1;
 }
+int ADQInterface::FlushDMA()
+{
+    return 1;
+}
 int ADQInterface::WriteUserRegister(unsigned int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval)
 {
     return 1;
@@ -146,22 +151,30 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             StreamingHeader_t * hp = (StreamingHeader_t *)h[ch];
             hp[0].Channel = ch;
             hp[0].RecordLength = std::min(DEFAULT_BUFFER_SIZE, this->bufferSize);
+            hp[0].RecordNumber = this->recordNumber++;
             headersAdded[ch] = 1;
             samplesAdded[ch] = this->bufferSize/sizeof(short);
         }
         else
         {
-            long rcount = this->bufferSize / this->recordLength;
+           long rcount = this->bufferSize / ( this->recordLength * sizeof(short) );
             for (long i = 0; i < rcount; i++)
             {
-                short * dp = (short*)d[ch];
-                memcpy(&dp[i*this->recordLength], this->sourceData[ch], this->recordLength);
-                StreamingHeader_t * hp = (StreamingHeader_t *)h[ch];
+                short * dp = (short*)(d[ch]);
+                memcpy(&(dp[i*this->recordLength]), this->sourceData[ch], this->recordLength*sizeof(short));
+                StreamingHeader_t * hp = (StreamingHeader_t *)(h[ch]);
                 hp[i].Channel = ch;
                 hp[i].RecordLength = this->recordLength;
+                hp[i].RecordNumber = this->recordNumber++;
             }
             samplesAdded[ch] = rcount*this->recordLength;
-            headersAdded[ch] = rcount;
+            headersAdded[ch] = rcount; /*
+            StreamingHeader_t * hp = (StreamingHeader_t *)(h[ch]);
+            hp[0].Channel = ch;
+            hp[0].RecordLength = this->recordLength;
+            hp[0].RecordNumber = this->recordNumber++;
+            samplesAdded[ch] = this->recordLength;
+            headersAdded[ch] = 1;*/
         }
         headerStatus[ch] = 1;
 
