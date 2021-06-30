@@ -112,7 +112,7 @@ void ChannelConfiguration::setInputRange(INPUT_RANGES e)
 short ChannelConfiguration::getDCBiasedTriggerValue()
 {
 
-    int value =  this->getCurrentDigitalOffset()+this->dcBiasCode+this->triggerLevelCode;
+    int value =  this->getCurrentBaseDCOffset()+this->dcBiasCode+this->triggerLevelCode;
     int clamped = std::max(SHRT_MIN, std::min(value, SHRT_MAX));
     if(clamped != value)
     {

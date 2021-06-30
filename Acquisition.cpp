@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
+#include <climits>
 Acquisition::Acquisition(
     std::shared_ptr<ApplicationConfiguration> appConfig,
     std::shared_ptr<ADQInterface> adqDevice)
@@ -98,9 +99,11 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
         providedConfig->getCurrentChannelConfig().inputRangeFloat,
         &(providedConfig->getCurrentChannelConfig().inputRangeFloat))
     ) {spdlog::error("SetInputRange failed."); return false;};
+    int totalBias = providedConfig->getCurrentChannelConfig().dcBiasCode + providedConfig->getCurrentChannelConfig().getCurrentBaseDCOffset();
+    int clampedBias = std::max(SHRT_MIN, std::min(totalBias, SHRT_MAX));
     if(!this->adqDevice->SetAdjustableBias(
         adqChannelIndex,
-        providedConfig->getCurrentChannelConfig().dcBiasCode + providedConfig->getCurrentChannelConfig().getCurrentBaseDCOffset())
+        clampedBias)
     ) {spdlog::error("SetAdjustableBias failed."); return false;};
     if(!this->adqDevice->SetTransferBuffers(
         providedConfig->transferBufferCount,

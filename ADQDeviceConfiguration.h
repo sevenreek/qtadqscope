@@ -76,7 +76,7 @@ public:
     int triggerLevelReset = 0;
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     TRIGGER_MODES triggerMode = TRIGGER_MODES::SOFTWARE;
-    unsigned long recordLength = 128;
+    unsigned int recordLength = 128;
     unsigned int recordCount = -1;  // -1 is infty
     unsigned long pretrigger = 0;
     unsigned long triggerDelay = 0;

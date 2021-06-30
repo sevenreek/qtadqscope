@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>964</width>
-    <height>661</height>
+    <width>1160</width>
+    <height>813</height>
    </rect>
   </property>
   <property name="font">
@@ -1091,6 +1091,16 @@
                </item>
               </widget>
              </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="limitRecordsCB">
+               <property name="toolTip">
+                <string>The number of records to acquire might be limited. In that case set the Record count below to the desired value. Records cannot be limited in free running mode.</string>
+               </property>
+               <property name="text">
+                <string>Limit records</string>
+               </property>
+              </widget>
+             </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_24">
                <property name="font">
@@ -1117,20 +1127,13 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QCheckBox" name="limitRecordsCB">
-               <property name="toolTip">
-                <string>The number of records to acquire might be limited. In that case set the Record count below to the desired value. Records cannot be limited in free running mode.</string>
-               </property>
-               <property name="text">
-                <string>Limit records</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="1">
-              <widget class="QLabel" name="label_12">
+              <widget class="QPushButton" name="singleShot">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
-                <string/>
+                <string>Single shot</string>
                </property>
               </widget>
              </item>
@@ -1160,8 +1163,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>964</width>
-     <height>25</height>
+     <width>1160</width>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConfiguration">

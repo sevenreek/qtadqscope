@@ -10,7 +10,7 @@ DMAChecker::DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_p
 
 void DMAChecker::runLoop()
 {
-    this->lastBuffers = this->writeBuffers->buffers[0];
+    this->totalRecordsGathered = 0;
     if(this->loopActive)
     {
         spdlog::critical("DMA Checker loop already active.");
@@ -29,18 +29,12 @@ void DMAChecker::runLoop()
         /*
         if(buffersFilled)
         {
-            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
+
         }
-        else if(std::chrono::system_clock::now()
-            > this->lastFilledBufferReceivedOn + std::chrono::milliseconds(flushTimeoutMs))
-        {
-            spdlog::info("Flushing DMA buffers.");
-            this->adqDevice->FlushDMA();
-            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
-        }*/
+        */
         if(buffersFilled >= this->transferBufferCount-1) {
             if(this->adqDevice->GetStreamOverflow()) {
-                spdlog::error("STREAM OVERFLOWING! Some samples will be lost!", buffersFilled);
+                spdlog::error("STREAM OVERFLOW! Some samples will be lost!");
             }
             else {
                 spdlog::warn("Filled {}/{} DMA buffers. Overflow likely soon!", buffersFilled, this->transferBufferCount);
@@ -49,11 +43,14 @@ void DMAChecker::runLoop()
         if(buffersFilled)
         {
             emit this->onBuffersFilled(buffersFilled);
-        } else if(this->lastFilledBufferCount == 0)
+            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
+        }/* else if(std::chrono::system_clock::now()
+            > this->lastFilledBufferReceivedOn + std::chrono::milliseconds(this->flushTimeout))
         {
-            QThread::msleep(SLEEP_TIME);
-            //this->adqDevice->FlushDMA();
-        }
+           //spdlog::info("Flushing DMA buffers.");
+           this->adqDevice->FlushDMA();
+           this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
+        }*/
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
         {
             StreamingBuffers* sbuf = nullptr;

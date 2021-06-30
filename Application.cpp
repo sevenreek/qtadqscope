@@ -558,43 +558,48 @@ void Application::changeTriggerMode(int index) {
         this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
         this->mainWindow.ui->limitRecordsCB->setCheckState(Qt::CheckState::Unchecked);
         this->mainWindow.ui->limitRecordsCB->setEnabled(false);
+        this->mainWindow.ui->recordCountInput->setEnabled(false);
         this->adqDevice->SetTriggerMode(this->config->getCurrentChannelConfig().triggerMode);
         this->config->getCurrentChannelConfig().isContinuousStreaming = true;
-    }
-    else if(txt == "SOFTWARE")
-    {
-        spdlog::debug("Trigger mode set to SOFTWARE");
-        this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
-        this->mainWindow.ui->limitRecordsCB->setEnabled(true);
-        this->adqDevice->SetTriggerMode(this->config->getCurrentChannelConfig().triggerMode);
-        this->config->getCurrentChannelConfig().isContinuousStreaming = false;
-    }
-    else if (txt == "LEVEL")
-    {
-        spdlog::debug("Trigger mode set to LEVEL");
-        this->mainWindow.ui->limitRecordsCB->setEnabled(true);
-        this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::LEVEL;
-        this->adqDevice->SetTriggerMode(this->config->getCurrentChannelConfig().triggerMode);
-        this->config->getCurrentChannelConfig().isContinuousStreaming = false;
-    }
-    else if (txt == "EXTERNAL")
-    {
-        spdlog::warn("Trigger mode set to EXTERNAL. This feature is experimental.");
-        this->mainWindow.ui->limitRecordsCB->setEnabled(true);
-        this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::EXTERNAL;
-        this->adqDevice->SetTriggerMode(this->config->getCurrentChannelConfig().triggerMode);
-        this->config->getCurrentChannelConfig().isContinuousStreaming = false;
+        this->config->getCurrentChannelConfig().recordCount = -1;
     }
     else
     {
-        spdlog::error("{} trigger mode is currently unsupported.", txt.toStdString());
+        if(txt == "SOFTWARE")
+        {
+            spdlog::debug("Trigger mode set to SOFTWARE");
+            this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
+
+        }
+        else if (txt == "LEVEL")
+        {
+            spdlog::debug("Trigger mode set to LEVEL");
+            this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::LEVEL;
+        }
+        else if (txt == "EXTERNAL")
+        {
+            spdlog::warn("Trigger mode set to EXTERNAL. This feature is experimental.");
+            this->config->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::EXTERNAL;
+        }
+        else
+        {
+            spdlog::error("{} trigger mode is currently unsupported.", txt.toStdString());
+        }
+        this->mainWindow.ui->limitRecordsCB->setEnabled(true);
+        this->mainWindow.ui->recordCountInput->setEnabled(true);
+        this->adqDevice->SetTriggerMode(this->config->getCurrentChannelConfig().triggerMode);
+        this->config->getCurrentChannelConfig().isContinuousStreaming = false;
+        if(this->mainWindow.ui->limitRecordsCB->checkState())
+        {
+            this->config->getCurrentChannelConfig().recordCount =
+                this->mainWindow.ui->recordCountInput->value();
+        }
     }
 }
 void Application::changeLimitRecords(int state)
 {
     if(state) // Checked or Partially checked
     {
-
         this->config->getCurrentChannelConfig().recordCount = this->mainWindow.ui->recordCountInput->value();
         this->mainWindow.ui->recordCountInput->setEnabled(true);
     }
@@ -727,7 +732,7 @@ void Application::changeFiletype(int state)
 
 }
 void Application::primaryButtonPressed() {
-    spdlog::debug("Primary button pressed");
+    //spdlog::debug("Primary button pressed");
     if(this->acquisition == nullptr)
     {
         spdlog::error("Acquisition not created.");
@@ -789,6 +794,7 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
             this->mainWindow.ui->streamStartStopButton->setEnabled(true);
             this->mainWindow.ui->streamStartStopButton->setText("Start");
             this->mainWindow.ui->analysisSettingsContainer->setEnabled(true);
+            this->mainWindow.ui->singleShot->setEnabled(true);
         }
         break;
         case ACQUISITION_STATES::STOPPING:
@@ -799,7 +805,7 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
         break;
         case ACQUISITION_STATES::RUNNING:
         {
-
+            this->mainWindow.ui->singleShot->setEnabled(false);
         }
         break;
         default:

@@ -14,7 +14,10 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
     Application app(w);
-    app.start(argc, argv);
+    if(app.start(argc, argv) == -1)
+    {
+        return -1;
+    }
     spdlog::info("Starting");
     return a.exec();
 }

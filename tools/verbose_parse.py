@@ -102,6 +102,7 @@ if __name__ == '__main__':
                     break
                 head = MinifiedRecordHeader.from_buffer_copy(bhead)
                 # do anything else you need with the header
+                print('#{} {}ps'.format(head.recordNumber, head.timestamp*125))
                 record_length = head.recordLength
                 
             bsamples = f.read(record_length*ct.sizeof(ct.c_int16))

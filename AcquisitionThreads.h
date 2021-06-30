@@ -8,6 +8,7 @@
 #endif
 #include <QObject>
 #include "BufferProcessor.h"
+#include <chrono>
 #define SLEEP_TIME 3
 class DMAChecker : public QObject
 {
@@ -18,8 +19,10 @@ private:
     std::shared_ptr<ADQInterface> adqDevice;
     unsigned long transferBufferCount;
     StreamingHeader_t lastHeaders[MAX_NOF_CHANNELS];
-    StreamingBuffers* lastBuffers = nullptr;
-    unsigned long long lastFilledBufferCount = 1;
+    unsigned int lastFilledBufferCount = 1;
+    unsigned long long totalRecordsGathered = 0;
+    std::chrono::high_resolution_clock::time_point lastFilledBufferReceivedOn;
+    unsigned int flushTimeout = 25;
 public:
     DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
 

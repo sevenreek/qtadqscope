@@ -126,23 +126,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             this->recordBufferLength[ch] += unparsedSamplesInBuffer;
             unparsedSamplesInBuffer = 0;
         }
-        /*
-        if(completedHeaders<buffers.nof_headers[ch])
-        {
-            // copy the incomplete header
-            // THIS WILL ACTUALLY NOT WORK PROPERLY DUE TO THE USE OF A CIRCULAR BUFFER
-            // WRITE BUFFERS. WHENEVER AN INCOMPLETE HEADER IS ADDED THE COMPLETED ONE WILL BE MANGLED
-            // THERE MIGHT BE A CHANCE TO GET THIS WORKING IF IT IS IMPLEMENTED
-            // SOMEWHERE NEAR THE WRITEBUFFERS CLASS
 
-            std::memcpy(
-               &(buffers.headers[ch][0]),
-               &(buffers.headers[ch][completedHeaders]),
-               sizeof(StreamingHeader_t)
-           );
-
-
-        }*/
 
 
     }
