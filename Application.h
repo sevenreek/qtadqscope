@@ -119,6 +119,7 @@ public slots:
 
     void openCalibrateDialog();
     void useCalculatedOffset(CALIBRATION_MODES mode, int offset);
+
 };
 
 #endif // APPLICATION_H

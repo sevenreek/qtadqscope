@@ -715,6 +715,9 @@
              <property name="suffix">
               <string>ms</string>
              </property>
+             <property name="minimum">
+              <number>50</number>
+             </property>
              <property name="maximum">
               <number>2147483647</number>
              </property>
@@ -1164,7 +1167,7 @@
      <x>0</x>
      <y>0</y>
      <width>1160</width>
-     <height>30</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConfiguration">

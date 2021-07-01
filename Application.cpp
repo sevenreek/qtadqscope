@@ -97,14 +97,11 @@ void Application::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
 
 void Application::setUI()
 {
-
     // This is a temporary(hopefully) hack.
     int actualChannel = this->config->getCurrentChannel();
     this->mainWindow.ui->channelComboBox->setCurrentIndex((this->config->getCurrentChannel()+1)%MAX_NOF_CHANNELS);
     this->mainWindow.ui->channelComboBox->setCurrentIndex(actualChannel);
     this->changeDMABufferCount(this->config->transferBufferCount);
-
-
 }
 
 

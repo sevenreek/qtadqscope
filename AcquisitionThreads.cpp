@@ -43,14 +43,14 @@ void DMAChecker::runLoop()
         if(buffersFilled)
         {
             emit this->onBuffersFilled(buffersFilled);
-            this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
-        }/* else if(std::chrono::system_clock::now()
-            > this->lastFilledBufferReceivedOn + std::chrono::milliseconds(this->flushTimeout))
+            this->nextBufferCheckTime = std::chrono::system_clock::now() + std::chrono::milliseconds(this->flushTimeout);
+        } else if(std::chrono::system_clock::now()
+            > this->nextBufferCheckTime)
         {
            //spdlog::info("Flushing DMA buffers.");
            this->adqDevice->FlushDMA();
-           this->lastFilledBufferReceivedOn = std::chrono::system_clock::now();
-        }*/
+           this->nextBufferCheckTime = std::chrono::system_clock::now() + std::chrono::milliseconds(this->flushTimeout);
+        }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
         {
             StreamingBuffers* sbuf = nullptr;

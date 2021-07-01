@@ -21,7 +21,7 @@ private:
     StreamingHeader_t lastHeaders[MAX_NOF_CHANNELS];
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;
-    std::chrono::high_resolution_clock::time_point lastFilledBufferReceivedOn;
+    std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
     unsigned int flushTimeout = 25;
 public:
     DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
