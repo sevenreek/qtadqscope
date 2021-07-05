@@ -97,6 +97,10 @@ set(PROJECT_SOURCES
         CalibrationTable.h
         CalibrationTable.cpp
         MinifiedRecordHeader.h
+        QADQDevice.cpp
+        QADQDevice.h
+        QADQConfig.cpp
+        QADQConfig.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
