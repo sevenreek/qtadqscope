@@ -17,7 +17,7 @@ class StreamingBuffers {
   unsigned int      nof_samples[MAX_NOF_CHANNELS] = {0,0,0,0};
   unsigned int      header_status[MAX_NOF_CHANNELS] = {0,0,0,0};
   short             *data[MAX_NOF_CHANNELS] = {nullptr};
-  StreamingHeader_t *headers[MAX_NOF_CHANNELS] = {nullptr};
+  ADQRecordHeader *headers[MAX_NOF_CHANNELS] = {nullptr};
 };
 
 class WriteBuffers {
@@ -32,8 +32,8 @@ public:
   std::vector<StreamingBuffers*> buffers = {nullptr};
   Semaphore sWrite;
   Semaphore sRead;
-  StreamingBuffers* awaitWrite(int timeout);
-  StreamingBuffers* awaitRead(int timeout);
+  StreamingBuffers* awaitWrite(int timeout=-1);
+  StreamingBuffers* awaitRead(int timeout=-1);
   int getWriteCount();
   int getReadCount();
   void notifyWritten();

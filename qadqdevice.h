@@ -4,22 +4,44 @@
 #include <QObject>
 #include "ADQAPI.h"
 #include <memory>
-#include "QADQConfig.h"
 #include "StreamingBuffers.h"
 #include <QTimer>
+#include <QThread>
+#include "spdlog/spdlog.h"
+#include <vector>
+#include "RecordProcessor.h"
+#include <QThreadPool>
+#include "ApplicationConfiguration.h"
+#include "BufferProcessor.h"
+
+
 
 class QADQDevice;
+
+class QADQStreamProcessor : public QObject
+{
+    Q_OBJECT
+private:
+    bool loopActive = false;
+    WriteBuffers &writeBuffers;
+    unsigned long transferBufferCount;
+    BufferProcessor &processor;
+public:
+    QADQStreamProcessor(WriteBuffers &writeBuffers, BufferProcessor &processor);
+    void run(bool triggered);
+    void stop();
+signals:
+    void onStopped();
+};
 
 class QAcquisition : public QObject
 {
     Q_OBJECT
 public:
     enum STATES {
-        READY,
-        CONFIGURING,
+        STOPPED,
         RUNNING,
-        DISARMED,
-        FORCESTOPPED
+        STOPPING
     };
     enum RESULT {
         FINISHED,
@@ -28,16 +50,32 @@ public:
         OTHER_ERROR
     };
     QAcquisition(QADQDevice &device, WriteBuffers &writeBuffers);
+    class SmartBuffer {
+        // adheres to RAII
+        WriteBuffers &wb;
+        StreamingBuffers &sb;
+    public:
+        SmartBuffer(WriteBuffers &wb, StreamingBuffers &sb);
+        ~SmartBuffer();
+        StreamingBuffers &data();
+    };
+    std::unique_ptr<SmartBuffer> requestBuffer(unsigned int timeout);
+    QAcquisition::STATES getState() const;
+public slots:
+    bool run(unsigned int bufferCount, unsigned int dmaFlushDuration, unsigned int duration=0);
+    bool stop(bool dumpUnprocessed=false);
+
 private:
     ADQRecordHeader incompleteHeaders[MAX_NOF_CHANNELS];
-    QTimer timer;
-    QAcquisition::STATES state = STATES::READY;
-    WriteBuffers &writeBuffers;
+    bool loopDMA = false;
+    QElapsedTimer acquisitionTimer;
+    QElapsedTimer dmaFlushTimer;
+    QAcquisition::STATES state = STATES::STOPPED;
     QADQDevice &device;
-    bool run(unsigned int duration=0);
-    bool stop(bool dumpUnprocessed=false);
+    WriteBuffers &writeBuffers;
+    void setState(STATES state);
 signals:
-    void onStart();
+    void onStateChanged(STATES state);
     void onStopped(RESULT res);
     void onBuffersFilled(unsigned long count);
     void onBufferWritten();
@@ -47,60 +85,62 @@ class QADQDevice : public QObject
 {
     Q_OBJECT
 private:
-    unsigned int deviceNumber = 1;
-    float obtainedInputRange[MAX_NOF_CHANNELS];
-    ADQInterface * device;
-    std::unique_ptr<QADQConfiguration> activeConfiguration;
-    std::unique_ptr<QADQConfiguration> nextConfiguration;
-    std::shared_ptr<WriteBuffers> writeBuffers;
-    std::unique_ptr<QAcquisition> acquisition;
-    QADQDevice();
+    unsigned int deviceNumber;
+    void * adqCU;
+    std::shared_ptr<ADQInterface> device;
+    bool configured = false;
+    ApplicationConfiguration & appConfig;
+    WriteBuffers writeBuffers;
+    QAcquisition acquisition;
 public:
     struct BufferDimensions{
         unsigned int count;
         unsigned int size;
     };
-    static QADQDevice *create(void* adqapi, QThread *thread=nullptr);
+    QADQDevice(void* adqapi, unsigned int deviceNumber, ApplicationConfiguration &conf, QThread *thread=nullptr);
 
     // ACQUISITION
     bool configureAcquisition();
-    bool startAcquisition();
+    bool overrideAcquisition(ApplicationConfiguration &conf);
+    bool startAcquisition(unsigned int bufferCount, unsigned int dmaFlush, unsigned int duration);
     bool stopAcquisition(bool dumpData=false);
     QAcquisition::STATES getAcquisitionState();
-    bool setExclusiveChannel(int zeroIndexedChannel);
-    bool setChannelMask(unsigned char mask);
-    unsigned char getChannelMask();
+
+    // STREAMING
+    bool startStreaming();
+    bool stopStreaming();
 
     // TRIGGER
     TRIGGER_MODES getTriggerMode(); bool setTriggerMode(TRIGGER_MODES mode);
     int getTriggerLevel();          bool setTriggerLevel(int level);
     TRIGGER_EDGES getTriggerEdge(); bool setTriggerEdge(TRIGGER_EDGES edges);
-    int getPretrigger();            bool setPretrigger(int pretrigger);
-    int getTriggerDelay();          bool setTriggerDelay(int delay);
-    int getTriggerReset();          bool setTriggerReset(int reset);
-    bool enableTriggered();
-    bool enableContinuous();
-    bool isTriggeredStreaming();
-
-    // RECORD
-    unsigned int getRecordLength(); bool setRecordLength(unsigned int length);
-    unsigned int getRecordCount();  bool setRecordCount(unsigned int count);
-
-    // BUFFERS
-    BufferDimensions getTransferBuffersDimensions();
-    bool setTransferBuffersDimensions(unsigned int count, unsigned int size);
-    unsigned int getQueueSize(); bool setQueueSize(unsigned int length);
+                                    bool setTriggerReset(int reset);
+    unsigned char getTriggerMask(); bool setTriggerMask(unsigned char mask);
+    bool SWTrig();
 
     // DMA
     bool flushDMA();
     unsigned int getFilledBuffersCount();
     bool isOverflowed();
-    StreamingBuffers * getNextBuffer();
+    bool acquireBuffer(StreamingBuffers& to);
 
+    // INPUT
+    float getInputRangeMilvolts(int ch);
+    bool setInputRange(int ch, float target, float &result);
+    int getDCBias(int ch);       bool setDCBias(int ch, int offset);
+    bool setGainAndOffset(int ch, int gain, int offset);
+
+    // USER LOGIC
+    bool writeUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int &retval);
 
     // HELPERS
-    int milivoltsToCodes(float mv);
-    float codesToMilivolts(int codes);
+    int milivoltsToCodes(int ch, float mv);
+    float codesToMilivolts(int ch, int codes);
+
+    std::unique_ptr<QAcquisition::SmartBuffer> requestBuffer(unsigned int timeout);
+
+signals:
+    void onAcquisitionStateChanged(QAcquisition::STATES state);
 };
 
 #endif // QADQDEVICE_H

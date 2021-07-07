@@ -1,35 +1,8 @@
 #ifndef QADQCONFIG_H
 #define QADQCONFIG_H
+#include "CalibrationTable.h"
 
-enum TRIGGER_MODES
-{
-    SOFTWARE = 1,
-    EXTERNAL = 2,
-    LEVEL = 3,
-    INTERNAL = 4,
-    EXTERNAL_2 = 7,
-    EXTERNAL_3 = 8
-};
 
-enum TRIGGER_EDGES
-{
-    FALLING = 0,
-    RISING = 1,
-    BOTH = 2
-};
-
-enum INPUT_RANGES
-{
-    MV_100 = 0,
-    MV_250 = 1,
-    MV_500 = 2,
-    MV_1000 = 3,
-    MV_2000 = 4,
-    MV_5000 = 5,
-    MV_10000 = 6
-};
-const int INPUT_RANGE_COUNT = (7);
-const float INPUT_RANGE_VALUES[INPUT_RANGE_COUNT] = {100, 250, 500, 1000, 2000, 5000, 10000};
 class BufferConfiguration
 {
     unsigned long long filesize = 1ull*1024ull*1024ull*1024ull;
@@ -50,25 +23,71 @@ public:
 class TriggerConfiguration
 {
     bool enabled = false;
-    TRIGGER_MODES mode;
-    TRIGGER_EDGES edge;
+    TRIGGER_MODES mode = TRIGGER_MODES::INTERNAL;
+    TRIGGER_EDGES edge = TRIGGER_EDGES::FALLING;
     int level = 0;
     int reset = 0;
+    unsigned char mask = 0b0001;
+public:
+    bool getEnabled() const;
+    void setEnabled(bool value);
+    TRIGGER_MODES getMode() const;
+    void setMode(const TRIGGER_MODES &value);
+    TRIGGER_EDGES getEdge() const;
+    void setEdge(const TRIGGER_EDGES &value);
+    int getLevel() const;
+    void setLevel(int value);
+    int getReset() const;
+    void setReset(int value);
+    unsigned char getMask() const;
+    void setMask(unsigned char value);
 };
 class RecordConfiguration
 {
-    unsigned int length;
-    unsigned int count;
+    unsigned int length = 128;
+    unsigned int count = -1; // -1 for infinity
     unsigned int pretrigger = 0;
     unsigned int delay = 0;
+
+public:
+    unsigned int getLength() const;
+    void setLength(unsigned int value);
+    unsigned int getCount() const;
+    void setCount(unsigned int value);
+    unsigned int getPretrigger() const;
+    void setPretrigger(unsigned int value);
+    unsigned int getDelay() const;
+    void setDelay(unsigned int value);
 };
 class InputConfiguration
 {
-    int analogOffset = 0;
-    int dcShift = 0;
-    INPUT_RANGES range;
-    int digitalGain = 1024;
-    int digitaalOffset = 0;
+    unsigned char userLogicBypass = 0b11;
+    float dcShift = 0;
+    INPUT_RANGES range = INPUT_RANGES::MV_5000;
+
+public:
+    float getInputRangeMilivolts();
+    float getDcShift() const;
+    void setDcShift(float value);
+    INPUT_RANGES getRange() const;
+    void setRange(const INPUT_RANGES &value);
+    unsigned char getUserLogicBypass() const;
+    void setUserLogicBypass(unsigned char value);
+};
+
+class TimingConfiguration
+{
+    unsigned short sampleSkip = 1;
+    CLOCK_SOURCES clockSource = CLOCK_SOURCES::INTSRC_INTREF_10MHZ;
+    unsigned int duration = 0;
+
+public:
+    unsigned short getSampleSkip() const;
+    void setSampleSkip(unsigned short value);
+    CLOCK_SOURCES getClockSource() const;
+    void setClockSource(const CLOCK_SOURCES &value);
+    unsigned int getDuration() const;
+    void setDuration(unsigned int value);
 };
 
 class QADQConfiguration
@@ -77,13 +96,17 @@ public:
     unsigned char getChannelMask() const;
     void setChannelMask(unsigned char value);
 
-    BufferConfiguration buffers() const;
+    BufferConfiguration &buffers() ;
 
-    RecordConfiguration records() const;
+    RecordConfiguration &records() ;
 
-    InputConfiguration input() const;
+    InputConfiguration &input() ;
 
-    TriggerConfiguration trigger() const;
+    TriggerConfiguration &trigger() ;
+
+    TimingConfiguration &timing() ;
+
+    CalibrationTable &calibrations();
 
 private:
     unsigned char channelMask = 0b0000;
@@ -92,6 +115,8 @@ private:
     RecordConfiguration _records;
     InputConfiguration _input;
     TriggerConfiguration _trigger;
+    TimingConfiguration _timing;
+    CalibrationTable _calibrationTable;
 };
 
 #endif // QADQCONFIG_H

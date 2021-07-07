@@ -3,7 +3,8 @@
 
 #include <QDialog>
 #include "CalibrationTable.h"
-#include "Acquisition.h"
+#include "qadqdevice.h"
+#include <QSpinBox>
 #include "SignalParameterComputer.h"
 #include "spdlog/spdlog.h"
 #include <memory>
@@ -27,15 +28,15 @@ class FullCalibrationDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit FullCalibrationDialog(std::shared_ptr<ApplicationConfiguration> appConfig, std::shared_ptr<Acquisition> acq, QWidget *parent = nullptr);
+    explicit FullCalibrationDialog(ApplicationConfiguration &appConfig, QADQDevice &adqdevice, QWidget *parent = nullptr);
     ~FullCalibrationDialog();
     Ui::FullCalibrationDialog *ui;
 
 private:
-    std::shared_ptr<ApplicationConfiguration> appConfig;
-    std::shared_ptr<ApplicationConfiguration> calibrationConfiguration;
+    ApplicationConfiguration &appConfig;
+    QADQDevice &adqdevice;
+    ApplicationConfiguration calibrationConfiguration;
     std::shared_ptr<SignalParameterComputer> parameterComputer;
-    std::shared_ptr<Acquisition> acquisition;
     std::vector<FullCalibrationSetup> setups;
     QSpinBox * analogValues[MAX_NOF_CHANNELS];
     QSpinBox * digitalValues[MAX_NOF_CHANNELS];
@@ -51,7 +52,7 @@ private:
     void appendStage(int ch, int inrange, int mode);
     CALIBRATION_MODES mode;
 public slots:
-    void onStateChanged(ACQUISITION_STATES newState);
+    void onStateChanged(QAcquisition::STATES newState);
     void apply();
     void start();
     void load();

@@ -32,6 +32,7 @@ public:
     unsigned int getCurrentChannel();
     void toFile(const char* str);
     bool fromFile(const char* str);
+    unsigned char getChannelMask();
 
 };
 

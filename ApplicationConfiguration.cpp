@@ -65,3 +65,13 @@ bool ApplicationConfiguration::fromFile(const char* str)
     configStream.close();
     return true;
 }
+
+unsigned char ApplicationConfiguration::getChannelMask()
+{
+    unsigned char mask = 1<<this->channel;
+    if(this->secondChannel != CHANNEL_DISABLED)
+    {
+        mask |= 1<<this->secondChannel;
+    }
+    return mask;
+}

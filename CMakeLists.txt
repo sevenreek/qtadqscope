@@ -101,6 +101,7 @@ set(PROJECT_SOURCES
         QADQDevice.h
         QADQConfig.cpp
         QADQConfig.h
+        DeviceConstants.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

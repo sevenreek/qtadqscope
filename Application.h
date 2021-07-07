@@ -6,7 +6,7 @@
 #else
     #include "ADQAPI.h"
 #endif
-#include "Acquisition.h"
+#include "qadqdevice.h"
 #include <memory>
 #include "ApplicationConfiguration.h"
 #include "ScopeUpdater.h"
@@ -24,18 +24,20 @@ private:
     // Control unit created by the appropriate ADQAPI function.
     void* adqControlUnit;
     std::shared_ptr<ApplicationConfiguration> config;
-    std::shared_ptr<ADQInterface> adqDevice;
     std::unique_ptr<QTimer> updateTimer;
     // Instance of object responsible for updating the plot in real time.
     std::shared_ptr<ScopeUpdater> scopeUpdater;
     // Currently used instance of file writer object that stores the incoming data.
     std::shared_ptr<FileWriter> fileWriter;
     // Pointer to the helper object Acquisition.
-    std::shared_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
     std::unique_ptr<FullCalibrationDialog> autoCalibrateDialog;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
+    std::unique_ptr<BaseBufferProcessor> bufferProcessor;
+    std::shared_ptr<QADQDevice> adqDevice;
+    std::unique_ptr<QThread> adqThread;
+    std::unique_ptr<QThread> bufferProcessorThread;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */

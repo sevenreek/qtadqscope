@@ -1,16 +1,16 @@
 #include "FullCalibrationDialog.h"
 #include "ui_FullCalibrationDialog.h"
 
-FullCalibrationDialog::FullCalibrationDialog(std::shared_ptr<ApplicationConfiguration> appConfig, std::shared_ptr<Acquisition> acq, QWidget *parent) :
+FullCalibrationDialog::FullCalibrationDialog(ApplicationConfiguration &appConfig, QADQDevice &adqdevice, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::FullCalibrationDialog)
+    ui(new Ui::FullCalibrationDialog),
+    appConfig(appConfig),
+    adqdevice(adqdevice),
+    calibrationConfiguration(appConfig)
 {
     ui->setupUi(this);
-    this->acquisition = acq;
-    this->calibrationConfiguration = std::make_shared<ApplicationConfiguration>(*(appConfig.get()));
     this->calibrationTable = std::unique_ptr<CalibrationTable>(new CalibrationTable());
-    this->appConfig = appConfig;
-    this->parameterComputer = std::make_shared<SignalParameterComputer>(this->calibrationConfiguration->fileSizeLimit);
+    this->parameterComputer = std::make_shared<SignalParameterComputer>(this->calibrationConfiguration.fileSizeLimit);
     this->ui->startCalibration->connect(
         this->ui->startCalibration,
         &QAbstractButton::pressed,
@@ -66,28 +66,28 @@ void FullCalibrationDialog::changeInputRange(int v)
 
 void FullCalibrationDialog::configureNextStage()
 {
-    this->calibrationConfiguration->setCurrentChannel(this->setups[currentSetupIndex].channel);
-    this->calibrationConfiguration->getCurrentChannelConfig().setInputRange((INPUT_RANGES)this->setups[currentSetupIndex].inputRange);
-    this->calibrationConfiguration->getCurrentChannelConfig().setCurrentBaseDCOffset(
+    this->calibrationConfiguration.setCurrentChannel(this->setups[currentSetupIndex].channel);
+    this->calibrationConfiguration.getCurrentChannelConfig().setInputRange((INPUT_RANGES)this->setups[currentSetupIndex].inputRange);
+    this->calibrationConfiguration.getCurrentChannelConfig().setCurrentBaseDCOffset(
         calibrationTable->analogOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
     );
-    this->calibrationConfiguration->getCurrentChannelConfig().setCurrentDigitalOffset(
+    this->calibrationConfiguration.getCurrentChannelConfig().setCurrentDigitalOffset(
         calibrationTable->digitalOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
     );
-    this->calibrationConfiguration->getCurrentChannelConfig().sampleSkip = this->ui->sampleSkip->value();
+    this->calibrationConfiguration.getCurrentChannelConfig().sampleSkip = this->ui->sampleSkip->value();
 
-    this->calibrationConfiguration->transferBufferCount = 16;
-    this->calibrationConfiguration->transferBufferSize = 4ULL*1024ULL*1024ULL;
-    this->calibrationConfiguration->writeBufferCount = 64;
+    this->calibrationConfiguration.transferBufferCount = 16;
+    this->calibrationConfiguration.transferBufferSize = 4ULL*1024ULL*1024ULL;
+    this->calibrationConfiguration.writeBufferCount = 64;
 
-    this->calibrationConfiguration->getCurrentChannelConfig().dcBias = 0;
-    this->calibrationConfiguration->getCurrentChannelConfig().dcBiasCode = 0;
-    this->calibrationConfiguration->getCurrentChannelConfig().isContinuousStreaming = true;
-    this->calibrationConfiguration->getCurrentChannelConfig().recordCount = -1;
-    this->calibrationConfiguration->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
-    this->calibrationConfiguration->getCurrentChannelConfig().updateScope = false;
-    this->calibrationConfiguration->getCurrentChannelConfig().userLogicBypass = 0b1111;
-    this->calibrationConfiguration->secondChannel = CHANNEL_DISABLED;
+    this->calibrationConfiguration.getCurrentChannelConfig().dcBias = 0;
+    this->calibrationConfiguration.getCurrentChannelConfig().dcBiasCode = 0;
+    this->calibrationConfiguration.getCurrentChannelConfig().isContinuousStreaming = true;
+    this->calibrationConfiguration.getCurrentChannelConfig().recordCount = -1;
+    this->calibrationConfiguration.getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
+    this->calibrationConfiguration.getCurrentChannelConfig().updateScope = false;
+    this->calibrationConfiguration.getCurrentChannelConfig().userLogicBypass = 0b1111;
+    this->calibrationConfiguration.secondChannel = CHANNEL_DISABLED;
 }
 void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
 {
@@ -182,12 +182,12 @@ bool FullCalibrationDialog::runStage()
         )
     );
     this->configureNextStage();
-    this->parameterComputer->startNewStream(*(this->calibrationConfiguration));
+    this->parameterComputer->startNewStream((this->calibrationConfiguration));
     std::list<std::shared_ptr<RecordProcessor>> rps;
     rps.push_back(this->parameterComputer);
     unsigned long durationMs = this->ui->calibrationDuration->value();
     bool success = true;
-    success &= this->acquisition->configure(this->calibrationConfiguration, rps);
+    success &= this->adqdevice.
     if(!success) {
         spdlog::debug("Acquisition configuration failed.");
         this->ui->hintLabel->setText("Calibration failed.");

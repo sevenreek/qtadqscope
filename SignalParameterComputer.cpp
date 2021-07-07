@@ -24,7 +24,7 @@ void SignalParameterComputer::startNewStream(ApplicationConfiguration& config)
         this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
     }
 }
-bool SignalParameterComputer::writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length)
+bool SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
@@ -43,7 +43,7 @@ bool SignalParameterComputer::writeRecord(StreamingHeader_t* header, short* buff
         return true;
     }
 }
-bool SignalParameterComputer::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
+bool SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(header == NULL) // if that is the case it is a continuous (no trigger and headers) stream
     {

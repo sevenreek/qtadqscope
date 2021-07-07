@@ -21,7 +21,7 @@ void StreamingBuffers::reallocate(unsigned long bufferSize, unsigned char channe
             {
               spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
             }
-            this->headers[ch] = (StreamingHeader_t*)std::realloc(this->headers[ch], bufferSize);
+            this->headers[ch] = (ADQRecordHeader*)std::realloc(this->headers[ch], bufferSize);
             if(this->headers[ch] == nullptr)
             {
               spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
@@ -76,7 +76,7 @@ WriteBuffers::~WriteBuffers()
   }
   //this->buffers.clear();
 }
-StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
+StreamingBuffers* WriteBuffers::awaitWrite(int timeout)
 {
   if(!this->sWrite.tryAcquire(timeout)) return nullptr;
   //spdlog::debug("Lock on write buffer {} obtained.", this->writePosition);
@@ -84,7 +84,7 @@ StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
   this->writePosition = (this->writePosition+1)%this->bufferCount;
   return this->buffers[returnWritePos];
 }
-StreamingBuffers* WriteBuffers::awaitRead(int timeout=-1)
+StreamingBuffers* WriteBuffers::awaitRead(int timeout)
 {
   if(!this->sRead.tryAcquire(timeout)) return nullptr;
   //spdlog::debug("Lock on read buffer {} obtained.", this->readPosition);

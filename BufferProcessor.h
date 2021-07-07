@@ -25,7 +25,7 @@ private:
     // record completion listeners
     std::list<std::shared_ptr<RecordProcessor>> &recordProcessors;
     // notify record listeners (processors)
-    bool completeRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, char channel);
+    bool completeRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, char channel);
 public:
     BaseBufferProcessor(std::list<std::shared_ptr<RecordProcessor>> &recordProcessors, unsigned long recordLength);
     ~BaseBufferProcessor();
