@@ -58,7 +58,7 @@ void DMAChecker::runLoop()
             > this->nextBufferCheckTime)
         {
            //spdlog::debug("Flushing DMA buffers.");
-           //this->adqDevice->FlushDMA();
+           this->adqDevice->FlushDMA();
            this->nextBufferCheckTime = std::chrono::system_clock::now() + std::chrono::milliseconds(this->flushTimeout);
         }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
