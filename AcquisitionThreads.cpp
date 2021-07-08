@@ -1,6 +1,16 @@
 #include "AcquisitionThreads.h"
 #include "spdlog/spdlog.h"
 #include <QThread>
+unsigned int DMAChecker::getFlushTimeout() const
+{
+    return flushTimeout;
+}
+
+void DMAChecker::setFlushTimeout(unsigned int value)
+{
+    flushTimeout = value;
+}
+
 DMAChecker::DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount)
 {
     this->writeBuffers = writeBuffers;
@@ -47,8 +57,8 @@ void DMAChecker::runLoop()
         } else if(std::chrono::system_clock::now()
             > this->nextBufferCheckTime)
         {
-           //spdlog::info("Flushing DMA buffers.");
-           this->adqDevice->FlushDMA();
+           //spdlog::debug("Flushing DMA buffers.");
+           //this->adqDevice->FlushDMA();
            this->nextBufferCheckTime = std::chrono::system_clock::now() + std::chrono::milliseconds(this->flushTimeout);
         }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start
@@ -59,6 +69,7 @@ void DMAChecker::runLoop()
              if(!this->loopActive)
              {
                  //this->writeBuffers.notifyWritten(); maybe?
+                 if(sbuf != nullptr) this->writeBuffers->notifyRead();
                  goto DMA_CHECKER_LOOP_EXIT;
              }
             } while(sbuf == nullptr);

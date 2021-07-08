@@ -15,6 +15,7 @@
 #include "BuffersDialog.h"
 #include "RegisterDialog.h"
 #include "FullCalibrationDialog.h"
+
 class Application : public QObject
 {
     Q_OBJECT
@@ -24,7 +25,7 @@ private:
     // Control unit created by the appropriate ADQAPI function.
     void* adqControlUnit;
     std::shared_ptr<ApplicationConfiguration> config;
-    std::shared_ptr<ADQInterface> adqDevice;
+    //std::shared_ptr<ADQInterface> adqDevice;
     std::unique_ptr<QTimer> updateTimer;
     // Instance of object responsible for updating the plot in real time.
     std::shared_ptr<ScopeUpdater> scopeUpdater;

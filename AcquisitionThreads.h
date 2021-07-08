@@ -22,9 +22,13 @@ private:
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;
     std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
-    unsigned int flushTimeout = 25;
+    unsigned int flushTimeout = 50;
 public:
     DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
+
+    unsigned int getFlushTimeout() const;
+
+    void setFlushTimeout(unsigned int value);
 
 public slots:
     void setTransferBufferCount(unsigned long count);

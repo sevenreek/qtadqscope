@@ -70,9 +70,12 @@ void ChannelConfiguration::loadFromJSON(json j)
         inputRangeIndex++;
     }
     this->dcBiasCode =          j["offset"];
+    this->dcBias = ADCCodeToMV(this->inputRangeFloat, this->dcBiasCode);
     this->inputRangeEnum =      j["input_range"];
+    this->inputRangeFloat = INPUT_RANGE_VALUES[this->inputRangeEnum];
     this->triggerMode =         j["trigger_mode"];
     this->triggerLevelCode =    j["trigger_level"];
+    this->triggerLevel = ADCCodeToMV(this->inputRangeFloat, this->triggerLevelCode);
     this->triggerEdge =         j["trigger_edge"];
     this->triggerLevelReset =   j["trigger_reset"];
     this->recordLength =        j["record_length"];

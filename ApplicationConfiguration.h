@@ -24,6 +24,8 @@ public:
 
     unsigned long timedRunValue = 0;
 
+    unsigned long dmaCheckMinimumTimeout = 500;
+
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
     LOGGING_LEVELS uiLoggingLevel = LOGGING_LEVELS::DEBUG;
     LOGGING_LEVELS fileLoggingLevel = LOGGING_LEVELS::DEBUG;

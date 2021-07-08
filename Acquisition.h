@@ -18,6 +18,7 @@
 #include <list>
 #include <chrono>
 #include "AcquisitionThreads.h"
+#include "QADQWrapper.h"
 enum ACQUISITION_STATES {
     STOPPED,
     STOPPING,
@@ -35,11 +36,14 @@ protected:
     std::unique_ptr<QTimer> acqusitionTimer;
     std::shared_ptr<ApplicationConfiguration> appConfig;
     std::shared_ptr<ADQInterface> adqDevice;
+    std::shared_ptr<QADQWrapper> adqWrapper;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
     std::shared_ptr<WriteBuffers> writeBuffers;
     std::unique_ptr<DMAChecker> dmaChecker;
     std::shared_ptr<BufferProcessor> bufferProcessor;
     std::unique_ptr<LoopBufferProcessor> bufferProcessorHandler;
+
+    bool streamActive = false;
 
     bool dmaCheckingActive = false;
     bool bufferProcessingActive = false;
@@ -48,7 +52,7 @@ protected:
     bool processingLoopStopped = true;
 
     bool configured = false;
-    QThread dmaCheckingThread;
+    QThread adqThread;
     QThread bufferProcessingThread;
     ACQUISITION_STATES state = ACQUISITION_STATES::STOPPED;
     void stopDMAChecker();
@@ -57,6 +61,7 @@ protected:
     void setState(ACQUISITION_STATES state);
     unsigned long lastBuffersFilled;
     void initialize();
+    bool isStreamFullyStopped();
 public:
     virtual ~Acquisition();
     Acquisition(
@@ -65,7 +70,7 @@ public:
     );
     ACQUISITION_STATES getState();
     bool configure(std::shared_ptr<ApplicationConfiguration> providedConfig, std::list<std::shared_ptr<RecordProcessor>> recordProcessors);
-    bool start(bool needSwTrig);
+    bool start(bool needSwTrig, unsigned int dmaFlushTimeout=100);
     bool startTimed(unsigned long msDuration, bool needSwTrig);
     unsigned long checkDMA();
     std::chrono::time_point<std::chrono::high_resolution_clock> timeStarted;
@@ -74,11 +79,14 @@ public:
     int getReadQueueFill();
     int getWriteQueueFill();
 
+    std::shared_ptr<QADQWrapper> getADQWrapper() const;
+
 public slots:
     bool stop();
     void error();
     void onAcquisitionThreadStopped();
     void onProcessingThreadStopped();
+    void onADQStreamStateChanged(bool running);
     void buffersFilled(unsigned long filled);
     void finishRecordProcessors();
     void setStoppedState();

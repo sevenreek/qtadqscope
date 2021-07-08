@@ -19,9 +19,12 @@ Acquisition::Acquisition(
         this->recordProcessors,
         appConfig->transferBufferSize/sizeof(short)
     ));
-    bufferProcessorHandler = std::unique_ptr<LoopBufferProcessor>(new LoopBufferProcessor(writeBuffers, this->bufferProcessor));
-    bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
-    dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(writeBuffers, adqDevice, appConfig->transferBufferCount));
+    this->bufferProcessorHandler = std::unique_ptr<LoopBufferProcessor>(new LoopBufferProcessor(writeBuffers, this->bufferProcessor));
+    this->bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
+    this->dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(writeBuffers, adqDevice, appConfig->transferBufferCount));
+    this->dmaChecker->moveToThread(&this->adqThread);
+    this->adqWrapper = std::shared_ptr<QADQWrapper>(new QADQWrapper(this->adqDevice));
+    this->adqWrapper->moveToThread(&this->adqThread);
     this->initialize();
 }
 void Acquisition::initialize()
@@ -31,23 +34,33 @@ void Acquisition::initialize()
     connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onLoopStopped, this, &Acquisition::onProcessingThreadStopped);
     connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
 
-    dmaChecker->moveToThread(&this->dmaCheckingThread);
     //connect(&this->dmaCheckingThread, &QThread::finished, dmaChecker.get(), &QObject::deleteLater);
     connect(this, &Acquisition::onStart, dmaChecker.get(), &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker.get(), &DMAChecker::onLoopStopped, this, &Acquisition::onAcquisitionThreadStopped);
     connect(dmaChecker.get(), &DMAChecker::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
     connect(dmaChecker.get(), &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled, Qt::ConnectionType::DirectConnection);
 
+    connect(this->adqWrapper.get(), &QADQWrapper::streamStateChanged, this, &Acquisition::onADQStreamStateChanged);
     bufferProcessingThread.start();
-    dmaCheckingThread.start();
+    adqThread.start();
     this->acqusitionTimer = std::unique_ptr<QTimer>(new QTimer(this));
     this->acqusitionTimer->setSingleShot(true);
     connect(this->acqusitionTimer.get(), &QTimer::timeout, this, [=](){this->stop();});
+}
+
+bool Acquisition::isStreamFullyStopped()
+{
+    return this->dmaLoopStopped && this->processingLoopStopped && !this->streamActive;
 }
 Acquisition::~Acquisition() {
     stopDMAChecker();
     stopProcessor();
     this->joinThreads();
+}
+
+std::shared_ptr<QADQWrapper> Acquisition::getADQWrapper() const
+{
+    return adqWrapper;
 }
 
 void Acquisition::stopDMAChecker()
@@ -58,11 +71,11 @@ void Acquisition::joinThreads()
 {
     this->stopDMAChecker();
     this->stopProcessor();
-    this->dmaCheckingThread.quit();
+    this->adqThread.quit();
     this->bufferProcessingThread.quit();
 
     this->bufferProcessingThread.wait();
-    this->dmaCheckingThread.wait();
+    this->adqThread.wait();
 }
 void Acquisition::stopProcessor()
 {
@@ -70,6 +83,7 @@ void Acquisition::stopProcessor()
 }
 bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedConfig = nullptr, std::list<std::shared_ptr<RecordProcessor>> recordProcessors=std::list<std::shared_ptr<RecordProcessor>>())
 {
+    this->adqDevice->StopStreaming();
     this->recordProcessors = recordProcessors;
     if(providedConfig == nullptr)
         providedConfig = this->appConfig;
@@ -94,17 +108,25 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
             if(!this->adqDevice->BypassUserLogic(i+1, 0)) {spdlog::error("BypassUserLogic failed."); return false;};
         }
     }
+    float res;
+    spdlog::debug("Trying setinputrange ch{}={}", adqChannelIndex, providedConfig->getCurrentChannelConfig().inputRangeFloat);
     if(!this->adqDevice->SetInputRange(
         adqChannelIndex,
         providedConfig->getCurrentChannelConfig().inputRangeFloat,
-        &(providedConfig->getCurrentChannelConfig().inputRangeFloat))
+        &res)
     ) {spdlog::error("SetInputRange failed."); return false;};
+    providedConfig->getCurrentChannelConfig().inputRangeFloat = res;
     int totalBias = providedConfig->getCurrentChannelConfig().dcBiasCode + providedConfig->getCurrentChannelConfig().getCurrentBaseDCOffset();
     int clampedBias = std::max(SHRT_MIN, std::min(totalBias, SHRT_MAX));
     if(!this->adqDevice->SetAdjustableBias(
         adqChannelIndex,
         clampedBias)
     ) {spdlog::error("SetAdjustableBias failed."); return false;};
+    if(!this->adqDevice->SetGainAndOffset(
+        providedConfig->getCurrentChannel()+1,
+        providedConfig->getCurrentChannelConfig().digitalGain,
+        providedConfig->getCurrentChannelConfig().getCurrentDigitalOffset()
+    )) {spdlog::error("SetGainAndOffset failed."); return false;};
     if(!this->adqDevice->SetTransferBuffers(
         providedConfig->transferBufferCount,
         providedConfig->transferBufferSize)
@@ -122,6 +144,7 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
         );*/
         spdlog::info("Configuring continuous streaming with mask {:#b}.", channelMask);
         if(!this->adqDevice->ContinuousStreamingSetup(channelMask)) {spdlog::error("ContinuousStreamingSetup failed."); return false;};
+
     }
     else
     {
@@ -151,14 +174,29 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
 }
 bool Acquisition::startTimed(unsigned long msDuration, bool needSwTrig)
 {
+    unsigned int dmaFlushTimeout = 100;
+    if(msDuration>500)
+    {
+        dmaFlushTimeout = msDuration/5;
+    }
+    else if(msDuration>200)
+    {
+        dmaFlushTimeout = msDuration/2;
+    }
+    else
+    {
+        dmaFlushTimeout = 0.9*msDuration;
+    }
     this->acqusitionTimer->setInterval(msDuration);
     this->acqusitionTimer->start();
-    bool result = this->start(needSwTrig);
+    bool result = this->start(needSwTrig, dmaFlushTimeout);
     if(!result) this->acqusitionTimer->stop();
     return result;
 }
-bool Acquisition::start(bool needSwTrig)
+bool Acquisition::start(bool needSwTrig, unsigned int dmaFlushTimeout)
 {
+    this->dmaChecker->setFlushTimeout(dmaFlushTimeout);
+    if(this->state == ACQUISITION_STATES::RUNNING) return false;
     this->setState(ACQUISITION_STATES::RUNNING);
     /*
     if(!this->adqDevice->FlushDMA())
@@ -190,14 +228,14 @@ bool Acquisition::start(bool needSwTrig)
 }
 bool Acquisition::stop()
 {
-    this->adqDevice->StopStreaming();
+    this->adqWrapper->stopStreaming();
     this->acqusitionTimer->stop();
     spdlog::info("API: Stream stop");
     this->setState(ACQUISITION_STATES::STOPPING);
     this->stopDMAChecker();
     this->stopProcessor();
     this->timeStopped = std::chrono::high_resolution_clock::now();
-    if(this->dmaLoopStopped && this->processingLoopStopped)
+    if(this->isStreamFullyStopped())
     {
         this->setStoppedState();
     }
@@ -221,7 +259,7 @@ void Acquisition::setState(ACQUISITION_STATES state)
 void Acquisition::onAcquisitionThreadStopped()
 {
     this->dmaLoopStopped = true;
-    if(this->dmaLoopStopped && this->processingLoopStopped)
+    if(this->isStreamFullyStopped())
     {
         this->setStoppedState();
     }
@@ -229,7 +267,16 @@ void Acquisition::onAcquisitionThreadStopped()
 void Acquisition::onProcessingThreadStopped()
 {
     this->processingLoopStopped = true;
-    if(this->dmaLoopStopped && this->processingLoopStopped)
+    if(this->isStreamFullyStopped())
+    {
+        this->setStoppedState();
+    }
+}
+
+void Acquisition::onADQStreamStateChanged(bool running)
+{
+    this->streamActive = running;
+    if(this->isStreamFullyStopped())
     {
         this->setStoppedState();
     }
