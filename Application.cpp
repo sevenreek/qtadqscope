@@ -775,7 +775,6 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
             this->mainWindow.ui->streamStartStopButton->setEnabled(true);
             this->mainWindow.ui->streamStartStopButton->setText("Start");
             this->mainWindow.ui->analysisSettingsContainer->setEnabled(true);
-            this->mainWindow.ui->singleShot->setEnabled(true);
         }
         break;
         case ACQUISITION_STATES::STOPPING:
@@ -786,7 +785,6 @@ void Application::acquisitionStateChanged(ACQUISITION_STATES newState)
         break;
         case ACQUISITION_STATES::RUNNING:
         {
-            this->mainWindow.ui->singleShot->setEnabled(false);
         }
         break;
         default:
