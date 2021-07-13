@@ -21,10 +21,12 @@ Acquisition::Acquisition(
     ));
     this->bufferProcessorHandler = std::unique_ptr<LoopBufferProcessor>(new LoopBufferProcessor(writeBuffers, this->bufferProcessor));
     this->bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
-    this->dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(writeBuffers, adqDevice, appConfig->transferBufferCount));
-    this->dmaChecker->moveToThread(&this->adqThread);
+
     this->adqWrapper = std::shared_ptr<QADQWrapper>(new QADQWrapper(this->adqDevice));
     this->adqWrapper->moveToThread(&this->adqThread);
+
+    this->dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(writeBuffers, adqDevice, this->adqWrapper, appConfig->transferBufferCount));
+    this->dmaChecker->moveToThread(&this->adqThread);
     this->initialize();
 }
 void Acquisition::initialize()

@@ -11,10 +11,11 @@ void DMAChecker::setFlushTimeout(unsigned int value)
     flushTimeout = value;
 }
 
-DMAChecker::DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount)
+DMAChecker::DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, std::shared_ptr<QADQWrapper> adqWrapper, unsigned long transferBufferCount)
 {
     this->writeBuffers = writeBuffers;
     this->adqDevice = adqDevice;
+    this->adqWrapper = adqWrapper;
     this->transferBufferCount = transferBufferCount;
 }
 
@@ -58,7 +59,7 @@ void DMAChecker::runLoop()
             > this->nextBufferCheckTime)
         {
            //spdlog::debug("Flushing DMA buffers.");
-           this->adqDevice->FlushDMA();
+           this->adqWrapper->flushDMA();
            this->nextBufferCheckTime = std::chrono::system_clock::now() + std::chrono::milliseconds(this->flushTimeout);
         }
         for(unsigned int b = 0; b < buffersFilled; b++) // if no buffers are filled the for loop will not start

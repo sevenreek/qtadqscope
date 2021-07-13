@@ -7,6 +7,7 @@
     #include "ADQAPI.h"
 #endif
 #include <QObject>
+#include "QADQWrapper.h"
 #include "BufferProcessor.h"
 #include <chrono>
 #define SLEEP_TIME 3
@@ -23,8 +24,9 @@ private:
     unsigned long long totalRecordsGathered = 0;
     std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
     unsigned int flushTimeout = 50;
+    std::shared_ptr<QADQWrapper> adqWrapper;
 public:
-    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, unsigned long transferBufferCount);
+    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, std::shared_ptr<QADQWrapper> adqWrapper, unsigned long transferBufferCount);
 
     unsigned int getFlushTimeout() const;
 

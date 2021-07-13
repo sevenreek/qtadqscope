@@ -115,6 +115,7 @@ void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
 }
 void FullCalibrationDialog::start()
 {
+    this->currentSetupIndex = 0;
     spdlog::debug("Starting full calibration");
     if(this->ui->modeAnalog->isChecked()) {
         this->mode = CALIBRATION_MODES::ANALOG;
