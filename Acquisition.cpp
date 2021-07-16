@@ -6,10 +6,10 @@
 #include <climits>
 Acquisition::Acquisition(
     std::shared_ptr<ApplicationConfiguration> appConfig,
-    std::shared_ptr<ADQInterface> adqDevice)
+    std::shared_ptr<ADQInterfaceWrapper> adqDevice):
+    adqDevice(adqDevice)
 {
     this->appConfig = appConfig;
-    this->adqDevice = adqDevice;
     this->writeBuffers = std::shared_ptr<WriteBuffers>(new WriteBuffers(
         appConfig->writeBufferCount,
         appConfig->transferBufferSize,
@@ -22,10 +22,7 @@ Acquisition::Acquisition(
     this->bufferProcessorHandler = std::unique_ptr<LoopBufferProcessor>(new LoopBufferProcessor(writeBuffers, this->bufferProcessor));
     this->bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
 
-    this->adqWrapper = std::shared_ptr<QADQWrapper>(new QADQWrapper(this->adqDevice));
-    this->adqWrapper->moveToThread(&this->adqThread);
-
-    this->dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(writeBuffers, adqDevice, this->adqWrapper, appConfig->transferBufferCount));
+    this->dmaChecker = std::unique_ptr<DMAChecker>(new DMAChecker(this->writeBuffers, this->adqDevice, appConfig->transferBufferCount));
     this->dmaChecker->moveToThread(&this->adqThread);
     this->initialize();
 }
@@ -42,7 +39,6 @@ void Acquisition::initialize()
     connect(dmaChecker.get(), &DMAChecker::onError, this, &Acquisition::error, Qt::ConnectionType::BlockingQueuedConnection);
     connect(dmaChecker.get(), &DMAChecker::onBuffersFilled, this, &Acquisition::buffersFilled, Qt::ConnectionType::DirectConnection);
 
-    connect(this->adqWrapper.get(), &QADQWrapper::streamStateChanged, this, &Acquisition::onADQStreamStateChanged);
     bufferProcessingThread.start();
     adqThread.start();
     this->acqusitionTimer = std::unique_ptr<QTimer>(new QTimer(this));
@@ -52,17 +48,12 @@ void Acquisition::initialize()
 
 bool Acquisition::isStreamFullyStopped()
 {
-    return this->dmaLoopStopped && this->processingLoopStopped && !this->streamActive;
+    return this->dmaLoopStopped && this->processingLoopStopped;
 }
 Acquisition::~Acquisition() {
     stopDMAChecker();
     stopProcessor();
     this->joinThreads();
-}
-
-std::shared_ptr<QADQWrapper> Acquisition::getADQWrapper() const
-{
-    return adqWrapper;
 }
 
 void Acquisition::stopDMAChecker()
@@ -230,7 +221,7 @@ bool Acquisition::start(bool needSwTrig, unsigned int dmaFlushTimeout)
 }
 bool Acquisition::stop()
 {
-    this->adqWrapper->stopStreaming();
+    this->adqDevice->StopStreaming();
     this->acqusitionTimer->stop();
     spdlog::info("API: Stream stop");
     this->setState(ACQUISITION_STATES::STOPPING);
@@ -275,14 +266,6 @@ void Acquisition::onProcessingThreadStopped()
     }
 }
 
-void Acquisition::onADQStreamStateChanged(bool running)
-{
-    this->streamActive = running;
-    if(this->isStreamFullyStopped())
-    {
-        this->setStoppedState();
-    }
-}
 
 
 

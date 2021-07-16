@@ -45,7 +45,17 @@ int Application::start(int argc, char *argv[]) {
             *this->mainWindow.ui->plotArea
         )
     );
-    this->acquisition = std::make_shared<Acquisition>(this->config, std::shared_ptr<ADQInterface>(ADQControlUnit_GetADQ(adqControlUnit, this->config->deviceNumber)));
+    this->adqDevice =
+        std::shared_ptr<ADQInterfaceWrapper>(
+            new MutexADQWrapper(
+                adqControlUnit,
+                this->config->deviceNumber
+            )
+        );
+    this->acquisition = std::make_shared<Acquisition>(
+        this->config,
+        adqDevice
+    );
 
     this->buffersConfigurationDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog());
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog());
@@ -489,7 +499,7 @@ void Application::changeAnalogOffset(double val) {
     this->mainWindow.ui->analogOffsetCodeInput->blockSignals(false);
     this->config->getCurrentChannelConfig().dcBias = val;
     this->config->getCurrentChannelConfig().dcBiasCode = code;
-    this->acquisition->getADQWrapper()->setAdjustableBias(
+    this->adqDevice->SetAdjustableBias(
         this->config->getCurrentChannel()+1,
         this->config->getCurrentChannelConfig().dcBiasCode
     );
@@ -503,7 +513,7 @@ void Application::changeAnalogOffsetCode(int val) {
     this->mainWindow.ui->analogOffsetInput->blockSignals(false);
     this->config->getCurrentChannelConfig().dcBias = flt;
     this->config->getCurrentChannelConfig().dcBiasCode = val;
-    this->acquisition->getADQWrapper()->setAdjustableBias(
+    this->adqDevice->SetAdjustableBias(
         this->config->getCurrentChannel()+1,
         this->config->getCurrentChannelConfig().dcBiasCode
     );
@@ -515,7 +525,7 @@ void Application::changeInputRange(int index) {
     float target = (float)INPUT_RANGE_VALUES[index];
     float result;
 
-    this->acquisition->getADQWrapper()->setInputRange(this->config->getCurrentChannel()+1,target,&result);
+    this->adqDevice->SetInputRange(this->config->getCurrentChannel()+1,target,&result);
     this->config->getCurrentChannelConfig().inputRangeFloat = result;
     this->mainWindow.ui->actualInputRangeLabel->setText(
         QString::fromStdString(
@@ -623,12 +633,12 @@ void Application::changeTriggerDelay(int val) {
 }
 void Application::changeLevelTriggerEdge(int index) {
     this->config->getCurrentChannelConfig().triggerEdge = static_cast<TRIGGER_EDGES>(index);
-    this->acquisition->getADQWrapper()->setLvlTrigEdge(index);
+    this->adqDevice->SetLvlTrigEdge(index);
 }
 void Application::changeLevelTriggerCode(int val) {
     spdlog::debug("changeLevelTriggerCode");
     this->config->getCurrentChannelConfig().triggerLevelCode = val;
-    this->acquisition->getADQWrapper()->setLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
+    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
     double mvVal = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, val);
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerVoltageInput->setValue(mvVal);
@@ -640,7 +650,7 @@ void Application::changeLevelTriggerMV(double val) {
     spdlog::debug("changeLevelTriggerMV");
     int code = mvToADCCode(this->config->getCurrentChannelConfig().inputRangeFloat, val);
     this->config->getCurrentChannelConfig().triggerLevelCode = code;
-    this->acquisition->getADQWrapper()->setLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
+    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(true);
     this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config->getCurrentChannelConfig().triggerLevelCode);
     this->mainWindow.ui->levelTriggerCodesInput->blockSignals(false);
@@ -650,7 +660,7 @@ void Application::changeLevelTriggerMV(double val) {
 
 void Application::changeLevelTriggerReset(int val) {
     this->config->getCurrentChannelConfig().triggerLevelReset = val;
-    this->acquisition->getADQWrapper()->setTrigLevelResetValue(val);
+    this->adqDevice->SetTrigLevelResetValue(val);
 }
 void Application::changeUpdateScope(int state) {
     if(state)
@@ -870,24 +880,24 @@ void Application::onRegisterDialogClosed()
 
     unsigned int retval;
     unsigned int algorithmConfig = ( algorithmMode | (activeChannels << 4) | ( passthrough << 8 ));
-    this->acquisition->getADQWrapper()->writeUserRegister(1, 0x10, 0, algorithmConfig, &retval);
+    this->adqDevice->WriteUserRegister(1, 0x10, 0, algorithmConfig, &retval);
     if(retval != algorithmConfig) spdlog::debug("Failed to set algorithm configuration");
 
     short dcOffsetValue = this->registerDialog->ui->algorithmParamInput0->value();
     spdlog::debug("Setting DC offset register to {}", dcOffsetValue);
-    this->acquisition->getADQWrapper()->writeUserRegister(1, 0x11, 0, dcOffsetValue, &retval);
+    this->adqDevice->WriteUserRegister(1, 0x11, 0, dcOffsetValue, &retval);
     if(dcOffsetValue != (short)retval) spdlog::debug("Failed to set DC offset register");
 
 
     short algParam1 = this->registerDialog->ui->algorithmParamInput1->value();
     spdlog::debug("Setting alg_param1 register to {}", algParam1);
-    this->acquisition->getADQWrapper()->writeUserRegister(1, 0x12, 0, algParam1, &retval);
+    this->adqDevice->WriteUserRegister(1, 0x12, 0, algParam1, &retval);
     if(algParam1 != (short)retval) spdlog::debug("Failed to set algParam1 register");
 
 }
 void Application::triggerSoftwareTrig()
 {
-    this->acquisition->getADQWrapper()->SWTrig();
+    this->adqDevice->SWTrig();
 }
 
 void Application::loadConfig()
@@ -963,5 +973,5 @@ void Application::useCalculatedOffset(CALIBRATION_MODES mode, int offset)
 }
 void Application::flushDMA()
 {
-    this->acquisition->getADQWrapper()->flushDMA();
+    this->adqDevice->FlushDMA();
 }
