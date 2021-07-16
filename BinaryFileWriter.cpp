@@ -106,22 +106,23 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
         this->channelMask = 1<<baseChannel | 1<<additionalChannel;
     }
     config.toFile(s_cfg.c_str());
+    this->sizeLimit = config.fileSizeLimit;
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
     {
+        if(this->dataBuffer[ch] != nullptr)
+        {
+            free(this->dataBuffer[ch]);
+            this->dataBuffer[ch] = nullptr;
+        }
         this->samplesSaved[ch] = 0;
         if(1<<ch & this->channelMask)
         {
-            if(this->dataBuffer[ch] != nullptr)
-            {
-                free(this->dataBuffer[ch]);
-                this->dataBuffer[ch] = nullptr;
-            }
+
             this->dataBuffer[ch] = (short*)std::malloc(this->sizeLimit);
             //spdlog::debug("Allocated buffer for ch{}; size:{}",ch, this->sizeLimit);
         }
     }
     this->bytesSaved = 0;
-    this->sizeLimit = config.fileSizeLimit;
     this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 }
 
