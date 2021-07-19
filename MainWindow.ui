@@ -58,6 +58,11 @@
              </item>
              <item>
               <property name="text">
+               <string>BINARY VERBOSE</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
                <string>BUFF BINARY</string>
               </property>
              </item>
@@ -849,7 +854,7 @@
            <item row="1" column="0" colspan="2">
             <widget class="QTabWidget" name="tabWidget">
              <property name="currentIndex">
-              <number>0</number>
+              <number>1</number>
              </property>
              <property name="tabsClosable">
               <bool>false</bool>
@@ -1160,7 +1165,7 @@
      <x>0</x>
      <y>0</y>
      <width>1160</width>
-     <height>30</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConfiguration">

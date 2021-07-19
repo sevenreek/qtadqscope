@@ -233,3 +233,53 @@ void VerboseBufferedBinaryWriter::startNewStream(ApplicationConfiguration& confi
         }
     }
 }
+
+VerboseBinaryWriter::VerboseBinaryWriter(unsigned long long sizeLimit) : BinaryFileWriter(sizeLimit)
+{
+
+}
+
+bool VerboseBinaryWriter::processRecord(StreamingHeader_t *header, short *buffer, unsigned long length, int channel)
+{
+    if(this->bytesSaved >= this->sizeLimit)
+    {
+        return false;
+    }
+    else if(this->isContinuousStream)
+    {
+        this->bytesSaved += length*sizeof(short);
+        this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
+        return true;
+    }
+    else
+    {
+        //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
+        MinifiedRecordHeader mh = minifyRecordHeader(*header);
+        this->dataStream[channel].write(reinterpret_cast<char*>(&mh), sizeof(MinifiedRecordHeader));
+        this->bytesSaved += sizeof(MinifiedRecordHeader);
+
+        this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
+        this->bytesSaved += length*sizeof(short);
+        return true;
+    }
+}
+
+VerboseBinaryWriter::~VerboseBinaryWriter()
+{
+
+}
+
+
+void VerboseBinaryWriter::startNewStream(ApplicationConfiguration &config)
+{
+    BinaryFileWriter::startNewStream(config); // call super
+    for(int i = 0; i< MAX_NOF_CHANNELS; i++)
+    {
+        if((1<<i) & this->channelMask)
+        {
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
+            MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
+            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(MinifiedChannelConfiguration));
+        }
+    }
+}

@@ -65,7 +65,7 @@ void DMAChecker::runLoop()
         {
             StreamingBuffers* sbuf = nullptr;
             do{
-             sbuf = this->writeBuffers->awaitWrite(1000);
+             sbuf = this->writeBuffers->awaitWrite(250);
              if(!this->loopActive)
              {
                  //this->writeBuffers.notifyWritten(); maybe?

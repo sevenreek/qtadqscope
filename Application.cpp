@@ -688,6 +688,9 @@ void Application::setFileWriterType(FILE_TYPE_SELECTOR fts)
         case FILE_TYPE_SELECTOR::S_BINARY:{
             this->fileWriter = std::make_shared<BinaryFileWriter>(this->config->fileSizeLimit);
         }break;
+        case FILE_TYPE_SELECTOR::S_BINARY_VERBOSE:{
+            this->fileWriter = std::make_shared<VerboseBinaryWriter>(this->config->fileSizeLimit);
+        }break;
         case FILE_TYPE_SELECTOR::S_BINARY_BUFFERED:{
             this->fileWriter = std::make_shared<BufferedBinaryFileWriter>(this->config->fileSizeLimit);
         }break;
@@ -823,10 +826,13 @@ void Application::updatePeriodicUIElements()
     if(this->fileWriter != nullptr) {
         fileFill = this->fileWriter->getProcessedBytes();
     }
+
     this->mainWindow.ui->DMAFillStatus->setValue(100ULL*buffersFill / (this->config->transferBufferCount - 1));
+
     // for some reason the api refuses to fill all buffers, GetDataStreaming will always return bufferCount-1 even when nearly overflowing
     this->mainWindow.ui->RAMFillStatus->setValue(100ULL*queueFill / this->config->writeBufferCount);
     this->mainWindow.ui->FileFillStatus->setValue(100ULL*fileFill / this->config->fileSizeLimit);
+
 }
 void Application::createPeriodicUpdateTimer(unsigned long period)
 {
@@ -852,7 +858,7 @@ void Application::onDMADialogClosed()
     unsigned long newBufferCount = this->buffersConfigurationDialog->ui->dmaBufferCount->value();
     unsigned long newBufferSize = this->buffersConfigurationDialog->ui->dmaBufferSize->value();
     unsigned long newQueueCount = this->buffersConfigurationDialog->ui->writeBufferCount->value();
-    unsigned long long newFileLimit = (unsigned long long)this->buffersConfigurationDialog->ui->maximumFileSize->value()*BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER;
+    unsigned long long newFileLimit = static_cast<unsigned long long>(this->buffersConfigurationDialog->ui->maximumFileSize->value()*BuffersDialog::FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER);
     this->config->transferBufferCount = newBufferCount;
     this->config->transferBufferSize = newBufferSize;
     this->config->writeBufferCount = newQueueCount;
