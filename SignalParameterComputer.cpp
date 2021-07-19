@@ -1,5 +1,5 @@
 #include "SignalParameterComputer.h"
-
+#include "spdlog/spdlog.h"
 
 SignalParameterComputer::SignalParameterComputer(unsigned long long sizeLimit)
 {
@@ -79,6 +79,12 @@ std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
     std::unique_ptr<SignalParameters> result = std::unique_ptr<SignalParameters>(new SignalParameters());
     result->average = 0;
     result->rms = 0;
+    if(samplesSaved == 0)
+    {
+        result->average = 0;
+        result->rms = 0;
+        spdlog::warn("SignalParameterComputer did not collect any samples. Returning average of 0.");
+    }
     for(unsigned long i = 0; i < samplesSaved; i++)
     {
         result->average += dataBuffer[i];

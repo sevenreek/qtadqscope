@@ -17,16 +17,15 @@ class DMAChecker : public QObject
 private:
     bool loopActive = false;
     std::shared_ptr<WriteBuffers> writeBuffers;
-    std::shared_ptr<ADQInterface> adqDevice;
     unsigned long transferBufferCount;
     StreamingHeader_t lastHeaders[MAX_NOF_CHANNELS];
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;
     std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
     unsigned int flushTimeout = 50;
-    std::shared_ptr<QADQWrapper> adqWrapper;
+    std::shared_ptr<ADQInterfaceWrapper> adqDevice;
 public:
-    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterface> adqDevice, std::shared_ptr<QADQWrapper> adqWrapper, unsigned long transferBufferCount);
+    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterfaceWrapper> adqDevice, unsigned long transferBufferCount);
 
     unsigned int getFlushTimeout() const;
 

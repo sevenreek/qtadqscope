@@ -106,22 +106,23 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
         this->channelMask = 1<<baseChannel | 1<<additionalChannel;
     }
     config.toFile(s_cfg.c_str());
+    this->sizeLimit = config.fileSizeLimit;
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
     {
+        if(this->dataBuffer[ch] != nullptr)
+        {
+            free(this->dataBuffer[ch]);
+            this->dataBuffer[ch] = nullptr;
+        }
         this->samplesSaved[ch] = 0;
         if(1<<ch & this->channelMask)
         {
-            if(this->dataBuffer[ch] != nullptr)
-            {
-                free(this->dataBuffer[ch]);
-                this->dataBuffer[ch] = nullptr;
-            }
+
             this->dataBuffer[ch] = (short*)std::malloc(this->sizeLimit);
             //spdlog::debug("Allocated buffer for ch{}; size:{}",ch, this->sizeLimit);
         }
     }
     this->bytesSaved = 0;
-    this->sizeLimit = config.fileSizeLimit;
     this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 }
 
@@ -229,6 +230,56 @@ void VerboseBufferedBinaryWriter::startNewStream(ApplicationConfiguration& confi
             spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
             MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
             this->dataStream[i].write((char*)&m,sizeof(MinifiedChannelConfiguration));
+        }
+    }
+}
+
+VerboseBinaryWriter::VerboseBinaryWriter(unsigned long long sizeLimit) : BinaryFileWriter(sizeLimit)
+{
+
+}
+
+bool VerboseBinaryWriter::processRecord(StreamingHeader_t *header, short *buffer, unsigned long length, int channel)
+{
+    if(this->bytesSaved >= this->sizeLimit)
+    {
+        return false;
+    }
+    else if(this->isContinuousStream)
+    {
+        this->bytesSaved += length*sizeof(short);
+        this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
+        return true;
+    }
+    else
+    {
+        //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
+        MinifiedRecordHeader mh = minifyRecordHeader(*header);
+        this->dataStream[channel].write(reinterpret_cast<char*>(&mh), sizeof(MinifiedRecordHeader));
+        this->bytesSaved += sizeof(MinifiedRecordHeader);
+
+        this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
+        this->bytesSaved += length*sizeof(short);
+        return true;
+    }
+}
+
+VerboseBinaryWriter::~VerboseBinaryWriter()
+{
+
+}
+
+
+void VerboseBinaryWriter::startNewStream(ApplicationConfiguration &config)
+{
+    BinaryFileWriter::startNewStream(config); // call super
+    for(int i = 0; i< MAX_NOF_CHANNELS; i++)
+    {
+        if((1<<i) & this->channelMask)
+        {
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
+            MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
+            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(MinifiedChannelConfiguration));
         }
     }
 }

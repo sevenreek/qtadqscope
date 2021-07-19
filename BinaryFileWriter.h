@@ -22,6 +22,15 @@ class BinaryFileWriter: public FileWriter {
     unsigned long long getProcessedBytes();
 };
 
+class VerboseBinaryWriter : public BinaryFileWriter
+{
+public:
+    explicit VerboseBinaryWriter(unsigned long long sizeLimit);
+    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    ~VerboseBinaryWriter();
+    void startNewStream(ApplicationConfiguration& config);
+};
+
 class BufferedBinaryFileWriter: public FileWriter {
     protected:
     bool isContinuousStream;

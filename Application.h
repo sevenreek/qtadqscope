@@ -35,6 +35,7 @@ private:
     std::shared_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
+    std::shared_ptr<ADQInterfaceWrapper> adqDevice;
     std::unique_ptr<FullCalibrationDialog> autoCalibrateDialog;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
     /*

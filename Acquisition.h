@@ -35,15 +35,12 @@ class Acquisition : public QObject
 protected:
     std::unique_ptr<QTimer> acqusitionTimer;
     std::shared_ptr<ApplicationConfiguration> appConfig;
-    std::shared_ptr<ADQInterface> adqDevice;
-    std::shared_ptr<QADQWrapper> adqWrapper;
+    std::shared_ptr<ADQInterfaceWrapper> adqDevice;
     std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
     std::shared_ptr<WriteBuffers> writeBuffers;
     std::unique_ptr<DMAChecker> dmaChecker;
     std::shared_ptr<BufferProcessor> bufferProcessor;
     std::unique_ptr<LoopBufferProcessor> bufferProcessorHandler;
-
-    bool streamActive = false;
 
     bool dmaCheckingActive = false;
     bool bufferProcessingActive = false;
@@ -66,7 +63,7 @@ public:
     virtual ~Acquisition();
     Acquisition(
         std::shared_ptr<ApplicationConfiguration> appConfig,
-        std::shared_ptr<ADQInterface> adqDevice
+        std::shared_ptr<ADQInterfaceWrapper> adqDevice
     );
     ACQUISITION_STATES getState();
     bool configure(std::shared_ptr<ApplicationConfiguration> providedConfig, std::list<std::shared_ptr<RecordProcessor>> recordProcessors);
@@ -79,14 +76,11 @@ public:
     int getReadQueueFill();
     int getWriteQueueFill();
 
-    std::shared_ptr<QADQWrapper> getADQWrapper() const;
-
 public slots:
     bool stop();
     void error();
     void onAcquisitionThreadStopped();
     void onProcessingThreadStopped();
-    void onADQStreamStateChanged(bool running);
     void buffersFilled(unsigned long filled);
     void finishRecordProcessors();
     void setStoppedState();
