@@ -155,13 +155,14 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
             channelMask
         )) {spdlog::error("TriggeredStreamingSetup failed."); return false;};
     }
+    this->bufferProcessor->resetRecordsToStore(providedConfig->getCurrentChannelConfig().recordCount==ChannelConfiguration::INFINITE_RECORDS?0:providedConfig->getCurrentChannelConfig().recordCount);
     spdlog::info("Configured acquisition successfully.");
     this->writeBuffers->reconfigure(
         providedConfig->writeBufferCount,
         providedConfig->transferBufferSize,
         channelMask
     );
-
+    this->dmaChecker->setTransferBufferCount(providedConfig->transferBufferCount);
     this->configured = true;
     return this->configured;
 }

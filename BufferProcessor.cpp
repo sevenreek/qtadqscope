@@ -14,6 +14,7 @@ BaseBufferProcessor::BaseBufferProcessor(
 }
 bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
 {
+    this->recordsStored = 0;
     if(recordLength != this->recordLength)
     {
         this->recordLength = recordLength;
@@ -33,12 +34,17 @@ bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
 }
 bool BaseBufferProcessor::completeRecord(StreamingHeader_t *header, short *buffer, unsigned long sampleCount, char channel)
 {
+    if(recordsToStore && recordsStored >= recordsToStore)
+    {
+        return false;
+    }
     bool success = true;
     for(auto rp : this->recordProcessors)
     {
         //spdlog::debug("Processing record");
         success &= rp->processRecord(header, buffer, sampleCount, channel);
     }
+    recordsStored++;
     return success;
 }
 bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTriggeredStreaming)
@@ -139,6 +145,12 @@ void BaseBufferProcessor::resetBuffers()
     {
         this->recordBufferLength[ch] = 0;
     }
+}
+
+void BaseBufferProcessor::resetRecordsToStore(unsigned long long recordsToStore)
+{
+    this->recordsStored = 0;
+    this->recordsToStore = recordsToStore;
 }
 BaseBufferProcessor::~BaseBufferProcessor()
 {

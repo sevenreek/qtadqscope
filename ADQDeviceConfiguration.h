@@ -64,6 +64,7 @@ const int INPUT_RANGE_COUNT = (7);
 const float INPUT_RANGE_VALUES[INPUT_RANGE_COUNT] = {100, 250, 500, 1000, 2000, 5000, 10000};
 class ChannelConfiguration {
 public:
+    static const unsigned int INFINITE_RECORDS = -1;
     unsigned char userLogicBypass = 0b11;
     unsigned short sampleSkip = 10000;
     int baseDcBiasOffset[INPUT_RANGE_COUNT] = {0};
@@ -77,7 +78,7 @@ public:
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     TRIGGER_MODES triggerMode = TRIGGER_MODES::SOFTWARE;
     unsigned int recordLength = 128;
-    unsigned int recordCount = -1;  // -1 is infty
+    unsigned int recordCount = INFINITE_RECORDS;  // -1 is infty
     unsigned long pretrigger = 0;
     unsigned long triggerDelay = 0;
     int digitalOffset[INPUT_RANGE_COUNT] = {DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET,DEFAULT_DIGITAL_USER_OFFSET};

@@ -596,7 +596,7 @@ void Application::changeLimitRecords(int state)
     }
     else
     {
-        this->config->getCurrentChannelConfig().recordCount = -1;
+        this->config->getCurrentChannelConfig().recordCount = ChannelConfiguration::INFINITE_RECORDS;
         this->mainWindow.ui->recordCountInput->setEnabled(false);
     }
 }
@@ -863,6 +863,7 @@ void Application::onDMADialogClosed()
     this->config->transferBufferSize = newBufferSize;
     this->config->writeBufferCount = newQueueCount;
     this->config->fileSizeLimit = newFileLimit;
+    spdlog::debug("Modified buffers config to {} buffers of {}B with a {} queue and {}B file.", newBufferCount, newBufferSize, newQueueCount, newFileLimit);
 }
 void Application::configureULRegisters()
 {

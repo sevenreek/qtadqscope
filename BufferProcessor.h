@@ -11,6 +11,7 @@ public:
     virtual ~BufferProcessor() = 0;
     virtual bool reallocateBuffers(unsigned long recordLength) = 0;
     virtual void resetBuffers() = 0;
+    virtual void resetRecordsToStore(unsigned long long recordsToStore) = 0;
 };
 
 class BaseBufferProcessor : public BufferProcessor {
@@ -26,6 +27,8 @@ private:
     std::list<std::shared_ptr<RecordProcessor>> &recordProcessors;
     // notify record listeners (processors)
     bool completeRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, char channel);
+    unsigned long long recordsStored = 0;
+    unsigned long long recordsToStore = 0;
 public:
     BaseBufferProcessor(std::list<std::shared_ptr<RecordProcessor>> &recordProcessors, unsigned long recordLength);
     ~BaseBufferProcessor();
@@ -36,6 +39,7 @@ public:
     // if an incomplete record was stored in the buffer in between the next record could potentially exceed the allocated buffers;
     // reallocateBuffers() calls this function, so no need to call it manually if the record length changes
     void resetBuffers();
+    void resetRecordsToStore(unsigned long long recordsToStore);
 };
 
 
