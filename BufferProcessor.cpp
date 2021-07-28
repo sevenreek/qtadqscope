@@ -32,7 +32,7 @@ bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
     this->resetBuffers();
     return true;
 }
-bool BaseBufferProcessor::completeRecord(StreamingHeader_t *header, short *buffer, unsigned long sampleCount, char channel)
+bool BaseBufferProcessor::completeRecord(ADQRecordHeader *header, short *buffer, unsigned long sampleCount, char channel)
 {
     if(recordsToStore && recordsStored >= recordsToStore)
     {

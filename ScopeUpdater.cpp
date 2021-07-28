@@ -24,7 +24,7 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
     this->plot.graph(0)->setData(x,y);
     this->plot.replot();
 }
-bool ScopeUpdater::processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel)
+bool ScopeUpdater::processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel)
 {
     //spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
     for(unsigned long s = 0; s < sampleCount; s++)
@@ -66,5 +66,5 @@ void ScopeUpdater::changePlotTriggerLine(short pos, unsigned long sampleCount)
 
 void ScopeUpdater::changePlotTriggerLine(ChannelConfiguration& channelConfig)
 {
-    this->changePlotTriggerLine(channelConfig.getDCBiasedTriggerValue(), channelConfig.recordLength);
+    this->changePlotTriggerLine(channelConfig.getDCOffsetTriggerValue(), channelConfig.recordLength);
 }

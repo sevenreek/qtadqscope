@@ -13,7 +13,8 @@ Acquisition::Acquisition(
     this->writeBuffers = std::shared_ptr<WriteBuffers>(new WriteBuffers(
         appConfig->writeBufferCount,
         appConfig->transferBufferSize,
-        (unsigned char)(1<<(appConfig->getCurrentChannel())))
+        (unsigned char)(1<<(appConfig->getCurrentChannel())),
+        appConfig->getCurrentChannelConfig().recordLength)
     );
     this->bufferProcessor = std::shared_ptr<BaseBufferProcessor>(new BaseBufferProcessor(
         this->recordProcessors,
@@ -144,7 +145,7 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
         this->bufferProcessor->reallocateBuffers(providedConfig->getCurrentChannelConfig().recordLength);
         spdlog::info("Configuring triggered streaming.");
         if(!this->adqDevice->SetPreTrigSamples(providedConfig->getCurrentChannelConfig().pretrigger)) {spdlog::error("SetPreTrigSamples failed."); return false;};
-        if(!this->adqDevice->SetLvlTrigLevel(providedConfig->getCurrentChannelConfig().getDCBiasedTriggerValue())) {spdlog::error("SetLvlTrigLevel failed."); return false;};
+        if(!this->adqDevice->SetLvlTrigLevel(providedConfig->getCurrentChannelConfig().triggerLevelCode)) {spdlog::error("SetLvlTrigLevel failed."); return false;};
         if(!this->adqDevice->SetLvlTrigChannel(trigChannelMask)) {spdlog::error("SetLvlTrigChannel failed."); return false;};
         if(!this->adqDevice->SetLvlTrigEdge(providedConfig->getCurrentChannelConfig().triggerEdge)) {spdlog::error("SetLvlTrigEdge failed"); return false;};
         if(!this->adqDevice->TriggeredStreamingSetup(
@@ -160,7 +161,8 @@ bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedCo
     this->writeBuffers->reconfigure(
         providedConfig->writeBufferCount,
         providedConfig->transferBufferSize,
-        channelMask
+        channelMask,
+        appConfig->getCurrentChannelConfig().recordLength
     );
     this->dmaChecker->setTransferBufferCount(providedConfig->transferBufferCount);
     this->configured = true;

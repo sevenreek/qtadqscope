@@ -365,6 +365,19 @@ void Application::linkSignals()
         this,
         &Application::flushDMA
     );
+    // TRIGGER OFFSET MODE
+    this->mainWindow.ui->offsetFromAnalog->connect(
+        this->mainWindow.ui->offsetFromAnalog,
+        &QRadioButton::clicked,
+        this,
+        &Application::updateTriggerLevelDisplays
+    );
+    this->mainWindow.ui->offsetFromZero->connect(
+        this->mainWindow.ui->offsetFromZero,
+        &QRadioButton::clicked,
+        this,
+        &Application::updateTriggerLevelDisplays
+    );
 }
 
 ///// BEGIN UI SLOTS //////
@@ -433,6 +446,7 @@ void Application::changeChannel(int channel) {
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
     this->mainWindow.ui->baseOffsetCalibrationValue->setValue(this->config->getCurrentChannelConfig().getCurrentBaseDCOffset());
     this->mainWindow.ui->digitalOffsetInput->setValue(this->config->getCurrentChannelConfig().getCurrentDigitalOffset());
+    this->updateTriggerLevelDisplays();
 }
 void Application::changeSecondChannel(int channel) {
     channel -= 1; // -1 is disabled
@@ -504,10 +518,11 @@ void Application::changeAnalogOffset(double val) {
         this->config->getCurrentChannelConfig().dcBiasCode
     );
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
+    this->updateTriggerLevelDisplays();
 }
 void Application::changeAnalogOffsetCode(int val) {
     spdlog::debug("AnalogoffsetCodeChange");
-    int flt = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, val);
+    float flt = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, val);
     this->mainWindow.ui->analogOffsetInput->blockSignals(true);
     this->mainWindow.ui->analogOffsetInput->setValue(flt);
     this->mainWindow.ui->analogOffsetInput->blockSignals(false);
@@ -517,8 +532,8 @@ void Application::changeAnalogOffsetCode(int val) {
         this->config->getCurrentChannel()+1,
         this->config->getCurrentChannelConfig().dcBiasCode
     );
-
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
+    this->updateTriggerLevelDisplays();
 }
 void Application::changeInputRange(int index) {
     this->config->getCurrentChannelConfig().inputRangeEnum = static_cast<INPUT_RANGES>(index);
@@ -635,27 +650,48 @@ void Application::changeLevelTriggerEdge(int index) {
     this->config->getCurrentChannelConfig().triggerEdge = static_cast<TRIGGER_EDGES>(index);
     this->adqDevice->SetLvlTrigEdge(index);
 }
-void Application::changeLevelTriggerCode(int val) {
-    spdlog::debug("changeLevelTriggerCode");
-    this->config->getCurrentChannelConfig().triggerLevelCode = val;
-    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
-    double mvVal = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, val);
+void Application::updateTriggerLevelDisplays()
+{
+    int zeroBasedTriggerValue = this->config->getCurrentChannelConfig().triggerLevelCode;
+    float zeroBasedTriggerValueMv = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, zeroBasedTriggerValue);
+    int offsetCodeLevel = zeroBasedTriggerValue - this->config->getCurrentChannelConfig().dcBiasCode;
+    float offsetMvLevel = ADCCodeToMV(this->config->getCurrentChannelConfig().inputRangeFloat, offsetCodeLevel);
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(true);
-    this->mainWindow.ui->levelTriggerVoltageInput->setValue(mvVal);
+    this->mainWindow.ui->levelTriggerCodesInput->blockSignals(true);
+    if(this->mainWindow.ui->offsetFromZero->isChecked()) {
+        this->mainWindow.ui->levelTriggerCodesInput->setValue(zeroBasedTriggerValue);
+        this->mainWindow.ui->levelTriggerVoltageInput->setValue(zeroBasedTriggerValueMv);
+    }
+    else {
+        this->mainWindow.ui->levelTriggerCodesInput->setValue(offsetCodeLevel);
+        this->mainWindow.ui->levelTriggerVoltageInput->setValue(offsetMvLevel);
+    }
+    this->mainWindow.ui->levelTriggerCodesFromZero->setText(QString::asprintf("%d", zeroBasedTriggerValue));
+    this->mainWindow.ui->levelTriggerVoltageFromZero->setText(QString::asprintf("%.2f",zeroBasedTriggerValueMv));
     this->mainWindow.ui->levelTriggerVoltageInput->blockSignals(false);
-
+    this->mainWindow.ui->levelTriggerCodesInput->blockSignals(false);
     this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
 }
-void Application::changeLevelTriggerMV(double val) {
-    spdlog::debug("changeLevelTriggerMV");
-    int code = mvToADCCode(this->config->getCurrentChannelConfig().inputRangeFloat, val);
-    this->config->getCurrentChannelConfig().triggerLevelCode = code;
-    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCBiasedTriggerValue());
-    this->mainWindow.ui->levelTriggerCodesInput->blockSignals(true);
-    this->mainWindow.ui->levelTriggerCodesInput->setValue(this->config->getCurrentChannelConfig().triggerLevelCode);
-    this->mainWindow.ui->levelTriggerCodesInput->blockSignals(false);
-
-    this->scopeUpdater->changePlotTriggerLine(this->config->getCurrentChannelConfig());
+void Application::changeLevelTriggerCode(int codeLevel) {
+    int zeroBasedTriggerValue;
+    if(this->mainWindow.ui->offsetFromZero->isChecked())
+        zeroBasedTriggerValue = codeLevel;
+    else
+        zeroBasedTriggerValue = this->config->getCurrentChannelConfig().dcBiasCode + codeLevel;
+    this->config->getCurrentChannelConfig().triggerLevelCode = zeroBasedTriggerValue;
+    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCOffsetTriggerValue());
+    this->updateTriggerLevelDisplays();
+}
+void Application::changeLevelTriggerMV(double mvLevel) {
+    int zeroBasedTriggerValue;
+    int codeLevel = mvToADCCode(this->config->getCurrentChannelConfig().inputRangeFloat, mvLevel);
+    if(this->mainWindow.ui->offsetFromZero->isChecked())
+        zeroBasedTriggerValue = codeLevel;
+    else
+        zeroBasedTriggerValue = this->config->getCurrentChannelConfig().dcBiasCode + codeLevel;
+    this->config->getCurrentChannelConfig().triggerLevelCode = zeroBasedTriggerValue;
+    this->adqDevice->SetLvlTrigLevel(this->config->getCurrentChannelConfig().getDCOffsetTriggerValue());
+    this->updateTriggerLevelDisplays();
 }
 
 void Application::changeLevelTriggerReset(int val) {
@@ -922,6 +958,8 @@ void Application::loadConfig()
     {
         spdlog::warn("Failed to load configuration from file {}", ba.data());
     }
+
+    this->updateTriggerLevelDisplays();
 }
 
 void Application::saveConfig()

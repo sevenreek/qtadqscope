@@ -9,8 +9,8 @@ struct MinifiedRecordHeader {
     uint64_t timestamp;
 };
 
-MinifiedRecordHeader minifyRecordHeader(const StreamingHeader_t &h);
-MinifiedRecordHeader minifyRecordHeader(const StreamingHeader_t &h)
+MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h);
+MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
 {
     return MinifiedRecordHeader {.recordLength = h.RecordLength, .recordNumber = h.RecordNumber, .timestamp = h.Timestamp};
 }

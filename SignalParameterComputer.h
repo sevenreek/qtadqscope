@@ -18,8 +18,8 @@ public:
     explicit SignalParameterComputer(unsigned long long sizeLimit);
     ~SignalParameterComputer();
     void startNewStream(ApplicationConfiguration& config);
-    bool writeRecord(StreamingHeader_t* header, short* buffer, unsigned int length);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    bool writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length);
+    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     bool writeContinuousBuffer(short* buffer, unsigned int length);
     unsigned long long finish();
     const char* getName();

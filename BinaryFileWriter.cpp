@@ -39,7 +39,7 @@ void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
 
 }
 
-bool BinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
+bool BinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved > this->sizeLimit)
     {
@@ -126,7 +126,7 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
     this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 }
 
-bool BufferedBinaryFileWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
+bool BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
@@ -178,7 +178,7 @@ VerboseBufferedBinaryWriter::~VerboseBufferedBinaryWriter()
 {
 
 }
-bool VerboseBufferedBinaryWriter::processRecord(StreamingHeader_t* header, short* buffer, unsigned long length, int channel)
+bool VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved >= this->sizeLimit)
     {
@@ -239,7 +239,7 @@ VerboseBinaryWriter::VerboseBinaryWriter(unsigned long long sizeLimit) : BinaryF
 
 }
 
-bool VerboseBinaryWriter::processRecord(StreamingHeader_t *header, short *buffer, unsigned long length, int channel)
+bool VerboseBinaryWriter::processRecord(ADQRecordHeader *header, short *buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved >= this->sizeLimit)
     {

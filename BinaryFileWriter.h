@@ -16,7 +16,7 @@ class BinaryFileWriter: public FileWriter {
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -26,7 +26,7 @@ class VerboseBinaryWriter : public BinaryFileWriter
 {
 public:
     explicit VerboseBinaryWriter(unsigned long long sizeLimit);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBinaryWriter();
     void startNewStream(ApplicationConfiguration& config);
 };
@@ -44,7 +44,7 @@ class BufferedBinaryFileWriter: public FileWriter {
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     virtual ~BufferedBinaryFileWriter();
     void startNewStream(ApplicationConfiguration& config);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -53,7 +53,7 @@ class BufferedBinaryFileWriter: public FileWriter {
 class VerboseBufferedBinaryWriter : public BufferedBinaryFileWriter {
 public:
     explicit VerboseBufferedBinaryWriter(unsigned long long sizeLimit);
-    bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel);
+    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBufferedBinaryWriter();
     unsigned long long finish();
     void startNewStream(ApplicationConfiguration& config);

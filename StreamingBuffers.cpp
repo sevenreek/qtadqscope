@@ -1,33 +1,27 @@
 #include "StreamingBuffers.h"
 #include "spdlog/spdlog.h"
 
-StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char channelMask)
+StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength)
 {
-    this->reallocate(bufferSize, channelMask);
     this->bufferSize = bufferSize;
-}
-void StreamingBuffers::reallocate(unsigned long bufferSize, unsigned char channelMask)
-{
-    if(this->bufferSize != bufferSize || this->channelMask != channelMask)
+    this->channelMask = channelMask;
+    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        this->channelMask = channelMask;
-        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+      if((channelMask & (1<<ch)) == (1<<ch))
+      {
+        this->data[ch] = (short*)std::malloc(bufferSize);
+        //spdlog::debug("Allocated {} for channel {} in pointer {}", bufferSize, ch+1, fmt::ptr(this->data[ch]));
+        if(this->data[ch] == nullptr)
         {
-          if((channelMask & (1<<ch)) == (1<<ch))
-          {
-            this->data[ch] = (short*)std::realloc(this->data[ch], bufferSize);
-            //spdlog::debug("Allocated {} for channel {} in pointer {}", bufferSize, ch+1, fmt::ptr(this->data[ch]));
-            if(this->data[ch] == nullptr)
-            {
-              spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
-            }
-            this->headers[ch] = (StreamingHeader_t*)std::realloc(this->headers[ch], bufferSize);
-            if(this->headers[ch] == nullptr)
-            {
-              spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
-            }
-          }
+          spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
         }
+        unsigned int headerCount = bufferSize/sizeof(short)/recordLength + 1; // a single buffer can contain bufferSize/sizeof(short) samples so a total of that/recordLength + 1 headers
+        this->headers[ch] = (ADQRecordHeader*)std::malloc(headerCount*sizeof(ADQRecordHeader));
+        if(this->headers[ch] == nullptr)
+        {
+          spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
+        }
+      }
     }
 }
 StreamingBuffers::~StreamingBuffers()
@@ -49,20 +43,20 @@ StreamingBuffers::~StreamingBuffers()
   }
 }
 
-WriteBuffers::WriteBuffers(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask) :
+WriteBuffers::WriteBuffers(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength) :
   sWrite(bufferCount), sRead(0)
 {
-  this->bufferCount = bufferCount;
-  for(unsigned int b = 0; b < this->bufferCount; b++)
-  {
-    StreamingBuffers * bfp = new StreamingBuffers(bufferSize, channelMask);
+    if(recordLength == 0) recordLength = 2; // for continuous streaming;
+    this->bufferCount = bufferCount;
+    for(unsigned int b = 0; b < this->bufferCount; b++) {
+        StreamingBuffers * bfp = new StreamingBuffers(bufferSize, channelMask, recordLength);
     if(bfp == NULL) {
       spdlog::critical("Insufficient memory for buffers allocate.");
     }
     //spdlog::debug("Pushing buffer {} address {}", b, fmt::ptr(bfp));
     this->buffers.push_back(bfp);
-  }
-  //spdlog::debug("writePos={}; readPos={}", this->writePosition, this->readPosition);
+    }
+    //spdlog::debug("writePos={}; readPos={}", this->writePosition, this->readPosition);
 
 }
 WriteBuffers::~WriteBuffers()
@@ -100,8 +94,9 @@ void WriteBuffers::notifyRead()
 {
   this->sWrite.notify();
 }
-void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask)
+void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength)
 {
+    if(recordLength == 0) recordLength = 2; // for continuous streaming;
     for(unsigned int b = 0; b < this->bufferCount; b++)
     {
       //spdlog::debug("Deleting buffer {} address {}", b, fmt::ptr(this->buffers[b]));
@@ -115,7 +110,7 @@ void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSiz
     this->bufferCount = bufferCount;
     for(unsigned int b = 0; b < this->bufferCount; b++)
     {
-      StreamingBuffers * bfp = new StreamingBuffers(bufferSize, channelMask);
+      StreamingBuffers * bfp = new StreamingBuffers(bufferSize, channelMask, recordLength);
       if(bfp == nullptr) {
         spdlog::critical("Insufficient memory for buffers allocate.");
       }

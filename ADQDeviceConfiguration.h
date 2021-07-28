@@ -70,6 +70,7 @@ public:
     int baseDcBiasOffset[INPUT_RANGE_COUNT] = {0};
     int dcBiasCode = 0;
     float dcBias = 0;
+    bool triggerOffsetFromBias = false;
     INPUT_RANGES inputRangeEnum = INPUT_RANGES::MV_5000;
     float inputRangeFloat = 5000;
     float triggerLevel = 0;
@@ -88,12 +89,13 @@ public:
     void log();
     json toJSON();
     void loadFromJSON(json data);
-    short getDCBiasedTriggerValue();
+    short getDCOffsetTriggerValue();
     short getCurrentBaseDCOffset();
     short getCurrentDigitalOffset();
     void setInputRange(INPUT_RANGES e);
     void setCurrentBaseDCOffset(int v);
     void setCurrentDigitalOffset(int v);
+    int getTotalDCBias();
 };
 float ADCCodeToMV(float inputRange, int code);
 int mvToADCCode(float inputRange, float value);

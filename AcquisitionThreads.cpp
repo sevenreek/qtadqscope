@@ -77,6 +77,10 @@ void DMAChecker::runLoop()
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
+                if(sbuf == nullptr)
+                    spdlog::debug("sbuf is null");
+                if(sbuf->headers[ch] == nullptr)
+                    spdlog::debug("headers[ch] are null");
                 sbuf->headers[ch][0] = this->lastHeaders[ch];
                 // copy last header
             }

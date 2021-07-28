@@ -107,15 +107,19 @@ void ChannelConfiguration::setCurrentDigitalOffset(int v)
 {
     this->digitalOffset[this->inputRangeEnum] = v;
 }
+
+int ChannelConfiguration::getTotalDCBias()
+{
+    return this->getCurrentBaseDCOffset() + this->dcBiasCode;
+}
 void ChannelConfiguration::setInputRange(INPUT_RANGES e)
 {
     this->inputRangeEnum = e;
     this->inputRangeFloat = INPUT_RANGE_VALUES[e];
 }
-short ChannelConfiguration::getDCBiasedTriggerValue()
+short ChannelConfiguration::getDCOffsetTriggerValue()
 {
-
-    int value =  this->getCurrentBaseDCOffset()+this->dcBiasCode+this->triggerLevelCode;
+    int value =  this->getCurrentBaseDCOffset()+this->triggerLevelCode;
     int clamped = std::max(SHRT_MIN, std::min(value, SHRT_MAX));
     if(clamped != value)
     {

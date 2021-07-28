@@ -48,6 +48,7 @@ private:
      * to the values specified in current channel configuration.
      */
     void setUI();
+    void updateTriggerLevelDisplays();
 public:
     /*
      * Create an Application object before entering Qt's main loop
@@ -61,7 +62,6 @@ public:
      */
     int start(int argc, char *argv[]);
     void setFileWriterType(FILE_TYPE_SELECTOR fts);
-
 public slots:
     // UI SLOTS
     void changeChannel(int channel);

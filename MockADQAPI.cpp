@@ -148,7 +148,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
         if(this->recordLength == 0) // cont stream
         {
             memcpy(d[ch], this->sourceData[ch], std::min(DEFAULT_BUFFER_SIZE, this->bufferSize));
-            StreamingHeader_t * hp = (StreamingHeader_t *)h[ch];
+            ADQRecordHeader * hp = (ADQRecordHeader *)h[ch];
             hp[0].Channel = ch;
             hp[0].RecordLength = std::min(DEFAULT_BUFFER_SIZE, this->bufferSize);
             hp[0].RecordNumber = this->recordNumber++;
@@ -162,7 +162,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             {
                 short * dp = (short*)(d[ch]);
                 memcpy(&(dp[i*this->recordLength]), this->sourceData[ch], this->recordLength*sizeof(short));
-                StreamingHeader_t * hp = (StreamingHeader_t *)(h[ch]);
+                ADQRecordHeader * hp = (ADQRecordHeader *)(h[ch]);
                 hp[i].Channel = ch;
                 hp[i].RecordLength = this->recordLength;
                 hp[i].RecordNumber = this->recordNumber++;

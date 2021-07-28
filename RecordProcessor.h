@@ -5,7 +5,7 @@
 class RecordProcessor {
 public:
     virtual void startNewStream(ApplicationConfiguration& config) = 0;
-    virtual bool processRecord(StreamingHeader_t* header, short* buffer, unsigned long sampleCount, int channel) = 0;
+    virtual bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel) = 0;
     virtual unsigned long long finish() = 0;
     virtual const char* getName() = 0;
     virtual ~RecordProcessor() {}
