@@ -54,7 +54,8 @@ json ChannelConfiguration::toJSON()
         {"trigger_delay",       this->triggerDelay},
         {"digital_offset",      vDigitalOffset},
         {"digital_gain",        this->digitalGain},
-        {"stream_type",         this->isContinuousStreaming}
+        {"stream_type",         this->isContinuousStreaming},
+        {"tag",					this->fileTag}
 
     };
     return j;
@@ -90,6 +91,7 @@ void ChannelConfiguration::loadFromJSON(json j)
     }
     this->digitalGain =         j["digital_gain"];
     this->isContinuousStreaming = j["stream_type"];
+    this->fileTag = j.value("tag", "");
 }
 short ChannelConfiguration::getCurrentBaseDCOffset()
 {

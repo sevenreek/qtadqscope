@@ -96,6 +96,7 @@ public:
     void setCurrentBaseDCOffset(int v);
     void setCurrentDigitalOffset(int v);
     int getTotalDCBias();
+    std::string fileTag;
 };
 float ADCCodeToMV(float inputRange, int code);
 int mvToADCCode(float inputRange, float value);

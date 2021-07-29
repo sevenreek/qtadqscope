@@ -84,6 +84,7 @@ public slots:
     void changeLevelTriggerCode(int val);
     void changeLevelTriggerMV(double val);
     void changeLevelTriggerReset(int val);
+    void changeFileTag(QString newtag);
 
     void changeUpdateScope(int state);
     void changeAnalyse(int state);

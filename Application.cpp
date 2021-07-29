@@ -113,6 +113,10 @@ void Application::setUI()
 }
 
 
+void Application::changeFileTag(QString filetag)
+{
+    this->config->getCurrentChannelConfig().fileTag = filetag.toStdString();
+}
 
 
 
@@ -377,6 +381,13 @@ void Application::linkSignals()
         &QRadioButton::clicked,
         this,
         &Application::updateTriggerLevelDisplays
+    );
+    // FILE TAG
+    this->mainWindow.ui->acquisitionTag->connect(
+        this->mainWindow.ui->acquisitionTag,
+        &QLineEdit::textChanged,
+        this,
+        &Application::changeFileTag
     );
 }
 
