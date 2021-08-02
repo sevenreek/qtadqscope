@@ -40,24 +40,23 @@ struct MinifiedChannelConfiguration {
 MinifiedChannelConfiguration minifyChannelConfiguration(const ChannelConfiguration &c);
 MinifiedChannelConfiguration minifyChannelConfiguration(const ChannelConfiguration &c)
 {
-    MinifiedChannelConfiguration returnValue{
-        .userLogicBypass = c.userLogicBypass,
-        .sampleSkip = c.sampleSkip,
-        .inputRangeFloat = c.inputRangeFloat,
-        .triggerEdge = (unsigned char)c.triggerEdge,
-        .triggerMode = (unsigned char)c.triggerMode,
-        .isStreamContinuous = (unsigned char)c.isContinuousStreaming,
-        .triggerLevelCode = (short)c.triggerLevelCode,
-        .triggerLevelReset = (short)c.triggerLevelReset,
-        .digitalOffset = (short)c.digitalOffset[c.inputRangeEnum],
-        .analogOffset = (short)c.baseDcBiasOffset[c.inputRangeEnum],
-        .digitalGain = (short)c.digitalGain,
-        .dcBias = (short)c.dcBiasCode,
-        .recordLength = c.recordLength,
-        .recordCount = c.recordCount,
-        .pretrigger = (unsigned short)c.pretrigger,
-        .triggerDelay = (unsigned short)c.triggerDelay
-    };
+    MinifiedChannelConfiguration returnValue;
+    returnValue.userLogicBypass = c.userLogicBypass;
+    returnValue.sampleSkip = c.sampleSkip;
+    returnValue.inputRangeFloat = c.inputRangeFloat;
+    returnValue.triggerEdge = (unsigned char)c.triggerEdge;
+    returnValue.triggerMode = (unsigned char)c.triggerMode;
+    returnValue.isStreamContinuous = (unsigned char)c.isContinuousStreaming;
+    returnValue.triggerLevelCode = (short)c.triggerLevelCode;
+    returnValue.triggerLevelReset = (short)c.triggerLevelReset;
+    returnValue.digitalOffset = (short)c.digitalOffset[c.inputRangeEnum];
+    returnValue.analogOffset = (short)c.baseDcBiasOffset[c.inputRangeEnum];
+    returnValue.digitalGain = (short)c.digitalGain;
+    returnValue.dcBias = (short)c.dcBiasCode;
+    returnValue.recordLength = c.recordLength;
+    returnValue.recordCount = c.recordCount;
+    returnValue.pretrigger = (unsigned short)c.pretrigger;
+    returnValue.triggerDelay = (unsigned short)c.triggerDelay;
     std::strncpy(returnValue.fileTag, c.fileTag.c_str(), MAX_TAG_LENGTH-1);
     returnValue.fileTag[MAX_TAG_LENGTH-1] = '\0';
     return returnValue;

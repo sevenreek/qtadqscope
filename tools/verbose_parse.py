@@ -1,38 +1,11 @@
 import ctypes as ct
 import numpy as np
 import sys
+import os
 import argparse
 from matplotlib import pyplot as plt
 PACK_STRUCTURES = 0
-"""
-struct MinifiedRecordHeader {
-    uint32_t recordLength;
-    uint32_t recordNumber;
-    uint64_t timestamp;
-};
 
-struct MinifiedChannelConfiguration {
-    unsigned char userLogicBypass;
-    unsigned short sampleSkip;
-    float inputRangeFloat;
-    unsigned char triggerEdge;
-    unsigned char triggerMode;
-    unsigned char isStreamContinuous;
-    short triggerLevelCode;
-    short triggerLevelReset;
-
-    short digitalOffset;
-    short analogOffset;
-    short digitalGain;
-    short dcBias;
-
-    unsigned int recordLength;
-    unsigned int recordCount;
-    unsigned short pretrigger;
-    unsigned short triggerDelay;
-
-};
-"""
 
 # The binary strucutre of files created with the Verbose Buffered Binary file output mode are as follows:
 # The file begins with a struct MinifiedChannelConfiguration written in binary
@@ -54,9 +27,12 @@ struct MinifiedChannelConfiguration {
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filepath', metavar='path', type=str, help='path to the data file')
+    parser.add_argument('-o', '--output_ascii', default=None, help='path to destination ascii file')
+    parser.add_argument('-l', '--limit_records', default=0, help='number of records to extract, 0 for all')
     parser.add_argument('-p', '--pack', action='store_true', help='pack strucutres')
+    parser.add_argument('-t', '--tag_size', default=128, help='size of the acquisition tag at the start of a minified channel configuration, default=128')
     parser = parser.parse_args()
-
+    print("Using file tag ", parser.tag_size)
     # the structures are subject to change and on some machines might require
     # inheriting from ct.LittleEndianStructure or ct.BigEndianStructure
     # and setting proper pack argument, blackbox seems to work with LittleEndianStructure and pack==False
@@ -71,6 +47,7 @@ if __name__ == '__main__':
     class MinifiedChannelConfiguration(ct.Structure):
         _pack_ = parser.pack
         _fields_ = [
+            ("fileTag", ct.c_char * parser.tag_size),
             ("userLogicBypass", ct.c_uint8),
             ("sampleSkip", ct.c_uint16),
             ("inputRangeFloat", ct.c_float),
@@ -88,12 +65,17 @@ if __name__ == '__main__':
             ("pretrigger", ct.c_uint16),
             ("triggerDelay", ct.c_uint16),
         ]
-        
+    if(parser.output_ascii):
+        if os.path.exists(parser.output_ascii):
+            os.remove(parser.output_ascii)
+        output_file = open(parser.output_ascii, "a")
     with open(parser.filepath, "rb") as f:
         bconf = f.read(ct.sizeof(MinifiedChannelConfiguration))
         conf = MinifiedChannelConfiguration.from_buffer_copy(bconf)
+        print(conf.fileTag, conf.recordLength, conf.inputRangeFloat)
         eof = False
         record_length = conf.recordLength
+        record_count = 0
         while not eof:
             if(not conf.isStreamContinuous):
                 bhead = f.read(ct.sizeof(MinifiedRecordHeader))
@@ -104,6 +86,7 @@ if __name__ == '__main__':
                 # do anything else you need with the header
                 print('#{} {}ps'.format(head.recordNumber, head.timestamp*125))
                 record_length = head.recordLength
+                record_count += 1
                 
             bsamples = f.read(record_length*ct.sizeof(ct.c_int16))
             if(len(bsamples) == 0):
@@ -111,6 +94,13 @@ if __name__ == '__main__':
                 break
             print(len(bsamples))
             samples = np.frombuffer(bsamples, dtype=np.int16, count=-1)
-            plt.plot(samples)
-            plt.show()
-
+                    
+            if(parser.output_ascii):
+                np.savetxt(output_file, samples.astype(int), fmt='%d')
+            if(record_count >= int(parser.limit_records)):
+                break
+            #plt.plot(samples)
+            #plt.show()
+    
+    if(parser.output_ascii):
+        output_file.close()

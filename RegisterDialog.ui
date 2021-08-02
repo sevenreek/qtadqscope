@@ -48,12 +48,12 @@
        </item>
        <item>
         <property name="text">
-         <string>Trapezoidal v1</string>
+         <string>Trapezoidal v2</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>2nd Order Differential</string>
+         <string>1st Order Differential</string>
         </property>
        </item>
        <item>
@@ -63,7 +63,12 @@
        </item>
        <item>
         <property name="text">
-         <string>1st Order Differential</string>
+         <string>2nd Order Differential</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Boxcar</string>
         </property>
        </item>
       </widget>
