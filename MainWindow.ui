@@ -656,31 +656,6 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0" colspan="6">
-            <widget class="QPlainTextEdit" name="notificationsTextArea">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>1</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <family>Consolas</family>
-               <pointsize>8</pointsize>
-              </font>
-             </property>
-             <property name="plainText">
-              <string/>
-             </property>
-             <property name="textInteractionFlags">
-              <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-             </property>
-             <property name="placeholderText">
-              <string>Notifications and non-critical errors will display here.</string>
-             </property>
-            </widget>
-           </item>
            <item row="3" column="0">
             <widget class="QLabel" name="label_14">
              <property name="text">
@@ -752,6 +727,22 @@
              </property>
              <property name="checked">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0" colspan="6">
+            <widget class="QTextBrowser" name="notificationsTextArea">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>1</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <family>Consolas</family>
+               <pointsize>8</pointsize>
+              </font>
              </property>
             </widget>
            </item>

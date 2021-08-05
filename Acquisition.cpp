@@ -75,7 +75,7 @@ void Acquisition::stopProcessor()
 {
     this->bufferProcessorHandler->stopLoop();
 }
-bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedConfig = nullptr, std::list<std::shared_ptr<RecordProcessor>> recordProcessors=std::list<std::shared_ptr<RecordProcessor>>())
+bool Acquisition::configure(std::shared_ptr<ApplicationConfiguration> providedConfig = nullptr, std::list<std::shared_ptr<IRecordProcessor>> recordProcessors=std::list<std::shared_ptr<IRecordProcessor>>())
 {
     this->adqDevice->StopStreaming();
     this->recordProcessors = recordProcessors;

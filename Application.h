@@ -37,7 +37,7 @@ private:
     std::unique_ptr<RegisterDialog> registerDialog;
     std::shared_ptr<ADQInterfaceWrapper> adqDevice;
     std::unique_ptr<FullCalibrationDialog> autoCalibrateDialog;
-    std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
+    std::list<std::shared_ptr<IRecordProcessor>> recordProcessors;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */
@@ -117,8 +117,8 @@ public slots:
     void loadConfig();
     void saveConfig();
 
-    void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
-    void removeRecordProcessor(std::shared_ptr<RecordProcessor> rp);
+    void appendRecordProcessor(std::shared_ptr<IRecordProcessor> rp);
+    void removeRecordProcessor(std::shared_ptr<IRecordProcessor> rp);
 
     void openCalibrateDialog();
     void useCalculatedOffset(CALIBRATION_MODES mode, int offset);

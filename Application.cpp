@@ -67,7 +67,7 @@ int Application::start(int argc, char *argv[]) {
     return 0;
 }
 
-void Application::appendRecordProcessor(std::shared_ptr<RecordProcessor> rp)
+void Application::appendRecordProcessor(std::shared_ptr<IRecordProcessor> rp)
 {
     if(rp == nullptr)
     {
@@ -87,7 +87,7 @@ void Application::appendRecordProcessor(std::shared_ptr<RecordProcessor> rp)
         spdlog::warn("Adding record processor failed");
     }
 }
-void Application::removeRecordProcessor(std::shared_ptr<RecordProcessor> rp)
+void Application::removeRecordProcessor(std::shared_ptr<IRecordProcessor> rp)
 {
     //spdlog::debug("Remvoe record Processor");
     if(rp == nullptr)

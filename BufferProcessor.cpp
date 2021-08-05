@@ -3,9 +3,9 @@
 #include <cstring>
 #include "spdlog/spdlog.h"
 
-BufferProcessor::~BufferProcessor() = default;
+IBufferProcessor::~IBufferProcessor() = default;
 BaseBufferProcessor::BaseBufferProcessor(
-    std::list<std::shared_ptr<RecordProcessor>> &recordProcessors,
+    std::list<std::reference_wrapper<IRecordProcessor>> &recordProcessors,
     unsigned long recordLength
 ):
     recordProcessors(recordProcessors)
@@ -42,7 +42,7 @@ bool BaseBufferProcessor::completeRecord(ADQRecordHeader *header, short *buffer,
     for(auto rp : this->recordProcessors)
     {
         //spdlog::debug("Processing record");
-        success &= rp->processRecord(header, buffer, sampleCount, channel);
+        success &= rp.get().processRecord(header, buffer, sampleCount, channel);
     }
     recordsStored++;
     return success;

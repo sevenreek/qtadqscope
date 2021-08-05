@@ -6,7 +6,7 @@ struct SignalParameters {
     double rms;
 };
 
-class SignalParameterComputer : public RecordProcessor
+class SignalParameterComputer : public IRecordProcessor
 {
 private:
     unsigned long long bytesSaved;

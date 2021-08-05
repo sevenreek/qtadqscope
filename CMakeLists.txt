@@ -62,8 +62,6 @@ set(PROJECT_SOURCES
         MainWindow.ui
         include/qcustomplot/qcustomplot.cpp
         include/qcustomplot/qcustomplot.h
-        Acquisition.cpp
-        Acquisition.h
         BufferProcessor.cpp
         BufferProcessor.h
         Semaphore.h
@@ -99,6 +97,12 @@ set(PROJECT_SOURCES
         MinifiedRecordHeader.h
         QADQWrapper.cpp
         QADQWrapper.h
+        Digitizer.cpp
+        Digitizer.h
+        DigitizerConstants.h
+        DigitizerConfiguration.cpp
+        DigitizerConfiguration.h
+        util.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -106,16 +110,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
     )
 else()
-    if(ANDROID)
-        add_library(qtadqscope SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(qtadqscope
-            ${PROJECT_SOURCES}
-        )
-    endif()
+    add_executable(qtadqscope
+        ${PROJECT_SOURCES}
+    )
 endif()
+
 if(MOCK_ADQAPI)
     message(WARNING "Using MockADQ API")
     add_compile_definitions(MOCK_ADQAPI)

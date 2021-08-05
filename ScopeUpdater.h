@@ -4,7 +4,7 @@
 #include "qcustomplot.h"
 #include <QObject>
 
-class ScopeUpdater : public QObject, public RecordProcessor
+class ScopeUpdater : public QObject, public IRecordProcessor
 {
     Q_OBJECT
 private:

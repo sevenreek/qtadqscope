@@ -36,10 +36,10 @@ protected:
     std::unique_ptr<QTimer> acqusitionTimer;
     std::shared_ptr<ApplicationConfiguration> appConfig;
     std::shared_ptr<ADQInterfaceWrapper> adqDevice;
-    std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
+    std::list<std::shared_ptr<IRecordProcessor>> recordProcessors;
     std::shared_ptr<WriteBuffers> writeBuffers;
     std::unique_ptr<DMAChecker> dmaChecker;
-    std::shared_ptr<BufferProcessor> bufferProcessor;
+    std::shared_ptr<IBufferProcessor> bufferProcessor;
     std::unique_ptr<LoopBufferProcessor> bufferProcessorHandler;
 
     bool dmaCheckingActive = false;
@@ -66,7 +66,7 @@ public:
         std::shared_ptr<ADQInterfaceWrapper> adqDevice
     );
     ACQUISITION_STATES getState();
-    bool configure(std::shared_ptr<ApplicationConfiguration> providedConfig, std::list<std::shared_ptr<RecordProcessor>> recordProcessors);
+    bool configure(std::shared_ptr<ApplicationConfiguration> providedConfig, std::list<std::shared_ptr<IRecordProcessor>> recordProcessors);
     bool start(bool needSwTrig, unsigned int dmaFlushTimeout=100);
     bool startTimed(unsigned long msDuration, bool needSwTrig);
     unsigned long checkDMA();

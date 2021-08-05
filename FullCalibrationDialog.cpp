@@ -184,7 +184,7 @@ bool FullCalibrationDialog::runStage()
     );
     this->configureNextStage();
     this->parameterComputer->startNewStream(*(this->calibrationConfiguration));
-    std::list<std::shared_ptr<RecordProcessor>> rps;
+    std::list<std::shared_ptr<IRecordProcessor>> rps;
     rps.push_back(this->parameterComputer);
     unsigned long durationMs = this->ui->calibrationDuration->value();
     bool success = true;
