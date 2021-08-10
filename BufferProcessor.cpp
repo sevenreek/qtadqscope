@@ -5,7 +5,7 @@
 
 IBufferProcessor::~IBufferProcessor() = default;
 BaseBufferProcessor::BaseBufferProcessor(
-    std::list<std::reference_wrapper<IRecordProcessor>> &recordProcessors,
+    std::list<IRecordProcessor*> &recordProcessors,
     unsigned long recordLength
 ):
     recordProcessors(recordProcessors)
@@ -42,7 +42,7 @@ bool BaseBufferProcessor::completeRecord(ADQRecordHeader *header, short *buffer,
     for(auto rp : this->recordProcessors)
     {
         //spdlog::debug("Processing record");
-        success &= rp.get().processRecord(header, buffer, sampleCount, channel);
+        success &= rp->processRecord(header, buffer, sampleCount, channel);
     }
     recordsStored++;
     return success;

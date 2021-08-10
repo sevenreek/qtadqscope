@@ -1,6 +1,6 @@
 #include "Application.h"
 #include "MainWindow.h"
-#include "Acquisition.h"
+#include "DigitizerConfiguration.h"
 #include "./ui_MainWindow.h"
 #include "./ui_BuffersDialog.h"
 #include "./ui_RegisterDialog.h"
@@ -15,7 +15,7 @@ Application::Application( MainWindow& mainWindow) : mainWindow(mainWindow)
 }
 int Application::start(int argc, char *argv[]) {
 
-    this->config->fromFile("default_config.json");
+    this->config.fromFile("default_config.json");
     this->adqControlUnit = CreateADQControlUnit();
 #ifdef MOCK_ADQAPI
     spdlog::warn("Using mock ADQAPI");
@@ -27,7 +27,7 @@ int Application::start(int argc, char *argv[]) {
     }
 #endif
     // parse args here
-    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config->adqLoggingLevel, 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
+    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.getAdqLoggingLevel(), 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
     ADQControlUnit_FindDevices(this->adqControlUnit);
     int numberOfDevices = ADQControlUnit_NofADQ(adqControlUnit);
     if(numberOfDevices == 0)
@@ -37,72 +37,30 @@ int Application::start(int argc, char *argv[]) {
     }
     else if(numberOfDevices != 1)
     {
-        spdlog::warn("Found {} devices. Using {}.", numberOfDevices, this->config->deviceNumber);
+        spdlog::warn("Found {} devices. Using {}.", numberOfDevices, this->config.getDeviceNumber());
     }
+    this->adqWrapper = std::unique_ptr<ADQInterfaceWrapper>(new MutexADQWrapper(adqControlUnit, this->config.getDeviceNumber()));
+    this->digitizer =
+        std::unique_ptr<Digitizer>(
+            new Digitizer(
+                *this->adqWrapper.get()
+            )
+        );
     this->scopeUpdater = std::unique_ptr<ScopeUpdater>(
         new ScopeUpdater(
-            this->config->getCurrentChannelConfig().recordLength,
+            this->digitizer->getRecordLength(),
             *this->mainWindow.ui->plotArea
         )
     );
-    this->adqDevice =
-        std::shared_ptr<ADQInterfaceWrapper>(
-            new MutexADQWrapper(
-                adqControlUnit,
-                this->config->deviceNumber
-            )
-        );
-    this->acquisition = std::make_shared<Acquisition>(
-        this->config,
-        adqDevice
-    );
-
     this->buffersConfigurationDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog());
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog());
     this->autoCalibrateDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this->config, this->acquisition));
     this->linkSignals();
     this->setUI();
-    this->createPeriodicUpdateTimer(this->config->periodicUpdatePeriod);
+    this->createPeriodicUpdateTimer(this->config.getPeriodicUpdatePeriod());
     //this->config->toFile("test_json.scfg");
     return 0;
 }
-
-void Application::appendRecordProcessor(std::shared_ptr<IRecordProcessor> rp)
-{
-    if(rp == nullptr)
-    {
-        spdlog::error("Tried appending null record processor");
-        return;
-    }
-    spdlog::debug("Append record Processor");
-    unsigned int countBefore = this->recordProcessors.size();
-    if(std::find(this->recordProcessors.begin(), this->recordProcessors.end(), rp) != this->recordProcessors.end())
-    {
-        spdlog::warn("Tried to duplicate record processor in list.");
-        return;
-    }
-    this->recordProcessors.push_back(rp);
-    if(this->recordProcessors.size() != countBefore+1)
-    {
-        spdlog::warn("Adding record processor failed");
-    }
-}
-void Application::removeRecordProcessor(std::shared_ptr<IRecordProcessor> rp)
-{
-    //spdlog::debug("Remvoe record Processor");
-    if(rp == nullptr)
-    {
-        spdlog::error("Tried to remove null record processor in list.");
-        return;
-    }
-    unsigned int countBefore = this->recordProcessors.size();
-    this->recordProcessors.remove(rp);
-    if(this->recordProcessors.size() != countBefore-1)
-    {
-        spdlog::warn("Removing record processor failed");
-    }
-}
-
 void Application::setUI()
 {
     // This is a temporary(hopefully) hack.

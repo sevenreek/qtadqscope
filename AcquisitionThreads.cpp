@@ -16,6 +16,11 @@ bool DMAChecker::isLoopStopped() const
     return loopStopped;
 }
 
+unsigned int DMAChecker::getLastFilledBufferCount() const
+{
+    return lastFilledBufferCount;
+}
+
 DMAChecker::DMAChecker(WriteBuffers &writeBuffers, ADQInterfaceWrapper &adqDevice, unsigned long transferBufferCount):
     writeBuffers(writeBuffers),  transferBufferCount(transferBufferCount), adqDevice(adqDevice)
 {
@@ -73,7 +78,7 @@ void DMAChecker::runLoop()
              if(!this->shouldLoopRun)
              {
                  //this->writeBuffers.notifyWritten(); maybe?
-                 if(sbuf != nullptr) this->writeBuffers->notifyRead();
+                 if(sbuf != nullptr) this->writeBuffers.notifyRead();
                  goto DMA_CHECKER_LOOP_EXIT;
              }
             } while(sbuf == nullptr);

@@ -1,16 +1,40 @@
 #include "FullCalibrationDialog.h"
 #include "ui_FullCalibrationDialog.h"
 
-FullCalibrationDialog::FullCalibrationDialog(std::shared_ptr<ApplicationConfiguration> appConfig, std::shared_ptr<Acquisition> acq, QWidget *parent) :
+FullCalibrationDialog::FullCalibrationDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::FullCalibrationDialog)
 {
     ui->setupUi(this);
-    this->acquisition = acq;
-    this->calibrationConfiguration = std::make_shared<ApplicationConfiguration>(*(appConfig.get()));
-    this->calibrationTable = std::unique_ptr<CalibrationTable>(new CalibrationTable());
-    this->appConfig = appConfig;
-    this->parameterComputer = std::make_shared<SignalParameterComputer>(this->calibrationConfiguration->fileSizeLimit);
+
+    this->digitalValues[0] = this->ui->do0;
+    this->digitalValues[1] = this->ui->do1;
+    this->digitalValues[2] = this->ui->do2;
+    this->digitalValues[3] = this->ui->do3;
+
+    this->analogValues[0] = this->ui->ao0;
+    this->analogValues[1] = this->ui->ao1;
+    this->analogValues[2] = this->ui->ao2;
+    this->analogValues[3] = this->ui->ao3;
+}
+
+FullCalibrationDialog::~FullCalibrationDialog()
+{
+    delete ui;
+}
+void FullCalibrationDialog::changeInputRange(int v)
+{
+    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        this->digitalValues[ch]->setValue(this->calibrationTable.digitalOffset[ch][v]);
+        this->analogValues[ch]->setValue(this->calibrationTable.analogOffset[ch][v]);
+    }
+}
+
+void FullCalibrationDialog::initialize(ApplicationContext *context)
+{
+    this->DigitizerGUIComponent::initialize(context);
+    this->parameterComputer = std::unique_ptr<SignalParameterComputer>(new SignalParameterComputer(this->digitizer->getFileSizeLimit()));
     this->ui->startCalibration->connect(
         this->ui->startCalibration,
         &QAbstractButton::pressed,
@@ -40,55 +64,8 @@ FullCalibrationDialog::FullCalibrationDialog(std::shared_ptr<ApplicationConfigur
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [=](int index){ this->changeInputRange(index); }
     );
-    this->digitalValues[0] = this->ui->do0;
-    this->digitalValues[1] = this->ui->do1;
-    this->digitalValues[2] = this->ui->do2;
-    this->digitalValues[3] = this->ui->do3;
-
-    this->analogValues[0] = this->ui->ao0;
-    this->analogValues[1] = this->ui->ao1;
-    this->analogValues[2] = this->ui->ao2;
-    this->analogValues[3] = this->ui->ao3;
 }
 
-FullCalibrationDialog::~FullCalibrationDialog()
-{
-    delete ui;
-}
-void FullCalibrationDialog::changeInputRange(int v)
-{
-    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
-    {
-        this->digitalValues[ch]->setValue(this->calibrationTable->digitalOffset[ch][v]);
-        this->analogValues[ch]->setValue(this->calibrationTable->analogOffset[ch][v]);
-    }
-}
-
-void FullCalibrationDialog::configureNextStage()
-{
-    this->calibrationConfiguration->setCurrentChannel(this->setups[currentSetupIndex].channel);
-    this->calibrationConfiguration->getCurrentChannelConfig().setInputRange((INPUT_RANGES)this->setups[currentSetupIndex].inputRange);
-    this->calibrationConfiguration->getCurrentChannelConfig().setCurrentBaseDCOffset(
-        calibrationTable->analogOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
-    );
-    this->calibrationConfiguration->getCurrentChannelConfig().setCurrentDigitalOffset(
-        calibrationTable->digitalOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
-    );
-    this->calibrationConfiguration->getCurrentChannelConfig().sampleSkip = this->ui->sampleSkip->value();
-
-    this->calibrationConfiguration->transferBufferCount = 16;
-    this->calibrationConfiguration->transferBufferSize = 4ULL*1024ULL*1024ULL;
-    this->calibrationConfiguration->writeBufferCount = 64;
-
-    this->calibrationConfiguration->getCurrentChannelConfig().dcBias = 0;
-    this->calibrationConfiguration->getCurrentChannelConfig().dcBiasCode = 0;
-    this->calibrationConfiguration->getCurrentChannelConfig().isContinuousStreaming = true;
-    this->calibrationConfiguration->getCurrentChannelConfig().recordCount = -1;
-    this->calibrationConfiguration->getCurrentChannelConfig().triggerMode = TRIGGER_MODES::SOFTWARE;
-    this->calibrationConfiguration->getCurrentChannelConfig().updateScope = false;
-    this->calibrationConfiguration->getCurrentChannelConfig().userLogicBypass = 0b1111;
-    this->calibrationConfiguration->secondChannel = CHANNEL_DISABLED;
-}
 void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
 {
     FullCalibrationSetup s1;
@@ -110,8 +87,8 @@ void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
         this->setups.push_back(s1);
     }
     // reset affected cells:
-    this->calibrationTable->analogOffset[ch][inrange] = 0;
-    this->calibrationTable->digitalOffset[ch][inrange] = 0;
+    this->calibrationTable.analogOffset[ch][inrange] = 0;
+    this->calibrationTable.digitalOffset[ch][inrange] = 0;
 }
 void FullCalibrationDialog::start()
 {
@@ -125,7 +102,7 @@ void FullCalibrationDialog::start()
         this->mode = CALIBRATION_MODES::FINE_DIGITAL;
     }
     this->blockUI();
-    connect(this->acquisition.get(), &Acquisition::onStateChanged, this, &FullCalibrationDialog::onStateChanged);
+    connect(this->digitizer, &Digitizer::digitizerStateChanged, this, &FullCalibrationDialog::onStateChanged);
     this->setups.clear();
     unsigned char channelMask =
         (this->ui->channelSelection0->checkState()?(1<<0):0) |
@@ -182,40 +159,44 @@ bool FullCalibrationDialog::runStage()
             fmt::format("CH{}: {} mV", this->setups[this->currentSetupIndex].channel+1, INPUT_RANGE_VALUES[this->setups[this->currentSetupIndex].inputRange])
         )
     );
-    this->configureNextStage();
-    this->parameterComputer->startNewStream(*(this->calibrationConfiguration));
-    std::list<std::shared_ptr<IRecordProcessor>> rps;
-    rps.push_back(this->parameterComputer);
-    unsigned long durationMs = this->ui->calibrationDuration->value();
+    Acquisition acq = this->acquisitionFromStage(this->setups[this->currentSetupIndex]);
+    std::list<IRecordProcessor*> rps;
+    rps.push_back(this->parameterComputer.get());
     bool success = true;
-    success &= this->acquisition->configure(this->calibrationConfiguration, rps);
+    success &= this->digitizer->runOverridenAcquisition(acq, rps, this->calibrationTable);
     if(!success) {
-        spdlog::debug("Acquisition configuration failed.");
+        spdlog::debug("Calibration-acquisition failed to start.");
         this->ui->hintLabel->setText("Calibration failed.");
-        return false;
-    }
-    if(durationMs > 0)
-    {
-        success &= this->acquisition->startTimed(durationMs, true);
-    }
-    else {
-        spdlog::debug("Acqusistion start failed.");
-        this->ui->hintLabel->setText("Calibration failed.");
-        return false;
-    }
-    if(success) {
-    }
-    else
-    {
-        spdlog::debug("Acqusistion start failed.");
-        this->ui->hintLabel->setText("Calibration failed.");
-        this->acquisition->stop();
+        this->digitizer->stopAcquisition();
         return false;
     }
     spdlog::debug("Running stage {}: m:{} ch:{} ir:{}", this->currentSetupIndex, this->setups[this->currentSetupIndex].mode, this->setups[this->currentSetupIndex].channel, this->setups[this->currentSetupIndex].inputRange);
     return true;
 }
-void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
+
+Acquisition FullCalibrationDialog::acquisitionFromStage(const FullCalibrationSetup &stage)
+{
+    int ch = stage.channel;
+    int ir = stage.inputRange;
+    Acquisition acq;
+    acq.setChannelMask(1<<ch);
+    acq.setTriggerMask(1<<ch);
+    acq.setInputRange(ch, static_cast<INPUT_RANGES>(ir));
+    acq.setAnalogOffset(ch, this->calibrationTable.analogOffset[ch][ir]);
+    acq.setDigitalOffset(ch, this->calibrationTable.digitalOffset[ch][ir]);
+    acq.setSampleSkip(this->ui->sampleSkip->value());
+    acq.setTransferBufferCount(32);
+    acq.setTransferBufferSize(4UL*1024UL*1024UL);
+    acq.setTransferBufferQueueSize(64);
+    acq.setDcBias(ch, 0);
+    acq.setIsContinuous(true);
+    acq.setRecordCount(Acquisition::INFINITE_RECORDS);
+    acq.setTriggerMode(TRIGGER_MODES::SOFTWARE);
+    acq.setUserLogicBypassMask(0b11);
+    acq.setDuration(this->ui->calibrationDuration->value());
+    return acq;
+}
+void FullCalibrationDialog::onStateChanged(Digitizer::DIGITIZER_STATE newState)
 {
     if(!this->acquisitionActive)
     {
@@ -224,7 +205,7 @@ void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
         this->stopAcquisitions();
         return;
     }
-    if(newState == ACQUISITION_STATES::STOPPED)
+    if(newState == Digitizer::DIGITIZER_STATE::READY)
     {
         spdlog::debug("Calibration stage finished. Computing average.");
         std::unique_ptr<SignalParameters> sp = this->parameterComputer->getResults();
@@ -241,12 +222,12 @@ void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
 
         if(this->setups[this->currentSetupIndex].mode == CALIBRATION_MODES::ANALOG)
         {
-            this->calibrationTable->analogOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
+            this->calibrationTable.analogOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
                 = -sp->average;
         }
         else
         {
-            this->calibrationTable->digitalOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
+            this->calibrationTable.digitalOffset[this->setups[currentSetupIndex].channel][this->setups[currentSetupIndex].inputRange]
                 = sp->average;
         }
         if(!this->moveToNextStage()) // if no more stages
@@ -272,7 +253,7 @@ void FullCalibrationDialog::onStateChanged(ACQUISITION_STATES newState)
 void FullCalibrationDialog::stopAcquisitions()
 {
     this->acquisitionActive = false;
-    this->acquisition->disconnect(this);
+    this->digitizer->disconnect(this);
     this->unblockUI();
 }
 void FullCalibrationDialog::blockUI()
@@ -296,14 +277,14 @@ void FullCalibrationDialog::apply()
         if(this->ui->rangeSingle->isChecked())
         {
             int inputRange = this->ui->inputRangeView->currentIndex();
-            this->appConfig->channelConfig[ch].baseDcBiasOffset[inputRange] = this->calibrationTable->analogOffset[ch][inputRange];
-            this->appConfig->channelConfig[ch].digitalOffset[inputRange] = this->calibrationTable->digitalOffset[ch][inputRange];
+            this->digitizer->setAnalogOffset(ch, inputRange, this->calibrationTable.analogOffset[ch][inputRange]);
+            this->digitizer->setDigitalOffset(ch, inputRange, this->calibrationTable.digitalOffset[ch][inputRange]);
             continue;
         }
         for(int inrange = 0; inrange < INPUT_RANGE_COUNT; inrange++)
         {
-            this->appConfig->channelConfig[ch].baseDcBiasOffset[inrange] = this->calibrationTable->analogOffset[ch][inrange];
-            this->appConfig->channelConfig[ch].digitalOffset[inrange] = this->calibrationTable->digitalOffset[ch][inrange];
+            this->digitizer->setAnalogOffset(ch, inrange, this->calibrationTable.analogOffset[ch][inrange]);
+            this->digitizer->setDigitalOffset(ch, inrange, this->calibrationTable.digitalOffset[ch][inrange]);
         }
     }
 
@@ -318,7 +299,7 @@ void FullCalibrationDialog::load()
     );
     if(!fileName.length()) return;
     QByteArray ba = fileName.toLocal8Bit();
-    bool success = this->calibrationTable->fromJSON(ba.data());
+    bool success = this->calibrationTable.fromJSON(ba.data());
     if(!success)
     {
         spdlog::warn("Failed to load configuration from file {}", ba.data());
@@ -336,5 +317,5 @@ void FullCalibrationDialog::save()
     );
     if(!fileName.length()) return;
     QByteArray ba = fileName.toLocal8Bit();
-    this->calibrationTable->toJSON(ba.data());
+    this->calibrationTable.toJSON(ba.data());
 }

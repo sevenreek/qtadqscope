@@ -1,5 +1,5 @@
 #include "QADQWrapper.h"
-
+#include <QThread>
 QADQWrapper::QADQWrapper(std::shared_ptr<ADQInterface> adq):
 adq(adq)
 {

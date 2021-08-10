@@ -55,11 +55,6 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 set(PROJECT_SOURCES
         main.cpp
-        ADQDeviceConfiguration.cpp
-        ADQDeviceConfiguration.h
-        MainWindow.cpp
-        MainWindow.h
-        MainWindow.ui
         include/qcustomplot/qcustomplot.cpp
         include/qcustomplot/qcustomplot.h
         BufferProcessor.cpp
@@ -69,12 +64,10 @@ set(PROJECT_SOURCES
         StreamingBuffers.h
         StreamingHeader.h
         RecordProcessor.h
-        Application.cpp
-        Application.h
         ScopeUpdater.cpp
         ScopeUpdater.h
-        ApplicationConfiguration.cpp
-        ApplicationConfiguration.h
+        ApplicationContext.cpp
+        ApplicationContext.h
         AcquisitionThreads.cpp
         AcquisitionThreads.h
         BinaryFileWriter.cpp
@@ -89,9 +82,6 @@ set(PROJECT_SOURCES
         SignalParameterComputer.h
         MockADQAPI.cpp
         MockADQAPI.h
-        FullCalibrationDialog.cpp
-        FullCalibrationDialog.h
-        FullCalibrationDialog.ui
         CalibrationTable.h
         CalibrationTable.cpp
         MinifiedRecordHeader.h
@@ -103,6 +93,28 @@ set(PROJECT_SOURCES
         DigitizerConfiguration.cpp
         DigitizerConfiguration.h
         util.h
+        util.cpp
+        AcquisitionChannelSettingsTab.cpp
+        AcquisitionChannelSettingsTab.h
+        AcquisitionChannelSettingsTab.ui
+        AcquisitionSettings.cpp
+        AcquisitionSettings.h
+        AcquisitionSettings.ui
+        PrimaryWindow.cpp
+        PrimaryWindow.h
+        PrimaryWindow.ui
+        PrimaryControls.cpp
+        PrimaryControls.h
+        PrimaryControls.ui
+        RecordProcessorsPanel.cpp
+        RecordProcessorsPanel.h
+        RecordProcessorsPanel.ui
+        GUIApplication.cpp
+        GUIApplication.h
+        DigitizerGUIComponent.h
+        FullCalibrationDialog.cpp
+        FullCalibrationDialog.h
+        FullCalibrationDialog.ui
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

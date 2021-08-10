@@ -15,7 +15,7 @@ void Acquisition::setObtainedInputRange(int ch, float val)
 
 float Acquisition::getDesiredInputRange(int channel) const
 {
-    return INPUT_RANGE_VALUES[static_cast<int>(this->obtainedInputRange.at(channel))];
+    return INPUT_RANGE_VALUES[int(this->inputRange.at(channel))];
 }
 
 INPUT_RANGES Acquisition::getInputRange(int ch) const
@@ -94,7 +94,7 @@ void Acquisition::setTriggerLevel(int value)
     triggerLevel = value;
 }
 
-Acquisition Acquisition::fromJSON(const QJsonObject &json)
+Acquisition Acquisition::fromJson(const QJsonObject &json)
 {
     Acquisition returnValue;
     returnValue.tag                     = json["tag"].toString("").toStdString();
@@ -147,7 +147,7 @@ Acquisition Acquisition::fromJSON(const QJsonObject &json)
     return returnValue;
 }
 
-QJsonObject Acquisition::toJSON()
+QJsonObject Acquisition::toJson()
 {
     QJsonObject returnValue;
     returnValue.insert("tag",               QString::fromStdString(this->tag));
@@ -176,6 +176,16 @@ QJsonObject Acquisition::toJSON()
     returnValue.insert("analog_offset",     QJsonArray({this->analogOffset.at(0), this->analogOffset.at(1), this->analogOffset.at(2), this->analogOffset.at(3)}));
     returnValue.insert("obtained_range",    QJsonArray({this->obtainedInputRange.at(0), this->obtainedInputRange.at(1), this->obtainedInputRange.at(2), this->obtainedInputRange.at(3)}));
     return returnValue;
+}
+
+int Acquisition::getTriggerReset() const
+{
+    return triggerReset;
+}
+
+void Acquisition::setTriggerReset(int value)
+{
+    triggerReset = value;
 }
 
 std::string Acquisition::getTag() const

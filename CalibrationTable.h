@@ -1,6 +1,6 @@
 #ifndef CALIBRATIONTABLE_H
 #define CALIBRATIONTABLE_H
-#include "ADQDeviceConfiguration.h"
+#include "DigitizerConstants.h"
 
 class CalibrationTable {
 public:

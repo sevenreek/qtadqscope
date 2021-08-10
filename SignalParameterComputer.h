@@ -17,7 +17,7 @@ private:
 public:
     explicit SignalParameterComputer(unsigned long long sizeLimit);
     ~SignalParameterComputer();
-    void startNewStream(ApplicationConfiguration& config);
+    void startNewAcquisition(Acquisition& config);
     bool writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length);
     bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     bool writeContinuousBuffer(short* buffer, unsigned int length);

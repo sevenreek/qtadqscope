@@ -2,6 +2,11 @@
 #include "spdlog/spdlog.h"
 #include <ctime>
 #include "MinifiedRecordHeader.h"
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QFile>
+
+
 BinaryFileWriter::BinaryFileWriter(unsigned long long sizeLimit)
 {
     this->sizeLimit = sizeLimit;
@@ -15,28 +20,34 @@ unsigned long long BinaryFileWriter::getProcessedBytes()
 {
     return this->bytesSaved;
 }
-void BinaryFileWriter::startNewStream(ApplicationConfiguration& config)
+void BinaryFileWriter::startNewAcquisition(Acquisition& config)
 {
-    std::time_t t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::string s_cfg = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-    int baseChannel = config.getCurrentChannel();
-    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
-    this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
-    this->channelMask = 1<<baseChannel;
-    int additionalChannel = config.secondChannel;
-    if(additionalChannel != CHANNEL_DISABLED)
-    {
-        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
-        this->dataStream[additionalChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
-        this->channelMask = 1<<baseChannel | 1<<additionalChannel;
-    }
-    config.toFile(s_cfg.c_str());
+    this->channelMask = config.getChannelMask();
     this->bytesSaved = 0;
-    this->sizeLimit = config.fileSizeLimit;
-    this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
-
+    this->sizeLimit = config.getFileSizeLimit();
+    this->isContinuousStream = config.getIsContinuous();
+    std::time_t t = std::time(nullptr); // get current time
+    auto tm = *std::localtime(&t);
+    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        if((1<<ch) & this->channelMask)
+        {
+            int adqch = ch+1;
+            std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, adqch);
+            this->dataStream[ch].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
+        }
+    }
+    // save config
+    std::string s_cfg = fmt::format(
+        "{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
+    );
+    QJsonObject json = config.toJson();
+    QJsonDocument doc;
+    doc.setObject(json);
+    QFile cfgFile(QString::fromStdString(s_cfg));
+    cfgFile.open(QFile::OpenModeFlag::WriteOnly);
+    cfgFile.write(doc.toJson());
+    cfgFile.close();
 }
 
 bool BinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
@@ -67,10 +78,8 @@ const char* BinaryFileWriter::getName()
 
 
 
-BufferedBinaryFileWriter::BufferedBinaryFileWriter(unsigned long long sizeLimit)
+BufferedBinaryFileWriter::BufferedBinaryFileWriter(unsigned long long sizeLimit) : BinaryFileWriter(sizeLimit)
 {
-    this->sizeLimit = sizeLimit;
-    this->bytesSaved = 0;
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
     {
         this->dataBuffer[ch] = nullptr;
@@ -87,26 +96,9 @@ BufferedBinaryFileWriter::~BufferedBinaryFileWriter()
         }
     }
 }
-void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
+void BufferedBinaryFileWriter::startNewAcquisition(Acquisition& config)
 {
-    std::time_t t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-
-    std::string s_cfg = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-    int baseChannel = config.getCurrentChannel();
-    std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, baseChannel+1);
-    this->dataStream[baseChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
-    this->channelMask = 1<<baseChannel;
-    int additionalChannel = config.secondChannel;
-    if(additionalChannel != CHANNEL_DISABLED)
-    {
-        s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, additionalChannel+1);
-        this->dataStream[additionalChannel].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
-        this->channelMask = 1<<baseChannel | 1<<additionalChannel;
-    }
-    config.toFile(s_cfg.c_str());
-    this->sizeLimit = config.fileSizeLimit;
+    this->BinaryFileWriter::startNewAcquisition(config);
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
     {
         if(this->dataBuffer[ch] != nullptr)
@@ -122,8 +114,6 @@ void BufferedBinaryFileWriter::startNewStream(ApplicationConfiguration& config)
             //spdlog::debug("Allocated buffer for ch{}; size:{}",ch, this->sizeLimit);
         }
     }
-    this->bytesSaved = 0;
-    this->isContinuousStream = config.getCurrentChannelConfig().isContinuousStreaming;
 }
 
 bool BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
@@ -208,28 +198,21 @@ bool VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* 
         return true;
     }
 }
-unsigned long long VerboseBufferedBinaryWriter::finish() {
 
-    for(int i = 0; i< MAX_NOF_CHANNELS; i++)
-    {
-        if(1<<i & this->channelMask)
-        {
-            this->dataStream[i].write((char*)this->dataBuffer[i], this->samplesSaved[i]*sizeof(char));
-            this->dataStream[i].close();
-        }
-    }
-    return this->bytesSaved;
-}
-void VerboseBufferedBinaryWriter::startNewStream(ApplicationConfiguration& config)
+const char *VerboseBufferedBinaryWriter::getName()
 {
-    BufferedBinaryFileWriter::startNewStream(config); // call super
+    return "VerboseBufferedBinaryWriter";
+}
+void VerboseBufferedBinaryWriter::startNewAcquisition(Acquisition& config)
+{
+    this->BufferedBinaryFileWriter::startNewAcquisition(config); // call super
     for(int i = 0; i< MAX_NOF_CHANNELS; i++)
     {
         if((1<<i) & this->channelMask)
         {
-            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
-            MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
-            this->dataStream[i].write((char*)&m,sizeof(MinifiedChannelConfiguration));
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedAcquisitionConfiguration), i);
+            MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(config, i);
+            this->dataStream[i].write((char*)&m,sizeof(MinifiedAcquisitionConfiguration));
         }
     }
 }
@@ -269,17 +252,23 @@ VerboseBinaryWriter::~VerboseBinaryWriter()
 
 }
 
-
-void VerboseBinaryWriter::startNewStream(ApplicationConfiguration &config)
+const char *VerboseBinaryWriter::getName()
 {
-    BinaryFileWriter::startNewStream(config); // call super
+    return "VerboseBinaryWriter";
+}
+
+
+void VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
+{
+    this->BinaryFileWriter::startNewAcquisition(config); // call super
     for(int i = 0; i< MAX_NOF_CHANNELS; i++)
     {
         if((1<<i) & this->channelMask)
         {
-            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedChannelConfiguration), i);
-            MinifiedChannelConfiguration m = minifyChannelConfiguration(config.channelConfig[i]);
-            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(MinifiedChannelConfiguration));
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedAcquisitionConfiguration), i);
+            MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(config, i);
+            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(MinifiedAcquisitionConfiguration));
         }
     }
 }
+

@@ -1,9 +1,24 @@
 #include "Digitizer.h"
+#include "util.h"
+Acquisition Digitizer::getAcquisition() const
+{
+    return defaultAcquisition;
+}
 
 void Digitizer::changeDigitizerState(Digitizer::DIGITIZER_STATE newState)
 {
     this->currentState = newState;
     emit this->digitizerStateChanged(newState);
+}
+
+CalibrationTable Digitizer::getDefaultCalibrationTable() const
+{
+    return defaultCalibrationTable;
+}
+
+void Digitizer::setDefaultCalibrationTable(const CalibrationTable &value)
+{
+    defaultCalibrationTable = value;
 }
 
 bool Digitizer::isStreamFullyStopped()
@@ -21,7 +36,7 @@ void Digitizer::joinThreads()
     this->bufferProcessingThread.wait();
 }
 
-bool Digitizer::configureAcquisition(Acquisition &acq, std::list<std::reference_wrapper<IRecordProcessor> > &recordProcessors)
+bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)
 {
     this->recordProcessors = recordProcessors;
     this->adq.StopStreaming();
@@ -51,6 +66,8 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<std::reference_
                 &res)
             ) {spdlog::error("SetInputRange failed."); return false;};
             acq.setObtainedInputRange(ch, res);
+            acq.setAnalogOffset(ch, calibrations.analogOffset[ch][acq.getInputRange(ch)]);
+            acq.setDigitalOffset(ch, calibrations.digitalOffset[ch][acq.getInputRange(ch)]);
             int unclippedDCShift;
             int clippedDCShift = acq.getDcBias(ch) + acq.getTotalDCShift(ch, unclippedDCShift);
             if(clippedDCShift != unclippedDCShift) spdlog::warn("DC shift was clipped.");
@@ -109,9 +126,12 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<std::reference_
     this->bufferProcessor->resetRecordsToStore(acq.getRecordCount()==Acquisition::INFINITE_RECORDS?0:acq.getRecordCount());
     for(auto rp : this->recordProcessors)
     {
-        rp.get().startNewAcq(acq);
+        rp->startNewAcquisition(acq);
     }
     spdlog::info("Configured acquisition successfully.");
+    this->bufferProcessorHandler->changeStreamingType(!this->defaultAcquisition.getIsContinuous());
+    this->dmaChecker->setTransferBufferCount(this->getTransferBufferCount());
+    return true;
 }
 
 Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
@@ -169,7 +189,7 @@ bool Digitizer::stopAcquisition()
 
 bool Digitizer::runAcquisition()
 {
-    return this->runOverridenAcquisition(this->defaultAcquisition, this->defaultRecordProcessors);
+    return this->runOverridenAcquisition(this->defaultAcquisition, this->defaultRecordProcessors, this->defaultCalibrationTable);
 }
 
 void Digitizer::loopStopped()
@@ -177,10 +197,10 @@ void Digitizer::loopStopped()
     this->stopAcquisition();
 }
 
-bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<std::reference_wrapper<IRecordProcessor>> &recordProcessors)
+bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)
 {
     if(this->currentState != DIGITIZER_STATE::READY) return false;
-    if(!this->configureAcquisition(acq, recordProcessors)) goto START_FAILED;
+    if(!this->configureAcquisition(acq, recordProcessors, calibrations)) goto START_FAILED;
     if(acq.getDuration())
     {
         this->acquisitionTimer.setInterval(acq.getDuration());
@@ -204,14 +224,19 @@ START_FAILED:
 bool Digitizer::setAcquisition(const Acquisition acq)
 {
     this->defaultAcquisition = acq;
+    for(int ch=0; ch< MAX_NOF_CHANNELS; ch++)
+    {
+        this->setInputRange(ch, this->getInputRange(ch));
+    }
+    return true;
 }
 
-void Digitizer::appendRecordProcessor(IRecordProcessor &rp)
+void Digitizer::appendRecordProcessor(IRecordProcessor *rp)
 {
     this->defaultRecordProcessors.push_back(rp);
 }
 
-void Digitizer::removeRecordProcessor(IRecordProcessor &rp)
+void Digitizer::removeRecordProcessor(IRecordProcessor *rp)
 {
     this->defaultRecordProcessors.remove(rp);
 }
@@ -233,6 +258,7 @@ Digitizer::DIGITIZER_TRIGGER_MODE Digitizer::getTriggerMode()
         case TRIGGER_MODES::EXTERNAL_2: return DIGITIZER_TRIGGER_MODE::EXTERNAL2;
         case TRIGGER_MODES::EXTERNAL_3: return DIGITIZER_TRIGGER_MODE::EXTERNAL3;
     }
+    return DIGITIZER_TRIGGER_MODE::CONTINUOUS;
 }
 
 unsigned long Digitizer::getDuration()
@@ -280,6 +306,16 @@ unsigned char Digitizer::getTriggerMask()
     return this->defaultAcquisition.getTriggerMask();
 }
 
+int Digitizer::getTriggerLevel()
+{
+    return this->defaultAcquisition.getTriggerLevel();
+}
+
+int Digitizer::getTriggerReset()
+{
+    return this->defaultAcquisition.getTriggerReset();
+}
+
 unsigned short Digitizer::getPretrigger()
 {
     return this->defaultAcquisition.getPretrigger();
@@ -325,27 +361,62 @@ int Digitizer::getDigitalGain(int ch)
     return this->defaultAcquisition.getDigitalGain(ch);
 }
 
-int Digitizer::getDigitalOffset(int ch)
+int Digitizer::getDigitalOffset(int ch, int ir)
 {
-    return this->defaultAcquisition.getDigitalOffset(ch);
+    return this->defaultCalibrationTable.digitalOffset[ch][ir];
 }
 
-int Digitizer::getAnalogOffset(int ch)
+int Digitizer::getAnalogOffset(int ch, int ir)
 {
-    return this->defaultAcquisition.getAnalogOffset(ch);
+    return this->defaultCalibrationTable.analogOffset[ch][ir];
+}
+
+double Digitizer::getObtainedRange(int ch)
+{
+    if(!this->defaultAcquisition.getObtainedInputRange(ch))
+        return INPUT_RANGE_VALUES[this->defaultAcquisition.getInputRange(ch)];
+    return this->defaultAcquisition.getObtainedInputRange(ch);
+}
+
+std::string Digitizer::getAcquisitionTag()
+{
+    return this->defaultAcquisition.getTag();
+}
+
+unsigned long Digitizer::getSamplesPerRecordComplete()
+{
+    if(this->defaultAcquisition.getIsContinuous())
+    {
+        return this->defaultAcquisition.getTransferBufferSize()/sizeof(short);
+    }
+    else
+    {
+        return this->defaultAcquisition.getRecordLength();
+    }
+}
+
+
+unsigned long long Digitizer::getLastBuffersFill()
+{
+    return this->dmaChecker->getLastFilledBufferCount();
+}
+
+unsigned long long Digitizer::getQueueFill()
+{
+    return this->writeBuffers.getReadCount();
 }
 
 void Digitizer::setTriggerMode(Digitizer::DIGITIZER_TRIGGER_MODE triggerMode)
 {
     switch(triggerMode)
     {
-        case DIGITIZER_TRIGGER_MODE::CONTINUOUS: this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::SOFTWARE); this->defaultAcquisition.setIsContinuous(true );  break;
+        case DIGITIZER_TRIGGER_MODE::CONTINUOUS: this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::SOFTWARE); this->defaultAcquisition.setIsContinuous(true );   break;
         case DIGITIZER_TRIGGER_MODE::SOFTWARE:   this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::SOFTWARE); this->defaultAcquisition.setIsContinuous(false);  break;
         case DIGITIZER_TRIGGER_MODE::LEVEL:      this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::LEVEL   ); this->defaultAcquisition.setIsContinuous(false);  break;
         case DIGITIZER_TRIGGER_MODE::INTERNAL:   this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::INTERNAL); this->defaultAcquisition.setIsContinuous(false);  break;
         case DIGITIZER_TRIGGER_MODE::EXTERNAL:   this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::EXTERNAL); this->defaultAcquisition.setIsContinuous(false);  break;
-        case DIGITIZER_TRIGGER_MODE::EXTERNAL2:  this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::EXTERNAL); this->defaultAcquisition.setIsContinuous(false);  break;
-        case DIGITIZER_TRIGGER_MODE::EXTERNAL3:  this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::EXTERNAL); this->defaultAcquisition.setIsContinuous(false);  break;
+        case DIGITIZER_TRIGGER_MODE::EXTERNAL2:  this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::EXTERNAL_2); this->defaultAcquisition.setIsContinuous(false); break;
+        case DIGITIZER_TRIGGER_MODE::EXTERNAL3:  this->defaultAcquisition.setTriggerMode(TRIGGER_MODES::EXTERNAL_3); this->defaultAcquisition.setIsContinuous(false); break;
     }
     emit this->triggerModeChanged(triggerMode);
 }
@@ -383,6 +454,10 @@ void Digitizer::setFileSizeLimit(unsigned long long size)
 void Digitizer::setUserLogicBypass(unsigned char ulBypass)
 {
     this->defaultAcquisition.setUserLogicBypassMask(ulBypass);
+    for(int ul=0; ul < 2; ul++)
+    {
+        this->adq.BypassUserLogic(ul+1, (ulBypass&(1<<ul))?1:0);
+    }
     emit this->userLogicBypassChanged(ulBypass);
 }
 
@@ -395,6 +470,7 @@ void Digitizer::setClockSource(CLOCK_SOURCES clockSource)
 void Digitizer::setTriggerEdge(TRIGGER_EDGES edge)
 {
     this->defaultAcquisition.setTriggerEdge(edge);
+    this->adq.SetLvlTrigEdge(edge);
     emit this->triggerEdgeChanged(edge);
 }
 
@@ -402,6 +478,22 @@ void Digitizer::setTriggerMask(unsigned char mask)
 {
     this->defaultAcquisition.setTriggerMask(mask);
     emit this->triggerMaskChanged(mask);
+}
+
+void Digitizer::setTriggerLevel(int lvl)
+{
+    int clipped = clip(lvl, CODE_MIN, CODE_MAX);
+    if(clipped != lvl) spdlog::warn("Trigger level clipped to {} from {}.", clipped, lvl);
+    this->defaultAcquisition.setTriggerLevel(clipped);
+    this->adq.SetLvlTrigLevel(clipped);
+    emit this->triggerLevelChanged(clipped);
+}
+
+void Digitizer::setTriggerReset(int rst)
+{
+    this->defaultAcquisition.setTriggerReset(rst);
+    this->adq.SetTrigLevelResetValue(rst);
+    emit this->triggerResetChanged(rst);
 }
 
 void Digitizer::setPretrigger(unsigned short pretrigger)
@@ -443,29 +535,55 @@ void Digitizer::setSampleSkip(unsigned int sampleSkip)
 void Digitizer::setInputRange(int ch, INPUT_RANGES range)
 {
     this->defaultAcquisition.setInputRange(ch, range);
+    float obtained;
+    this->adq.SetInputRange(ch, INPUT_RANGE_VALUES[range], &obtained);
+    this->defaultAcquisition.setObtainedInputRange(ch, obtained);
     emit this->inputRangeChanged(ch, range);
 }
 
 void Digitizer::setDCBias(int ch, int bias)
 {
-    this->defaultAcquisition.setDcBias(ch, bias);
-    emit this->dcBiasChanged(ch, bias);
+    int clipped = clip(bias, CODE_MIN, CODE_MAX);
+    if(clipped != bias) spdlog::warn("DC bias for CH{} clipped to {} from {}.", ch+1, clipped, bias);
+    this->defaultAcquisition.setDcBias(ch, clipped);
+    this->adq.SetAdjustableBias(ch, this->defaultAcquisition.getTotalDCShift(ch, bias));
+    emit this->dcBiasChanged(ch, clipped);
 }
 
 void Digitizer::setDigitalGain(int ch, int gain)
 {
+
     this->defaultAcquisition.setDigitalGain(ch, gain);
     emit this->digitalGainChanged(ch, gain);
 }
 
-void Digitizer::setDigitalOffset(int ch, int offset)
+void Digitizer::setDigitalOffset(int ch, int ir, int offset)
 {
-    this->defaultAcquisition.setDigitalOffset(ch, offset);
-    emit this->digitalOffsetChanged(ch, offset);
+    int clipped = clip(offset, CODE_MIN, CODE_MAX);
+    if(clipped != offset) spdlog::warn("DC digital offset for CH{} clipped to {} from {}.", ch+1, clipped, offset);
+    this->defaultCalibrationTable.digitalOffset[ch][ir] = clipped;
+    if(ir == this->defaultAcquisition.getInputRange(ch))
+    {
+        this->defaultAcquisition.setDigitalOffset(ch, offset);
+        emit this->digitalOffsetChanged(ch, offset);
+    }
 }
 
-void Digitizer::setAnalogOffset(int ch, int offset)
+void Digitizer::setAnalogOffset(int ch, int ir, int offset)
 {
-    this->defaultAcquisition.setAnalogOffset(ch, offset);
-    emit this->analogOffsetChanged(ch, offset);
+    int clipped = clip(offset, CODE_MIN, CODE_MAX);
+    if(clipped != offset) spdlog::warn("DC analog offset for CH{} clipped to {} from {}.", ch+1, clipped, offset);
+    this->defaultCalibrationTable.analogOffset[ch][ir] = clipped;
+    if(ir == this->defaultAcquisition.getInputRange(ch))
+    {
+        this->defaultAcquisition.setAnalogOffset(ch, clipped);
+        this->adq.SetAdjustableBias(ch, this->defaultAcquisition.getTotalDCShift(ch, offset));
+        emit this->analogOffsetChanged(ch, clipped);
+    }
+}
+
+void Digitizer::setAcquisitionTag(string tag)
+{
+    this->defaultAcquisition.setTag(tag);
+    emit this->acquisitionTagChanged(tag);
 }

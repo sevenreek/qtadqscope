@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include "StreamingHeader.h"
-#include "ADQDeviceConfiguration.h"
+#include "DigitizerConstants.h"
 class StreamingBuffers {
   public:
   StreamingBuffers(unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength);

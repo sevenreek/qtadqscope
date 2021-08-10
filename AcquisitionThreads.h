@@ -34,6 +34,8 @@ public:
 
     bool isLoopStopped() const;
 
+    unsigned int getLastFilledBufferCount() const;
+
 public slots:
     void setTransferBufferCount(unsigned long count);
     void runLoop();

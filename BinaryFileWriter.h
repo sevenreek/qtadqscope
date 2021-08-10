@@ -6,16 +6,16 @@
 #include <fstream>
 
 class BinaryFileWriter: public FileWriter {
-    protected:
+protected:
     bool isContinuousStream;
     unsigned char channelMask;
-    std::ofstream dataStream[MAX_NOF_CHANNELS];
     unsigned long long bytesSaved;
     unsigned long long sizeLimit;
-    public:
+    std::ofstream dataStream[MAX_NOF_CHANNELS];
+public:
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
-    void startNewStream(ApplicationConfiguration& config);
+    void startNewAcquisition(Acquisition& config);
     bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
@@ -28,10 +28,11 @@ public:
     explicit VerboseBinaryWriter(unsigned long long sizeLimit);
     bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBinaryWriter();
-    void startNewStream(ApplicationConfiguration& config);
+    const char* getName();
+    void startNewAcquisition(Acquisition& config);
 };
 
-class BufferedBinaryFileWriter: public FileWriter {
+class BufferedBinaryFileWriter: public BinaryFileWriter {
     protected:
     bool isContinuousStream;
     unsigned char channelMask;
@@ -43,7 +44,7 @@ class BufferedBinaryFileWriter: public FileWriter {
     public:
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     virtual ~BufferedBinaryFileWriter();
-    void startNewStream(ApplicationConfiguration& config);
+    void startNewAcquisition(Acquisition& config);
     bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
@@ -55,8 +56,8 @@ public:
     explicit VerboseBufferedBinaryWriter(unsigned long long sizeLimit);
     bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBufferedBinaryWriter();
-    unsigned long long finish();
-    void startNewStream(ApplicationConfiguration& config);
+    const char* getName();
+    void startNewAcquisition(Acquisition& config);
 
 };
 

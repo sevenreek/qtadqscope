@@ -1,15 +1,21 @@
 #ifndef DIGITIZERCONSTANTS_H
 #define DIGITIZERCONSTANTS_H
 #include <climits>
+#include <string>
 const int MAX_NOF_CHANNELS = 4;
-const long long MAX_SAMPLING_RATE = 1000000000;
+const unsigned long long MAX_SAMPLING_RATE = 1000000000UL;
 const unsigned int MAX_FINITE_RECORD_COUNT = 0x7FFFFFFF;
 const int DEFAULT_DIGITAL_USER_GAIN = 1024;
 const int DEFAULT_DIGITAL_USER_OFFSET = 0;
-const char UNIT_PREFIXES[4]  = {' ', 'k', 'M', 'G'};
+const char UNIT_PREFIXES[7]  = {' ', 'k', 'M', 'G', 'P', 'Y', 'Z'};
 const unsigned int INFINITE_RECORDS = -1;
 const int CODE_MAX = SHRT_MAX;
 const int CODE_MIN = SHRT_MIN;
+const int RECORD_LENGTH_STEP = 32;
+const int TRANSFER_BUFFER_SIZE_STEP = 1024;
+const int PARALLEL_SAMPLES_STEP = 4;
+const std::string CHANNEL_ACTIVE_EMOJI = "👁‍";
+const std::string TRIGGER_ACTIVE_EMOJI = "⚡";
 enum LOGGING_LEVELS
 {
     DISABLED = 0,

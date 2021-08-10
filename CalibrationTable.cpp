@@ -1,6 +1,8 @@
 #include "json.hpp"
 #include "CalibrationTable.h"
 #include <fstream>
+using json = nlohmann::json;
+
 bool CalibrationTable::toJSON(const char* path)
 {
     std::ofstream tableStream(path, std::ios_base::out);

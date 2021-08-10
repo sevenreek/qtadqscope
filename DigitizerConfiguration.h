@@ -13,7 +13,7 @@ public:
 private:
     std::string tag;
     bool isContinuous = false;
-    unsigned long duration = NO_DURATION;
+    unsigned long duration = 200;
     unsigned long transferBufferSize = 2048;
     unsigned long transferBufferCount = 32;
     unsigned long transferBufferQueueSize = 128;
@@ -25,6 +25,7 @@ private:
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     unsigned char triggerMask = 0b0001;
     int triggerLevel = 0;
+    int triggerReset = 0;
 
     unsigned short pretrigger = 0;
     unsigned short triggerDelay = 0;
@@ -95,8 +96,10 @@ public:
     void setFileSizeLimit(unsigned long long value);
     int getTriggerLevel() const;
     void setTriggerLevel(int value);
-    static Acquisition fromJSON(const QJsonObject &json);
-    QJsonObject toJSON();
+    static Acquisition fromJson(const QJsonObject &json);
+    QJsonObject toJson();
+    int getTriggerReset() const;
+    void setTriggerReset(int value);
 };
 
 

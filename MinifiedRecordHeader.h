@@ -1,8 +1,9 @@
 #ifndef MINIFIEDRECORDHEADER_H
 #define MINIFIEDRECORDHEADER_H
 #include "StreamingHeader.h"
-#include "ADQDeviceConfiguration.h"
+#include "DigitizerConfiguration.h"
 #include <cinttypes>
+#include <string>
 struct MinifiedRecordHeader {
     uint32_t recordLength;
     uint32_t recordNumber;
@@ -15,16 +16,21 @@ MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
     return MinifiedRecordHeader {.recordLength = h.RecordLength, .recordNumber = h.RecordNumber, .timestamp = h.Timestamp};
 }
 const unsigned int MAX_TAG_LENGTH = 128;
-struct MinifiedChannelConfiguration {
+struct MinifiedAcquisitionConfiguration {
     char fileTag[MAX_TAG_LENGTH];
+    unsigned char isContinuous;
     unsigned char userLogicBypass;
+    unsigned char channelMask;
+    unsigned char channel;
     unsigned short sampleSkip;
-    float inputRangeFloat;
+    unsigned long duration;
+    float obtainedInputRange;
+
     unsigned char triggerEdge;
     unsigned char triggerMode;
-    unsigned char isStreamContinuous;
     short triggerLevelCode;
     short triggerLevelReset;
+
 
     short digitalOffset;
     short analogOffset;
@@ -37,27 +43,29 @@ struct MinifiedChannelConfiguration {
     unsigned short triggerDelay;
 
 };
-MinifiedChannelConfiguration minifyChannelConfiguration(const ChannelConfiguration &c);
-MinifiedChannelConfiguration minifyChannelConfiguration(const ChannelConfiguration &c)
+MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel);
+MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel)
 {
-    MinifiedChannelConfiguration returnValue;
-    returnValue.userLogicBypass = c.userLogicBypass;
-    returnValue.sampleSkip = c.sampleSkip;
-    returnValue.inputRangeFloat = c.inputRangeFloat;
-    returnValue.triggerEdge = (unsigned char)c.triggerEdge;
-    returnValue.triggerMode = (unsigned char)c.triggerMode;
-    returnValue.isStreamContinuous = (unsigned char)c.isContinuousStreaming;
-    returnValue.triggerLevelCode = (short)c.triggerLevelCode;
-    returnValue.triggerLevelReset = (short)c.triggerLevelReset;
-    returnValue.digitalOffset = (short)c.digitalOffset[c.inputRangeEnum];
-    returnValue.analogOffset = (short)c.baseDcBiasOffset[c.inputRangeEnum];
-    returnValue.digitalGain = (short)c.digitalGain;
-    returnValue.dcBias = (short)c.dcBiasCode;
-    returnValue.recordLength = c.recordLength;
-    returnValue.recordCount = c.recordCount;
-    returnValue.pretrigger = (unsigned short)c.pretrigger;
-    returnValue.triggerDelay = (unsigned short)c.triggerDelay;
-    std::strncpy(returnValue.fileTag, c.fileTag.c_str(), MAX_TAG_LENGTH-1);
+    MinifiedAcquisitionConfiguration returnValue;
+    returnValue.channel = channel;
+    returnValue.channelMask = c.getChannelMask();
+    returnValue.userLogicBypass = c.getUserLogicBypassMask();
+    returnValue.sampleSkip = c.getSampleSkip();
+    returnValue.obtainedInputRange = c.getObtainedInputRange(channel);
+    returnValue.triggerEdge = (unsigned char)c.getTriggerEdge();
+    returnValue.triggerMode = (unsigned char)c.getTriggerMode();
+    returnValue.isContinuous = (unsigned char)c.getIsContinuous();
+    returnValue.triggerLevelCode = (short)c.getTriggerLevel();
+    returnValue.triggerLevelReset = (short)c.getTriggerReset();
+    returnValue.digitalOffset = (short)c.getDigitalOffset(channel);
+    returnValue.analogOffset = (short)c.getAnalogOffset(channel);
+    returnValue.digitalGain = (short)c.getDigitalGain(channel);
+    returnValue.dcBias = (short)c.getDcBias(channel);
+    returnValue.recordLength = c.getRecordLength();
+    returnValue.recordCount = c.getRecordCount();
+    returnValue.pretrigger = (unsigned short)c.getPretrigger();
+    returnValue.triggerDelay = (unsigned short)c.getTriggerDelay();
+    strncpy(returnValue.fileTag, c.getTag().c_str(), MAX_TAG_LENGTH-1);
     returnValue.fileTag[MAX_TAG_LENGTH-1] = '\0';
     return returnValue;
 }

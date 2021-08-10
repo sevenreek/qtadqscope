@@ -12,14 +12,14 @@ SignalParameterComputer::~SignalParameterComputer()
 {
     std::free(this->dataBuffer);
 }
-void SignalParameterComputer::startNewStream(ApplicationConfiguration& config)
+void SignalParameterComputer::startNewAcquisition(Acquisition &config)
 {
     this->finished = false;
     this->samplesSaved = 0;
     this->bytesSaved = 0;
-    if(this->sizeLimit != config.fileSizeLimit)
+    if(this->sizeLimit != config.getFileSizeLimit())
     {
-        this->sizeLimit = config.fileSizeLimit;
+        this->sizeLimit = config.getFileSizeLimit();
         std::free(this->dataBuffer);
         this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
     }
