@@ -31,7 +31,7 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
         this,
         [=]{
             this->ui->plotArea->xAxis->setRange(0, this->context->digitizer->getSamplesPerRecordComplete());
-            this->ui->plotArea->yAxis->setRange(-(2<<15), 2<<15);
+            this->ui->plotArea->yAxis->setRange(-(1<<15), 1<<15);
         }
     );
     this->calibrationDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this));

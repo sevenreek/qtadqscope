@@ -157,7 +157,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
         }
         else
         {
-           long rcount = this->bufferSize / ( this->recordLength * sizeof(short) );
+            long rcount = this->bufferSize / ( this->recordLength * sizeof(short) );
             for (long i = 0; i < rcount; i++)
             {
                 short * dp = (short*)(d[ch]);

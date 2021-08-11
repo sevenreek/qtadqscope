@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>658</width>
-    <height>303</height>
+    <width>815</width>
+    <height>369</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -75,7 +75,7 @@
      <item row="4" column="1">
       <widget class="QSpinBox" name="writeBufferCount">
        <property name="minimum">
-        <number>1</number>
+        <number>4</number>
        </property>
        <property name="maximum">
         <number>65535</number>

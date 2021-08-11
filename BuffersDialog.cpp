@@ -50,5 +50,7 @@ void BuffersDialog::initialize(ApplicationContext *context)
 
 void BuffersDialog::reloadUI()
 {
-
+    this->ui->dmaBufferCount->setValue(this->digitizer->getTransferBufferCount());
+    this->ui->dmaBufferSize->setValue(this->digitizer->getTransferBufferSize());
+    this->ui->writeBufferCount->setValue(this->digitizer->getTransferBufferQueueSize());
 }
