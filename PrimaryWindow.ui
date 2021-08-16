@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>888</width>
-    <height>565</height>
+    <width>886</width>
+    <height>568</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Calibri Light</family>
+    <pointsize>12</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>QADQScope</string>
@@ -35,8 +41,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>888</width>
-     <height>21</height>
+     <width>886</width>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConfiguration">

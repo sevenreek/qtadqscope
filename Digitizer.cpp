@@ -69,7 +69,7 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
             acq.setAnalogOffset(ch, calibrations.analogOffset[ch][acq.getInputRange(ch)]);
             acq.setDigitalOffset(ch, calibrations.digitalOffset[ch][acq.getInputRange(ch)]);
             int unclippedDCShift;
-            int clippedDCShift = acq.getDcBias(ch) + acq.getTotalDCShift(ch, unclippedDCShift);
+            int clippedDCShift = acq.getTotalDCShift(ch, unclippedDCShift);
             if(clippedDCShift != unclippedDCShift) spdlog::warn("DC shift was clipped.");
             if(!this->adq.SetAdjustableBias(
                 adqch,
@@ -536,7 +536,7 @@ void Digitizer::setInputRange(int ch, INPUT_RANGES range)
 {
     this->defaultAcquisition.setInputRange(ch, range);
     float obtained;
-    this->adq.SetInputRange(ch, INPUT_RANGE_VALUES[range], &obtained);
+    this->adq.SetInputRange(ch+1, INPUT_RANGE_VALUES[range], &obtained);
     this->defaultAcquisition.setObtainedInputRange(ch, obtained);
     emit this->inputRangeChanged(ch, range);
 }
@@ -546,7 +546,7 @@ void Digitizer::setDCBias(int ch, int bias)
     int clipped = clip(bias, CODE_MIN, CODE_MAX);
     if(clipped != bias) spdlog::warn("DC bias for CH{} clipped to {} from {}.", ch+1, clipped, bias);
     this->defaultAcquisition.setDcBias(ch, clipped);
-    this->adq.SetAdjustableBias(ch, this->defaultAcquisition.getTotalDCShift(ch, bias));
+    this->adq.SetAdjustableBias(ch+1, this->defaultAcquisition.getTotalDCShift(ch, bias));
     emit this->dcBiasChanged(ch, clipped);
 }
 
@@ -577,7 +577,7 @@ void Digitizer::setAnalogOffset(int ch, int ir, int offset)
     if(ir == this->defaultAcquisition.getInputRange(ch))
     {
         this->defaultAcquisition.setAnalogOffset(ch, clipped);
-        this->adq.SetAdjustableBias(ch, this->defaultAcquisition.getTotalDCShift(ch, offset));
+        this->adq.SetAdjustableBias(ch+1, this->defaultAcquisition.getTotalDCShift(ch, offset));
         emit this->analogOffsetChanged(ch, clipped);
     }
 }

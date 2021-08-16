@@ -97,7 +97,7 @@ void PrimaryWindow::openConfigLoadDialog()
         return;
     }
     *this->context->config = ApplicationConfiguration::fromJson(json.object());
-    this->context->digitizer->setAcquisition(Acquisition::fromJson(json["acquisition"].toObject()));
+    this->context->digitizer->setAcquisition(Acquisition::fromJson(json.object()["acquisition"].toObject()));
     this->reloadUI();
 }
 

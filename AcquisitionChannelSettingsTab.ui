@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
-    <height>338</height>
+    <width>365</width>
+    <height>472</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Calibri Light</family>
+    <pointsize>12</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -29,7 +35,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Active 👁‍</string>
+        <string>Active ▶️</string>
        </property>
       </widget>
      </item>
@@ -108,9 +114,6 @@
           <property name="singleStep">
            <double>10.000000000000000</double>
           </property>
-          <property name="stepType">
-           <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-          </property>
          </widget>
         </item>
         <item row="0" column="0">
@@ -122,6 +125,9 @@
         </item>
         <item row="0" column="1">
          <widget class="QComboBox" name="inputRange">
+          <property name="currentIndex">
+           <number>5</number>
+          </property>
           <item>
            <property name="text">
             <string>100 mV</string>
@@ -301,9 +307,6 @@
             </property>
             <property name="singleStep">
              <double>10.000000000000000</double>
-            </property>
-            <property name="stepType">
-             <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
             </property>
            </widget>
           </item>

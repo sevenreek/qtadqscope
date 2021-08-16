@@ -10,7 +10,15 @@ BaseBufferProcessor::BaseBufferProcessor(
 ):
     recordProcessors(recordProcessors)
 {
-    this->reallocateBuffers(recordLength);
+    for(int i = 0; i < MAX_NOF_CHANNELS; i++)
+    {
+        //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
+        recordBuffer[i] = (short*)std::malloc(recordLength*sizeof(short));
+        if(recordBuffer[i] == nullptr)
+        {
+            spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
+        }
+    }
 }
 bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
 {
@@ -20,8 +28,9 @@ bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
         this->recordLength = recordLength;
         for(int i = 0; i < MAX_NOF_CHANNELS; i++)
         {
+            if(recordBuffer[i] != nullptr) free(recordBuffer[i]);
             //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-            recordBuffer[i] = (short*)std::realloc(recordBuffer[i], recordLength*sizeof(short));
+            recordBuffer[i] = (short*)std::malloc(recordLength*sizeof(short));
             if(recordBuffer[i] == nullptr)
             {
                 spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
@@ -160,6 +169,7 @@ BaseBufferProcessor::~BaseBufferProcessor()
         if(recordBuffer[i] != nullptr)
         {
             std::free(recordBuffer[i]);
+            this->recordBuffer[i] = nullptr;
         }
     }
 }

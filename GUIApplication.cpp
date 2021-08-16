@@ -19,7 +19,7 @@ bool ScopeApplication::start(QString acquisitionFile)
         QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
         if(err.error == QJsonParseError::NoError) {
             this->config = ApplicationConfiguration::fromJson(json.object());
-            acq = Acquisition::fromJson(json["acquisition"].toObject());
+            acq = Acquisition::fromJson(json.object()["acquisition"].toObject());
         }
     }
     ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.getAdqLoggingLevel(), 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3

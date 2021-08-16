@@ -299,7 +299,7 @@ void FullCalibrationDialog::load()
     );
     if(!fileName.length()) return;
     QByteArray ba = fileName.toLocal8Bit();
-    bool success = this->calibrationTable.fromJSON(ba.data());
+    bool success = this->calibrationTable.fromJson(ba.data());
     if(!success)
     {
         spdlog::warn("Failed to load configuration from file {}", ba.data());
@@ -317,5 +317,5 @@ void FullCalibrationDialog::save()
     );
     if(!fileName.length()) return;
     QByteArray ba = fileName.toLocal8Bit();
-    this->calibrationTable.toJSON(ba.data());
+    this->calibrationTable.toJson(ba.data());
 }

@@ -1,6 +1,7 @@
 #ifndef SIGNALPARAMETERCOMPUTER_H
 #define SIGNALPARAMETERCOMPUTER_H
 #include "RecordProcessor.h"
+#include <memory>
 struct SignalParameters {
     double average;
     double rms;

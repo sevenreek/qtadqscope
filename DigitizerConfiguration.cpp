@@ -70,8 +70,8 @@ void Acquisition::setAnalogOffset(int ch, int value)
 
 int Acquisition::getTotalDCShift(int ch, int& unclipped)
 {
-    int total = this->getAnalogOffset(ch) + this->getDcBias(ch);
-    return clip(total, CODE_MIN, CODE_MAX);
+    unclipped = this->getAnalogOffset(ch) + this->getDcBias(ch);
+    return clip(unclipped, CODE_MIN, CODE_MAX);
 }
 
 unsigned long long Acquisition::getFileSizeLimit() const

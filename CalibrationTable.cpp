@@ -3,7 +3,7 @@
 #include <fstream>
 using json = nlohmann::json;
 
-bool CalibrationTable::toJSON(const char* path)
+bool CalibrationTable::toJson(const char* path)
 {
     std::ofstream tableStream(path, std::ios_base::out);
     std::vector<std::vector<int>> digitalData(MAX_NOF_CHANNELS);
@@ -21,7 +21,7 @@ bool CalibrationTable::toJSON(const char* path)
     tableStream.close();
     return true;
 }
-bool CalibrationTable::fromJSON(const char* path)
+bool CalibrationTable::fromJson(const char* path)
 {
     std::ifstream configStream(path, std::ios_base::in);
     if(!configStream.good()) return false;

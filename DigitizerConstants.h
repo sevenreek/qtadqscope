@@ -14,7 +14,7 @@ const int CODE_MIN = SHRT_MIN;
 const int RECORD_LENGTH_STEP = 32;
 const int TRANSFER_BUFFER_SIZE_STEP = 1024;
 const int PARALLEL_SAMPLES_STEP = 4;
-const std::string CHANNEL_ACTIVE_EMOJI = "👁‍";
+const std::string CHANNEL_ACTIVE_EMOJI = "▶️";
 const std::string TRIGGER_ACTIVE_EMOJI = "⚡";
 enum LOGGING_LEVELS
 {

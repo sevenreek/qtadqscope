@@ -208,6 +208,7 @@ void AcquisitionSettings::handleTabChanged(int tab)
         this->handleSetChannelActive(tab, true);
         this->handleSetChannelTriggerActive(tab, true);
     }
+    this->tabs.at(tab)->reloadUI();
 }
 
 void AcquisitionSettings::handleSetChannelActive(int channel, bool active)
