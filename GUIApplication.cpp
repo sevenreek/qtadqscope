@@ -1,6 +1,6 @@
 #include "GUIApplication.h"
 #include "BinaryFileWriter.h"
-bool ScopeApplication::start(QString acquisitionFile)
+bool ScopeApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 {
     this->adqControlUnit = CreateADQControlUnit();
 #ifdef MOCK_ADQAPI
@@ -12,16 +12,7 @@ bool ScopeApplication::start(QString acquisitionFile)
         return false;
     }
 #endif
-    QFile file(acquisitionFile);
-    Acquisition acq;
-    if(file.exists()) {
-        QJsonParseError err;
-        QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
-        if(err.error == QJsonParseError::NoError) {
-            this->config = ApplicationConfiguration::fromJson(json.object());
-            acq = Acquisition::fromJson(json.object()["acquisition"].toObject());
-        }
-    }
+
     ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.getAdqLoggingLevel(), 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
     ADQControlUnit_FindDevices(this->adqControlUnit);
     int numberOfDevices = ADQControlUnit_NofADQ(adqControlUnit);
@@ -37,6 +28,7 @@ bool ScopeApplication::start(QString acquisitionFile)
     this->adqWrapper = std::unique_ptr<ADQInterfaceWrapper>(new MutexADQWrapper(this->adqControlUnit, this->config.getDeviceNumber()));
     this->digitizer = std::unique_ptr<Digitizer>(new Digitizer(*this->adqWrapper.get()));
     this->digitizer->setAcquisition(acq);
+    this->config = cfg;
     return true;
 }
 
@@ -45,9 +37,9 @@ GUIApplication::GUIApplication()
 
 }
 
-bool GUIApplication::start(QString acqusitionFile)
+bool GUIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 {
-    if(!this->ScopeApplication::start(acqusitionFile)) { return false; }
+    if(!this->ScopeApplication::start(cfg, acq)) { return false; }
     this->scopeUpdater = std::unique_ptr<ScopeUpdater>(new ScopeUpdater(this->digitizer->getRecordLength()));
     this->context = std::unique_ptr<ApplicationContext>(new ApplicationContext(&this->config, this->digitizer.get(), this->scopeUpdater.get()));
     this->primaryWindow = std::unique_ptr<PrimaryWindow>(new PrimaryWindow(this->context.get()));
@@ -59,9 +51,9 @@ CLIApplication::CLIApplication()
 {
 
 }
-bool CLIApplication::start(QString acqusitionFile)
+bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 {
-    if(!this->ScopeApplication::start(acqusitionFile)) { return false; }
+    if(!this->ScopeApplication::start(cfg, acq)) { return false; }
     if(this->digitizer->getDuration())
     {
         spdlog::info("Acquisition duration: {}", this->digitizer->getDuration());

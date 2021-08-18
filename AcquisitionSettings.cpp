@@ -41,6 +41,15 @@ void AcquisitionSettings::reloadUI()
     if(isOnlyOneBitSet(this->digitizer->getChannelMask()))
     {
         this->ui->enableMultichannel->setChecked(this->config->getAllowMultichannel());
+        int index = 0;
+        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+        {
+            if(this->digitizer->getChannelMask() & (1<<ch))
+            {
+                index = ch; break;
+            }
+        }
+        this->ui->channelTabs->setCurrentIndex(index);
     }
     else
     {
@@ -181,6 +190,15 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             this->tabs.at(ch)->setObtainedRange(this->digitizer->getObtainedRange(ch));
         }
     );
+    this->ui->acquisitionTag->connect(
+        this->ui->acquisitionTag,
+        &QLineEdit::textChanged,
+        this,
+        [=](const QString &text)
+            {
+                this->digitizer->setAcquisitionTag(text.toStdString());
+            }
+     );
     this->ui->recordProcessorsPanel->initialize(context);
 }
 

@@ -30,6 +30,7 @@ public:
     explicit FullCalibrationDialog(QWidget *parent = nullptr);
     ~FullCalibrationDialog();
     Ui::FullCalibrationDialog *ui;
+    void reloadUI();
 
 private:
     std::unique_ptr<SignalParameterComputer> parameterComputer;
@@ -46,6 +47,9 @@ private:
     bool moveToNextStage();
     void appendStage(int ch, int inrange, int mode);
     CALIBRATION_MODES mode;
+    std::list<IRecordProcessor*> calibrationProcessorsList;
+    Acquisition currentCalibrationAcquisition;
+    QLabel *labels[MAX_NOF_CHANNELS];
 public slots:
     void onStateChanged(Digitizer::DIGITIZER_STATE newState);
     void apply();

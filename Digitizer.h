@@ -75,6 +75,8 @@ private:
     bool isStreamFullyStopped();
     void joinThreads();
     bool configureAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
+    void finishRecordProcessors();
+    void handleAcquisitionFullyStopped();
 public slots:
     bool stopAcquisition();
     bool runAcquisition();

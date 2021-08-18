@@ -79,6 +79,16 @@ void ApplicationConfiguration::setUpdateScopeEnabled(bool value)
     updateScopeEnabled = value;
 }
 
+bool ApplicationConfiguration::getStartGUI() const
+{
+    return startGUI;
+}
+
+void ApplicationConfiguration::setStartGUI(bool value)
+{
+    startGUI = value;
+}
+
 
 
 unsigned int ApplicationConfiguration::getDeviceNumber() const

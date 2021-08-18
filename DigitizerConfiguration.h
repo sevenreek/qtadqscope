@@ -4,7 +4,7 @@
 #include <string>
 #include <array>
 #include <QJsonObject>
-
+#include "spdlog/spdlog.h"
 class Acquisition {
 public:
     const static unsigned long INFINITE_RECORDS = -1;
@@ -37,13 +37,14 @@ private:
     unsigned char channelMask = 0b0001;
     unsigned int sampleSkip = 1;
 
-    std::array<INPUT_RANGES, MAX_NOF_CHANNELS> inputRange = {{INPUT_RANGES::MV_5000}};
-    std::array<int, MAX_NOF_CHANNELS> dcBias = {{0}};
-    std::array<int, MAX_NOF_CHANNELS> digitalGain = {{DEFAULT_GAIN}};
-    std::array<int, MAX_NOF_CHANNELS> digitalOffset = {{0}};
-    std::array<int, MAX_NOF_CHANNELS> analogOffset = {{0}};
-    std::array<float, MAX_NOF_CHANNELS> obtainedInputRange = {{5000}};
+    std::array<INPUT_RANGES, MAX_NOF_CHANNELS> inputRange = {{INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000}};
+    std::array<int, MAX_NOF_CHANNELS> dcBias = {{0,0,0,0}};
+    std::array<int, MAX_NOF_CHANNELS> digitalGain = {{DEFAULT_GAIN, DEFAULT_GAIN, DEFAULT_GAIN, DEFAULT_GAIN}};
+    std::array<int, MAX_NOF_CHANNELS> digitalOffset = {{0,0,0,0}};
+    std::array<int, MAX_NOF_CHANNELS> analogOffset = {{0,0,0,0}};
+    std::array<float, MAX_NOF_CHANNELS> obtainedInputRange = {{5000,5000,5000,5000}};
 public:
+    void log();
     std::string getTag() const;
     void setTag(const std::string &value);
     bool getIsContinuous() const;

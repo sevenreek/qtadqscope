@@ -65,7 +65,7 @@ public:
     bool isLoopStopped() const;
 
 public slots:
-    void changeStreamingType(bool isTriggered);
+    void changeStreamingType(bool isContinuous);
     void runLoop();
     void stopLoop();
 signals:

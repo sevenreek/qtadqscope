@@ -4,7 +4,7 @@
 #include "DigitizerConfiguration.h"
 #include <cinttypes>
 #include <string>
-struct MinifiedRecordHeader {
+struct __attribute__ ((packed))  MinifiedRecordHeader {
     uint32_t recordLength;
     uint32_t recordNumber;
     uint64_t timestamp;
@@ -16,31 +16,29 @@ MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
     return MinifiedRecordHeader {.recordLength = h.RecordLength, .recordNumber = h.RecordNumber, .timestamp = h.Timestamp};
 }
 const unsigned int MAX_TAG_LENGTH = 128;
-struct MinifiedAcquisitionConfiguration {
+struct __attribute__ ((packed)) MinifiedAcquisitionConfiguration {
     char fileTag[MAX_TAG_LENGTH];
-    unsigned char isContinuous;
-    unsigned char userLogicBypass;
-    unsigned char channelMask;
-    unsigned char channel;
-    unsigned short sampleSkip;
-    unsigned long duration;
-    float obtainedInputRange;
+    uint8_t isContinuous;
+    uint8_t userLogicBypass;
+    uint8_t channelMask;
+    uint8_t channel;
+    uint16_t sampleSkip;
+    float_t obtainedInputRange;
 
-    unsigned char triggerEdge;
-    unsigned char triggerMode;
-    short triggerLevelCode;
-    short triggerLevelReset;
+    uint8_t triggerEdge;
+    uint8_t triggerMode;
+    int16_t triggerLevelCode;
+    int16_t triggerLevelReset;
 
+    int16_t digitalOffset;
+    int16_t analogOffset;
+    int16_t digitalGain;
+    int16_t dcBias;
 
-    short digitalOffset;
-    short analogOffset;
-    short digitalGain;
-    short dcBias;
-
-    unsigned int recordLength;
-    unsigned int recordCount;
-    unsigned short pretrigger;
-    unsigned short triggerDelay;
+    uint32_t recordLength;
+    uint32_t recordCount;
+    uint16_t pretrigger;
+    uint16_t triggerDelay;
 
 };
 MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel);

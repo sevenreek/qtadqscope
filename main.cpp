@@ -5,6 +5,38 @@
 #include <iostream>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+
+void processArguments(QApplication &app, ApplicationConfiguration &cfg, Acquisition &acq)
+{
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Test helper");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("config_file", "Configuration JSON to load.");
+
+    QCommandLineOption commandLineMode("c", "Start acqusition in command line mode.");
+    parser.addOption(commandLineMode);
+
+
+    parser.process(app);
+
+    const QStringList args = parser.positionalArguments();
+    QString acquisitionFile = "defaultconfig.json";
+
+    if(args.count() > 0)
+        acquisitionFile = args.at(0);
+    QFile file(acquisitionFile);
+    if(file.exists()) {
+        file.open(QFile::OpenModeFlag::ReadOnly);
+        QJsonParseError err;
+        QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
+        if(err.error == QJsonParseError::NoError) {
+            cfg = ApplicationConfiguration::fromJson(json.object());
+            acq = Acquisition::fromJson(json.object()["acquisition"].toObject());
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     spdlog::set_level(spdlog::level::debug); // Set global log level to debug
@@ -12,33 +44,22 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Test helper");
-    parser.addHelpOption();
-    parser.addVersionOption();
-    parser.addPositionalArgument("acquisition", "Acqusition configuration to load.");
 
-    QCommandLineOption commandLineMode("c", "Start acqusition in command line mode.");
-    parser.addOption(commandLineMode);
-
-    parser.process(a);
-
-    const QStringList args = parser.positionalArguments();
-    QString acquisitionFile = "defaultconfig.json";
-
-    if(args.count() > 0)
-        acquisitionFile = args.at(0);
+    ApplicationConfiguration config;
+    Acquisition acq;
+    processArguments(a, config, acq);
     std::unique_ptr<ScopeApplication> app;
-    if(parser.isSet(commandLineMode))
-    {
-        app = std::unique_ptr<ScopeApplication>(new CLIApplication());
-        spdlog::info("Starting CLI.");
-    }
-    else
+    if(config.getStartGUI())
     {
         app = std::unique_ptr<ScopeApplication>(new GUIApplication());
         spdlog::info("Starting GUI.");
     }
-    app->start(acquisitionFile);
+    else
+    {
+        app = std::unique_ptr<ScopeApplication>(new CLIApplication());
+        spdlog::info("Starting CLI.");
+    }
+    app->start(config, acq);
     return a.exec();
 }
+

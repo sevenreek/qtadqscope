@@ -142,6 +142,7 @@ void AcquisitionChannelSettingsTab::setDCOffset(int val)
     this->ui->dcOffsetMv->setValue(mv);
     this->ui->dcOffsetCode->blockSignals(false);
     this->ui->dcOffsetMv->blockSignals(false);
+    this->setTriggerLevel(this->digitizer->getTriggerLevel());
 }
 
 AcquisitionChannelSettingsTab::~AcquisitionChannelSettingsTab()
@@ -169,7 +170,7 @@ void AcquisitionChannelSettingsTab::reloadUI()
     }
     this->setTriggerLevel(this->digitizer->getTriggerLevel());
     this->ui->inputRange->setCurrentIndex(this->digitizer->getInputRange(this->channel));
-    this->setDCOffset(this->digitizer->getObtainedRange(this->channel));
+    this->setDCOffset(this->digitizer->getDCBias(this->channel));
 }
 
 void AcquisitionChannelSettingsTab::setChannelActive(bool act, bool exclusive)

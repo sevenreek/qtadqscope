@@ -29,7 +29,8 @@ if __name__ == '__main__':
     parser.add_argument('filepath', metavar='path', type=str, help='path to the data file')
     parser.add_argument('-o', '--output_ascii', default=None, help='path to destination ascii file')
     parser.add_argument('-l', '--limit_records', default=0, help='number of records to extract, 0 for all')
-    parser.add_argument('-p', '--pack', action='store_true', help='pack strucutres')
+    parser.add_argument('-n', '--no_pack', action='store_true', help='do not pack strucutres')
+    parser.add_argument('-p', '--plot', action='store_true', help='plot using matplotlib')
     parser.add_argument('-t', '--tag_size', default=128, help='size of the acquisition tag at the start of a minified channel configuration, default=128')
     parser = parser.parse_args()
     print("Using file tag ", parser.tag_size)
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     # inheriting from ct.LittleEndianStructure or ct.BigEndianStructure
     # and setting proper pack argument, blackbox seems to work with LittleEndianStructure and pack==False
     class MinifiedRecordHeader(ct.Structure):
-        _pack_ = parser.pack
+        _pack_ = not parser.no_pack
         _fields_ = [
             ("recordLength", ct.c_uint32),
             ("recordNumber", ct.c_uint32),
@@ -45,15 +46,17 @@ if __name__ == '__main__':
         ]
 
     class MinifiedChannelConfiguration(ct.Structure):
-        _pack_ = parser.pack
+        _pack_ = not parser.no_pack
         _fields_ = [
             ("fileTag", ct.c_char * parser.tag_size),
+            ("isStreamContinuous", ct.c_uint8),
             ("userLogicBypass", ct.c_uint8),
+            ("channelMask", ct.c_uint8),
+            ("channel", ct.c_uint8),
             ("sampleSkip", ct.c_uint16),
             ("inputRangeFloat", ct.c_float),
             ("triggerEdge", ct.c_uint8),
             ("triggerMode", ct.c_uint8),
-            ("isStreamContinuous", ct.c_uint8),
             ("triggerLevelCode", ct.c_int16),
             ("triggerLevelReset", ct.c_int16),
             ("digitalOffset", ct.c_int16),
@@ -65,6 +68,7 @@ if __name__ == '__main__':
             ("pretrigger", ct.c_uint16),
             ("triggerDelay", ct.c_uint16),
         ]
+    print("MinifiedConfig sizeof=", ct.sizeof(MinifiedChannelConfiguration))
     if(parser.output_ascii):
         if os.path.exists(parser.output_ascii):
             os.remove(parser.output_ascii)
@@ -99,8 +103,9 @@ if __name__ == '__main__':
                 np.savetxt(output_file, samples.astype(int), fmt='%d')
             if(record_count >= int(parser.limit_records)):
                 break
-            #plt.plot(samples)
-            #plt.show()
+            if(parser.plot):
+                plt.plot(samples)
+                plt.show()
     
     if(parser.output_ascii):
         output_file.close()

@@ -55,7 +55,11 @@ public:
     bool getUpdateScopeEnabled() const;
     void setUpdateScopeEnabled(bool value);
 
+    bool getStartGUI() const;
+    void setStartGUI(bool value);
+
 private:
+    bool startGUI = true;
     unsigned int deviceNumber = 1;
     unsigned int periodicUpdatePeriod = 100;
     unsigned long dmaCheckMinimumTimeout = 500;

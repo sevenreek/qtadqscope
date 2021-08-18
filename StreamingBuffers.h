@@ -15,8 +15,8 @@ class StreamingBuffers {
   unsigned int      nof_headers[MAX_NOF_CHANNELS] = {1,1,1,1};
   unsigned int      nof_samples[MAX_NOF_CHANNELS] = {0,0,0,0};
   unsigned int      header_status[MAX_NOF_CHANNELS] = {0,0,0,0};
-  short             *data[MAX_NOF_CHANNELS] = {nullptr};
-  ADQRecordHeader *headers[MAX_NOF_CHANNELS] = {nullptr};
+  short             *data[MAX_NOF_CHANNELS] = {nullptr,nullptr,nullptr,nullptr};
+  ADQRecordHeader *headers[MAX_NOF_CHANNELS] = {nullptr,nullptr,nullptr,nullptr};
 };
 
 class WriteBuffers {

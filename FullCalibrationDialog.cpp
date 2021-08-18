@@ -16,11 +16,21 @@ FullCalibrationDialog::FullCalibrationDialog(QWidget *parent) :
     this->analogValues[1] = this->ui->ao1;
     this->analogValues[2] = this->ui->ao2;
     this->analogValues[3] = this->ui->ao3;
+
+    this->labels[0] = this->ui->ch1label;
+    this->labels[1] = this->ui->ch2label;
+    this->labels[2] = this->ui->ch3label;
+    this->labels[3] = this->ui->ch4label;
 }
 
 FullCalibrationDialog::~FullCalibrationDialog()
 {
     delete ui;
+}
+
+void FullCalibrationDialog::reloadUI()
+{
+    this->changeInputRange(this->ui->inputRangeView->currentIndex());
 }
 void FullCalibrationDialog::changeInputRange(int v)
 {
@@ -28,13 +38,21 @@ void FullCalibrationDialog::changeInputRange(int v)
     {
         this->digitalValues[ch]->setValue(this->calibrationTable.digitalOffset[ch][v]);
         this->analogValues[ch]->setValue(this->calibrationTable.analogOffset[ch][v]);
+        this->labels[ch]->setText(
+            QString::fromStdString(
+                fmt::format("CH{} ({}|{})", ch+1, this->digitizer->getAnalogOffset(ch, v), this->digitizer->getDigitalOffset(ch,v))
+            )
+        );
     }
 }
 
 void FullCalibrationDialog::initialize(ApplicationContext *context)
 {
     this->DigitizerGUIComponent::initialize(context);
-    this->parameterComputer = std::unique_ptr<SignalParameterComputer>(new SignalParameterComputer(this->digitizer->getFileSizeLimit()));
+    this->parameterComputer = std::unique_ptr<SignalParameterComputer>(
+        new SignalParameterComputer(this->digitizer->getFileSizeLimit())
+    );
+    this->calibrationProcessorsList.push_back(this->parameterComputer.get());
     this->ui->startCalibration->connect(
         this->ui->startCalibration,
         &QAbstractButton::pressed,
@@ -93,6 +111,12 @@ void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
 void FullCalibrationDialog::start()
 {
     this->currentSetupIndex = 0;
+    unsigned char channelMask =
+        (this->ui->channelSelection0->checkState()?(1<<0):0) |
+        (this->ui->channelSelection1->checkState()?(1<<1):0) |
+        (this->ui->channelSelection2->checkState()?(1<<2):0) |
+        (this->ui->channelSelection3->checkState()?(1<<3):0);
+    if(!channelMask) return;
     spdlog::debug("Starting full calibration");
     if(this->ui->modeAnalog->isChecked()) {
         this->mode = CALIBRATION_MODES::ANALOG;
@@ -102,13 +126,10 @@ void FullCalibrationDialog::start()
         this->mode = CALIBRATION_MODES::FINE_DIGITAL;
     }
     this->blockUI();
+
     connect(this->digitizer, &Digitizer::digitizerStateChanged, this, &FullCalibrationDialog::onStateChanged);
     this->setups.clear();
-    unsigned char channelMask =
-        (this->ui->channelSelection0->checkState()?(1<<0):0) |
-        (this->ui->channelSelection1->checkState()?(1<<1):0) |
-        (this->ui->channelSelection2->checkState()?(1<<2):0) |
-        (this->ui->channelSelection3->checkState()?(1<<3):0);
+
     if(this->ui->rangeSingle->isChecked())
     {
         for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
@@ -159,11 +180,9 @@ bool FullCalibrationDialog::runStage()
             fmt::format("CH{}: {} mV", this->setups[this->currentSetupIndex].channel+1, INPUT_RANGE_VALUES[this->setups[this->currentSetupIndex].inputRange])
         )
     );
-    Acquisition acq = this->acquisitionFromStage(this->setups[this->currentSetupIndex]);
-    std::list<IRecordProcessor*> rps;
-    rps.push_back(this->parameterComputer.get());
+    this->currentCalibrationAcquisition = this->acquisitionFromStage(this->setups[this->currentSetupIndex]);
     bool success = true;
-    success &= this->digitizer->runOverridenAcquisition(acq, rps, this->calibrationTable);
+    success &= this->digitizer->runOverridenAcquisition(this->currentCalibrationAcquisition, this->calibrationProcessorsList, this->calibrationTable);
     if(!success) {
         spdlog::debug("Calibration-acquisition failed to start.");
         this->ui->hintLabel->setText("Calibration failed.");
@@ -209,6 +228,11 @@ void FullCalibrationDialog::onStateChanged(Digitizer::DIGITIZER_STATE newState)
     {
         spdlog::debug("Calibration stage finished. Computing average.");
         std::unique_ptr<SignalParameters> sp = this->parameterComputer->getResults();
+        if(!sp)
+        {
+            spdlog::error("Signal anaylzer results were accessed before finishing acquisition.");
+            return;
+        }
         spdlog::debug("Average obtained {}", sp->average);
         this->ui->inputRangeView->setCurrentIndex(this->setups[this->currentSetupIndex].inputRange);
         int channel = this->setups[this->currentSetupIndex].channel;
@@ -287,6 +311,7 @@ void FullCalibrationDialog::apply()
             this->digitizer->setDigitalOffset(ch, inrange, this->calibrationTable.digitalOffset[ch][inrange]);
         }
     }
+    this->reloadUI();
 
 }
 void FullCalibrationDialog::load()

@@ -40,6 +40,7 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
 {
     this->recordProcessors = recordProcessors;
     this->adq.StopStreaming();
+    acq.log();
     if(!this->adq.SetClockSource(acq.getClockSource())) {spdlog::error("SetClockSource failed."); return false;};
     if(!this->adq.SetTriggerMode(acq.getTriggerMode())) {spdlog::error("SetTriggerMode failed."); return false;};
     if(!this->adq.SetSampleSkip(acq.getSampleSkip())) {spdlog::error("SetSampleSkip failed."); return false;};
@@ -129,9 +130,22 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
         rp->startNewAcquisition(acq);
     }
     spdlog::info("Configured acquisition successfully.");
-    this->bufferProcessorHandler->changeStreamingType(!this->defaultAcquisition.getIsContinuous());
     this->dmaChecker->setTransferBufferCount(this->getTransferBufferCount());
     return true;
+}
+
+void Digitizer::finishRecordProcessors()
+{
+    for(auto rp : this->recordProcessors)
+    {
+        rp->finish();
+    }
+}
+
+void Digitizer::handleAcquisitionFullyStopped()
+{
+    this->finishRecordProcessors();
+    this->changeDigitizerState(DIGITIZER_STATE::READY);
 }
 
 Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
@@ -174,7 +188,7 @@ bool Digitizer::stopAcquisition()
     if(this->currentState == DIGITIZER_STATE::READY) return false;
     else if(this->currentState == DIGITIZER_STATE::STOPPING && this->isStreamFullyStopped())
     {
-        this->changeDigitizerState(DIGITIZER_STATE::READY);
+        this->handleAcquisitionFullyStopped();
         return true;
     }
     this->changeDigitizerState(DIGITIZER_STATE::STOPPING);
@@ -182,7 +196,7 @@ bool Digitizer::stopAcquisition()
     this->bufferProcessorHandler->stopLoop();
     if(this->isStreamFullyStopped())
     {
-        this->changeDigitizerState(DIGITIZER_STATE::READY);
+        this->handleAcquisitionFullyStopped();
     }
     return true;
 }

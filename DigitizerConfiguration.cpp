@@ -188,6 +188,34 @@ void Acquisition::setTriggerReset(int value)
     triggerReset = value;
 }
 
+void Acquisition::log()
+{
+    spdlog::info("Acquisition {}", this->tag);
+    spdlog::info("continuous = {}", this->isContinuous);
+    spdlog::info("duration = {}", this->duration);
+    spdlog::info("transferBufferSize = {}", this->transferBufferSize);
+    spdlog::info("transferBufferCount = {}", this->transferBufferCount);
+    spdlog::info("transferBufferQueueSize = {}", this->transferBufferQueueSize);
+    spdlog::info("fileSizeLimit = {}", this->fileSizeLimit);
+    spdlog::info("userLogicBypassMask = {:#b}", this->userLogicBypassMask);
+    spdlog::info("triggerMode = {}", this->triggerMode);
+    spdlog::info("triggerEdge = {}", this->triggerEdge);
+    spdlog::info("triggerMask = {:#b}", this->triggerMask);
+    spdlog::info("triggerLevel = {}", this->triggerLevel);
+    spdlog::info("triggerReset = {}", this->triggerReset);
+    spdlog::info("pretrigger = {}", this->pretrigger);
+    spdlog::info("triggerDelay = {}", this->triggerDelay);
+    spdlog::info("recordCount = {}", this->recordCount);
+    spdlog::info("recordLength = {}", this->recordLength);
+    spdlog::info("channelMask = {:#b}", this->channelMask);
+    spdlog::info("inputRange = {}, {}, {}, {}", this->inputRange[0], this->inputRange[1], this->inputRange[2], this->inputRange[3]);
+    spdlog::info("dcBias = {}, {}, {}, {}", this->dcBias[0], this->dcBias[1], this->dcBias[2], this->dcBias[3]);
+    spdlog::info("digitalGain = {}, {}, {}, {}", this->digitalGain[0], this->digitalGain[1], this->digitalGain[2], this->digitalGain[3]);
+    spdlog::info("digitalOffset = {}, {}, {}, {}", this->digitalOffset[0], this->digitalOffset[1], this->digitalOffset[2], this->digitalOffset[3]);
+    spdlog::info("analogOffset = {}, {}, {}, {}", this->analogOffset[0], this->analogOffset[1], this->analogOffset[2], this->analogOffset[3]);
+    spdlog::info("obtainedInputRange = {}, {}, {}, {}", this->obtainedInputRange[0], this->obtainedInputRange[1], this->obtainedInputRange[2], this->obtainedInputRange[3]);
+}
+
 std::string Acquisition::getTag() const
 {
     return tag;

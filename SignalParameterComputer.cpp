@@ -84,6 +84,7 @@ std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
         result->average = 0;
         result->rms = 0;
         spdlog::warn("SignalParameterComputer did not collect any samples. Returning average of 0.");
+        return result;
     }
     for(unsigned long i = 0; i < samplesSaved; i++)
     {

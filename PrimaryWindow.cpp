@@ -40,6 +40,8 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     this->buffersDialog->initialize(this->context);
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
+    connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
+    connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
 }
 
 PrimaryWindow::~PrimaryWindow()
@@ -89,6 +91,7 @@ void PrimaryWindow::openConfigLoadDialog()
         spdlog::error("File {} does not exist.", fileName.toStdString());
         return;
     }
+    file.open(QFile::OpenModeFlag::ReadOnly);
     QJsonParseError err;
     QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
     if(err.error != QJsonParseError::NoError)

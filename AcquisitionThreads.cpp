@@ -193,7 +193,7 @@ void LoopBufferProcessor::stopLoop()
     this->shouldLoopRun = false;
     //this->writeBuffers.notifyWritten();
 }
-void LoopBufferProcessor::changeStreamingType(bool isTriggered)
+void LoopBufferProcessor::changeStreamingType(bool isContinuous)
 {
-    this->isTriggeredStreaming = isTriggered;
+    this->isTriggeredStreaming = !isContinuous;
 }
