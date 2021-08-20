@@ -57,7 +57,7 @@ void FullCalibrationDialog::initialize(ApplicationContext *context)
         this->ui->startCalibration,
         &QAbstractButton::pressed,
         this,
-        &FullCalibrationDialog::start
+        &FullCalibrationDialog::startCalibration
     );
     this->ui->apply->connect(
         this->ui->apply,
@@ -82,6 +82,26 @@ void FullCalibrationDialog::initialize(ApplicationContext *context)
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [=](int index){ this->changeInputRange(index); }
     );
+    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        this->digitalValues[ch]->connect(
+            this->digitalValues[ch],
+            static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this,
+            [=](int val) {
+                this->setDigitalValue(ch, this->ui->inputRangeView->currentIndex(), val);
+            }
+        );
+        this->analogValues[ch]->connect(
+            this->analogValues[ch],
+            static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            this,
+            [=](int val) {
+                this->setAnalogValue(ch, this->ui->inputRangeView->currentIndex(), val);
+            }
+        );
+    }
+
 }
 
 void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
@@ -108,7 +128,17 @@ void FullCalibrationDialog::appendStage(int ch, int inrange, int mode)
     this->calibrationTable.analogOffset[ch][inrange] = 0;
     this->calibrationTable.digitalOffset[ch][inrange] = 0;
 }
-void FullCalibrationDialog::start()
+
+void FullCalibrationDialog::setAnalogValue(int ch, int ir, int val)
+{
+    this->calibrationTable.analogOffset[ch][ir] = val;
+}
+
+void FullCalibrationDialog::setDigitalValue(int ch, int ir, int val)
+{
+    this->calibrationTable.digitalOffset[ch][ir] = val;
+}
+void FullCalibrationDialog::startCalibration()
 {
     this->currentSetupIndex = 0;
     unsigned char channelMask =
@@ -177,7 +207,7 @@ bool FullCalibrationDialog::runStage()
     spdlog::debug("Running stage");
     this->ui->currentStage->setText(
         QString::fromStdString(
-            fmt::format("CH{}: {} mV", this->setups[this->currentSetupIndex].channel+1, INPUT_RANGE_VALUES[this->setups[this->currentSetupIndex].inputRange])
+            fmt::format("CH{}@{}mV", this->setups[this->currentSetupIndex].channel+1, INPUT_RANGE_VALUES[this->setups[this->currentSetupIndex].inputRange])
         )
     );
     this->currentCalibrationAcquisition = this->acquisitionFromStage(this->setups[this->currentSetupIndex]);
@@ -323,14 +353,22 @@ void FullCalibrationDialog::load()
         "JSON config (*.json);;All Files (*)"
     );
     if(!fileName.length()) return;
-    QByteArray ba = fileName.toLocal8Bit();
-    bool success = this->calibrationTable.fromJson(ba.data());
-    if(!success)
+    QFile file(fileName);
+    if(!file.open(QFile::OpenModeFlag::ReadOnly))
     {
-        spdlog::warn("Failed to load configuration from file {}", ba.data());
+        spdlog::error("Failed to open file {}", fileName.toStdString());
         return;
     }
-    changeInputRange(this->ui->inputRangeView->currentIndex());
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &err);
+    file.close();
+    if(err.error != QJsonParseError::NoError)
+    {
+        spdlog::error("Failed to parse JSON in file {}", fileName.toStdString());
+        return;
+    }
+    this->calibrationTable = CalibrationTable::fromJson(doc.object());
+    this->changeInputRange(this->ui->inputRangeView->currentIndex());
 }
 void FullCalibrationDialog::save()
 {
@@ -341,6 +379,14 @@ void FullCalibrationDialog::save()
         "JSON table (*.json);;All Files (*)"
     );
     if(!fileName.length()) return;
-    QByteArray ba = fileName.toLocal8Bit();
-    this->calibrationTable.toJson(ba.data());
+    QFile file(fileName);
+    if(!file.open(QFile::OpenModeFlag::WriteOnly))
+    {
+        spdlog::error("Failed to open file {}", fileName.toStdString());
+        return;
+    }
+    QJsonDocument doc;
+    doc.setObject(this->calibrationTable.toJson());
+    file.write(doc.toJson());
+    file.close();
 }

@@ -26,6 +26,7 @@ private:
     Ui::AcquisitionChannelSettingsTab *ui;
     void setOffsetSource(bool fromZero);
     void setTriggerLevel(int val);
+    void setTriggerLevelMv(double val);
     void setDCOffset(int val);
 
 signals:

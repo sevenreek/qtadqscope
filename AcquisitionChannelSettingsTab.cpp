@@ -39,24 +39,14 @@ void AcquisitionChannelSettingsTab::initialize(ApplicationContext * context, int
     this->ui->triggerLevelCode->connect(
         this->ui->triggerLevelCode, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val) {
-            if(this->config->getOffsetTriggerFromZero()) {
-                this->setTriggerLevel(val);
-            } else {
-                this->setTriggerLevel(this->digitizer->getDCBias(this->channel) + val);
-            }
+            this->setTriggerLevel(val);
         }
     );
     this->ui->triggerLevelMv->connect(
         this->ui->triggerLevelMv,
         static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-        [=](double d){
-            double range = this->digitizer->getObtainedRange(this->channel);
-            int code = mvToCode(d, range);
-            if(this->config->getOffsetTriggerFromZero()) {
-                this->setTriggerLevel(code);
-            } else {
-                this->setTriggerLevel(this->digitizer->getDCBias(this->channel) + code);
-            }
+        [=](double d) {
+            this->setTriggerLevelMv(d);
         }
     );
     this->ui->triggerEdge->connect(
@@ -106,23 +96,67 @@ void AcquisitionChannelSettingsTab::setTriggerLevel(int val)
 {
     this->ui->triggerLevelCode->blockSignals(true);
     this->ui->triggerLevelMv->blockSignals(true);
-    this->digitizer->setTriggerLevel(val);
+
     double channelInputRange = this->digitizer->getObtainedRange(this->channel);
-    int absolute = this->digitizer->getTriggerLevel();
-    int relative = absolute - channelInputRange;
-    double absoluteMv = codeToMv(absolute, channelInputRange);
-    double relativeMv = codeToMv(relative, channelInputRange);
+    int bias = this->digitizer->getDCBias(this->channel);
+    int relative, absolute;
+
     if(this->config->getOffsetTriggerFromZero())
     {
-        this->ui->triggerLevelCode->setValue(absolute);
-        this->ui->triggerLevelMv->setValue(absoluteMv);
+        absolute = val;
+        relative = absolute - bias;
     }
     else
     {
-        this->ui->triggerLevelCode->setValue(relative);
-        this->ui->triggerLevelMv->setValue(relativeMv);
-
+        relative = val;
+        absolute = relative + bias;
     }
+    double absoluteMv = codeToMv(absolute, channelInputRange);
+    double relativeMv = codeToMv(relative, channelInputRange);
+    this->digitizer->setTriggerLevel(absolute);
+    if(this->config->getOffsetTriggerFromZero()) {
+        this->ui->triggerLevelMv->setValue(absoluteMv);
+    }
+    else {
+        this->ui->triggerLevelMv->setValue(relativeMv);
+    }
+    this->ui->triggerLevelCodeAbsolute->setText(QString::fromStdString(fmt::format("{}", absolute)));
+    this->ui->triggerLevelMvAbsolute->setText(QString::fromStdString(fmt::format("{:.2f} mV", absoluteMv)));
+
+    this->ui->triggerLevelCode->blockSignals(false);
+    this->ui->triggerLevelMv->blockSignals(false);
+}
+
+void AcquisitionChannelSettingsTab::setTriggerLevelMv(double d)
+{
+    this->ui->triggerLevelCode->blockSignals(true);
+    this->ui->triggerLevelMv->blockSignals(true);
+
+    double channelInputRange = this->digitizer->getObtainedRange(this->channel);
+    int bias = this->digitizer->getDCBias(this->channel);
+    double biasMv = codeToMv(bias, channelInputRange);
+
+    double relativeMv, absoluteMv;
+
+    if(this->config->getOffsetTriggerFromZero())
+    {
+        absoluteMv = d;
+        relativeMv = absoluteMv - biasMv;
+    }
+    else
+    {
+        relativeMv = d;
+        absoluteMv = relativeMv + biasMv;
+    }
+    int absolute = mvToCode(absoluteMv, channelInputRange);
+    int relative = mvToCode(relativeMv, channelInputRange);
+    if(this->config->getOffsetTriggerFromZero()) {
+        this->ui->triggerLevelCode->setValue(absolute);
+    }
+    else {
+        this->ui->triggerLevelCode->setValue(relative);
+    }
+    this->digitizer->setTriggerLevel(absolute);
     this->ui->triggerLevelCodeAbsolute->setText(QString::fromStdString(fmt::format("{}", absolute)));
     this->ui->triggerLevelMvAbsolute->setText(QString::fromStdString(fmt::format("{:.2f} mV", absoluteMv)));
 

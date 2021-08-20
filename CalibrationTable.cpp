@@ -1,53 +1,40 @@
 #include "json.hpp"
 #include "CalibrationTable.h"
-#include <fstream>
 using json = nlohmann::json;
 
-bool CalibrationTable::toJson(const char* path)
+QJsonObject CalibrationTable::toJson()
 {
-    std::ofstream tableStream(path, std::ios_base::out);
-    std::vector<std::vector<int>> digitalData(MAX_NOF_CHANNELS);
-    std::vector<std::vector<int>> analogData(MAX_NOF_CHANNELS);
+    QJsonArray digitalData;
+    QJsonArray analogData;
     for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        digitalData[ch] = std::vector<int>(std::begin(this->digitalOffset[ch]), std::end(this->digitalOffset[ch]));
-        analogData[ch] = std::vector<int>(std::begin(this->analogOffset[ch]), std::end(this->analogOffset[ch]));
+        QJsonArray digCh;
+        QJsonArray anaCh;
+        digitalData.append(digCh);
+        analogData.append(anaCh);
+        for(int ir = 0; ir < INPUT_RANGE_COUNT; ir++)
+        {
+            digCh.append(this->digitalOffset[ch][ir]);
+            anaCh.append(this->analogOffset[ch][ir]);
+        }
     }
-    json j = {
+    QJsonObject j = {
         {"digital", digitalData},
         {"analog",  analogData}
     };
-    tableStream << j;
-    tableStream.close();
-    return true;
+    return j;
 }
-bool CalibrationTable::fromJson(const char* path)
+CalibrationTable CalibrationTable::fromJson(const QJsonObject &o)
 {
-    std::ifstream configStream(path, std::ios_base::in);
-    if(!configStream.good()) return false;
-    json j;
-    configStream >> j;
-    int channelIndex = 0;
-    for(auto &chd : j["digital"])
+    CalibrationTable table;
+    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        int inputRangeIndex = 0;
-        for(auto &ird : chd)
+        for(int ir = 0; ir < INPUT_RANGE_COUNT; ir++)
         {
-            this->digitalOffset[channelIndex][inputRangeIndex] = ird.get<int>();
-            inputRangeIndex++;
+            table.digitalOffset[ch][ir] = o["digital"].toArray()[ch].toArray()[ir].toInt(0);
+            table.analogOffset[ch][ir] =  o["analog"].toArray()[ch].toArray()[ir].toInt(0);
         }
-        channelIndex++;
     }
-    channelIndex = 0;
-    for(auto &cha : j["analog"])
-    {
-        int inputRangeIndex = 0;
-        for(auto &ira : cha)
-        {
-            this->analogOffset[channelIndex][inputRangeIndex] = ira.get<int>();
-            inputRangeIndex++;
-        }
-        channelIndex++;
-    }
-    return true;
+    return table;
 }
+

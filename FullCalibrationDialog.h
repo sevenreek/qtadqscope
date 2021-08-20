@@ -50,10 +50,12 @@ private:
     std::list<IRecordProcessor*> calibrationProcessorsList;
     Acquisition currentCalibrationAcquisition;
     QLabel *labels[MAX_NOF_CHANNELS];
+    void setAnalogValue(int ch, int ir, int val);
+    void setDigitalValue(int ch, int ir, int val);
 public slots:
     void onStateChanged(Digitizer::DIGITIZER_STATE newState);
     void apply();
-    void start();
+    void startCalibration();
     void load();
     void save();
     void stopAcquisitions();

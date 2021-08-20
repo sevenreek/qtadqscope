@@ -215,21 +215,22 @@ bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<IRecordProce
 {
     if(this->currentState != DIGITIZER_STATE::READY) return false;
     if(!this->configureAcquisition(acq, recordProcessors, calibrations)) goto START_FAILED;
+    this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
+    if(!this->adq.StartStreaming())
+    {
+        goto START_FAILED;
+    }
+    if(acq.getIsContinuous()) this->adq.SWTrig();
+    emit this->acquisitionStarted();
     if(acq.getDuration())
     {
         this->acquisitionTimer.setInterval(acq.getDuration());
         this->acquisitionTimer.start();
     }
-    if(!this->adq.StartStreaming())
-    {
-        goto START_FAILED;
-    }
-    this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
-    emit this->acquisitionStarted();
-    if(acq.getIsContinuous()) this->adq.SWTrig();
     spdlog::info("Acquisition started!");
     return true;
 START_FAILED:
+    this->stopAcquisition();
     spdlog::error("Stream failed to start!");
     this->acquisitionTimer.stop();
     return false;
