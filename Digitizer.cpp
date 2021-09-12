@@ -256,6 +256,11 @@ void Digitizer::removeRecordProcessor(IRecordProcessor *rp)
     this->defaultRecordProcessors.remove(rp);
 }
 
+bool Digitizer::writeUserRegister(unsigned int ul, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *returval)
+{
+    return this->adq.WriteUserRegister(ul, regnum, mask, data, returval);
+}
+
 Digitizer::DIGITIZER_STATE Digitizer::getDigitizerState()
 {
     return this->currentState;

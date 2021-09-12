@@ -28,6 +28,8 @@ private:
     void setTriggerLevel(int val);
     void setTriggerLevelMv(double val);
     void setDCOffset(int val);
+    void invalidateTriggerLevels();
+    void invalidateDCOffset();
 
 signals:
     void channelActiveChanged(bool act);

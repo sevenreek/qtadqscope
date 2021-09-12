@@ -8,6 +8,7 @@
 #include "ApplicationContext.h"
 #include "FullCalibrationDialog.h"
 #include "BuffersDialog.h"
+#include "RegisterDialog.h"
 namespace Ui {
 class PrimaryWindow;
 }
@@ -29,6 +30,7 @@ private:
     QCPItemLine * triggerLine;
     std::unique_ptr<FullCalibrationDialog> calibrationDialog;
     std::unique_ptr<BuffersDialog> buffersDialog;
+    std::unique_ptr<RegisterDialog> registerDialog;
 
 private slots:
     void openConfigSaveDialog();

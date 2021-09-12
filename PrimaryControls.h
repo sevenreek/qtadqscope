@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include "DigitizerGUIComponent.h"
-
+#include "GUILogger.h"
 namespace Ui {
 class PrimaryControls;
 }
@@ -20,6 +20,7 @@ public:
 public slots:
     void resetFillIndicators();
 private:
+    std::shared_ptr<QGUILogSink_mt> logSink;
     Ui::PrimaryControls *ui;
     QTimer periodicUpdateTimer;
     ApplicationContext *context;

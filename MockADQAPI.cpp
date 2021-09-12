@@ -137,6 +137,7 @@ int ADQInterface::FlushDMA()
 }
 int ADQInterface::WriteUserRegister(unsigned int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval)
 {
+    *retval = data;
     return 1;
 }
 

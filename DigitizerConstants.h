@@ -16,10 +16,11 @@ const int TRANSFER_BUFFER_SIZE_STEP = 1024;
 const int PARALLEL_SAMPLES_STEP = 4;
 const std::string CHANNEL_ACTIVE_EMOJI = "▶️";
 const std::string TRIGGER_ACTIVE_EMOJI = "⚡";
+const std::string LOGGER_PATTERN = "[%T] %v";
 enum LOGGING_LEVELS
 {
     DISABLED = 0,
-    ERROR = 1,
+    ERR = 1,
     WARN = 2,
     INFO = 3,
     DEBUG = 4
@@ -65,5 +66,13 @@ enum INPUT_RANGES
 };
 const int INPUT_RANGE_COUNT = (7);
 const float INPUT_RANGE_VALUES[INPUT_RANGE_COUNT] = {100, 250, 500, 1000, 2000, 5000, 10000};
-
+const std::string LOG_COLORS[7] = {
+    "cyan",
+    "purple",
+    "black",
+    "orange",
+    "red",
+    "darkred",
+    "white"
+};
 #endif // DIGITIZERCONSTANTS_H

@@ -9,7 +9,7 @@ class BinaryFileWriter: public FileWriter {
 protected:
     bool isContinuousStream;
     unsigned char channelMask;
-    unsigned long long bytesSaved;
+    unsigned long long bytesSaved = 0;
     unsigned long long sizeLimit;
     std::ofstream dataStream[MAX_NOF_CHANNELS];
 public:
@@ -34,11 +34,6 @@ public:
 
 class BufferedBinaryFileWriter: public BinaryFileWriter {
     protected:
-    bool isContinuousStream;
-    unsigned char channelMask;
-    std::ofstream dataStream[MAX_NOF_CHANNELS];
-    unsigned long long bytesSaved;
-    unsigned long long sizeLimit;
     short * dataBuffer[MAX_NOF_CHANNELS];
     unsigned long long samplesSaved[MAX_NOF_CHANNELS] = {0};
     public:

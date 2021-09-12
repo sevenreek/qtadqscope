@@ -1,6 +1,6 @@
 #include "PrimaryControls.h"
 #include "ui_PrimaryControls.h"
-
+#include "DigitizerConstants.h"
 PrimaryControls::PrimaryControls(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PrimaryControls)
@@ -40,7 +40,10 @@ void PrimaryControls::resetFillIndicators()
 void PrimaryControls::initialize(ApplicationContext *context)
 {
     this->DigitizerGUIComponent::initialize(context);
+    this->logSink = std::shared_ptr<QGUILogSink_mt>(new QGUILogSink_mt(this->ui->notificationsTextArea));
+    this->logSink->set_pattern(LOGGER_PATTERN);
     this->context = context;
+    this->context->primaryLogger->sinks().push_back(this->logSink);
     this->ui->streamStartStopButton->connect(
         this->ui->streamStartStopButton,
         &QAbstractButton::clicked,
@@ -133,6 +136,6 @@ void PrimaryControls::periodicUIUpdate()
 {
     if(this->context->fileSaver)
         this->ui->FileFillStatus->setValue(100*double(this->context->fileSaver->getProcessedBytes())/this->digitizer->getFileSizeLimit());
-    this->ui->DMAFillStatus->setValue(100*double(this->digitizer->getLastBuffersFill()/(this->digitizer->getTransferBufferCount()-1)));
-    this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getQueueFill()/this->digitizer->getTransferBufferQueueSize()));
+    this->ui->DMAFillStatus->setValue(100*double(this->digitizer->getLastBuffersFill())/(this->digitizer->getTransferBufferCount()-1));
+    this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getQueueFill())/this->digitizer->getTransferBufferQueueSize());
 }

@@ -153,8 +153,8 @@ void ApplicationConfiguration::setFileLoggingLevel(const LOGGING_LEVELS &value)
 
 
 
-ApplicationContext::ApplicationContext(ApplicationConfiguration *config, Digitizer *digitizer, ScopeUpdater *scope) :
-    config(config), digitizer(digitizer), scopeUpdater(scope)
+ApplicationContext::ApplicationContext(ApplicationConfiguration *config, Digitizer *digitizer, ScopeUpdater *scope, spdlog::logger *logger) :
+    config(config), digitizer(digitizer), scopeUpdater(scope), primaryLogger(logger)
 {
 
 }

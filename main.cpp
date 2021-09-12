@@ -35,6 +35,7 @@ void processArguments(QApplication &app, ApplicationConfiguration &cfg, Acquisit
             acq = Acquisition::fromJson(json.object()["acquisition"].toObject());
         }
     }
+    cfg.setStartGUI(!parser.isSet(commandLineMode));
 }
 
 int main(int argc, char *argv[])

@@ -101,7 +101,7 @@ if __name__ == '__main__':
                     
             if(parser.output_ascii):
                 np.savetxt(output_file, samples.astype(int), fmt='%d')
-            if(record_count >= int(parser.limit_records)):
+            if(parser.limit_records and record_count >= int(parser.limit_records)):
                 break
             if(parser.plot):
                 plt.plot(samples)

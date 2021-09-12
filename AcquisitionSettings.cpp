@@ -20,6 +20,7 @@ AcquisitionSettings::~AcquisitionSettings()
 
 void AcquisitionSettings::reloadUI()
 {
+    this->ui->recordProcessorsPanel->reloadUI();
     this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<0))?true:false);
     this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<1))?true:false);
     this->ui->acquisitionTag->setText(QString::fromStdString(this->digitizer->getAcquisitionTag()));

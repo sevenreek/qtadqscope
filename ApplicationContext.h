@@ -73,10 +73,11 @@ private:
 };
 class ApplicationContext {
 public:
-    ApplicationContext(ApplicationConfiguration * config, Digitizer * digitizer, ScopeUpdater *scope);
+    ApplicationContext(ApplicationConfiguration * config, Digitizer * digitizer, ScopeUpdater *scope, spdlog::logger *logger);
     ApplicationConfiguration * config = nullptr;
     Digitizer * digitizer = nullptr;
     ScopeUpdater *scopeUpdater = nullptr;
     FileWriter *fileSaver = nullptr;
+    spdlog::logger *primaryLogger = nullptr;
 };
 #endif // APPLICATIONCONFIGURATION_H

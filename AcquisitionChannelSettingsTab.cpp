@@ -65,8 +65,8 @@ void AcquisitionChannelSettingsTab::initialize(ApplicationContext * context, int
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
             [=](int index){
                 this->digitizer->setInputRange(this->channel, static_cast<INPUT_RANGES>(index));
-                this->setTriggerLevel(this->digitizer->getTriggerLevel());
-                this->setDCOffset(this->digitizer->getDCBias(this->channel));
+                this->invalidateTriggerLevels();
+                this->invalidateDCOffset();
             }
     );
     this->ui->dcOffsetCode->connect(
@@ -89,7 +89,7 @@ void AcquisitionChannelSettingsTab::initialize(ApplicationContext * context, int
 void AcquisitionChannelSettingsTab::setOffsetSource(bool fromZero)
 {
     this->config->setOffsetTriggerFromZero(fromZero);
-    this->setTriggerLevel(this->digitizer->getTriggerLevel());
+    this->invalidateTriggerLevels();
 }
 
 void AcquisitionChannelSettingsTab::setTriggerLevel(int val)
@@ -176,7 +176,45 @@ void AcquisitionChannelSettingsTab::setDCOffset(int val)
     this->ui->dcOffsetMv->setValue(mv);
     this->ui->dcOffsetCode->blockSignals(false);
     this->ui->dcOffsetMv->blockSignals(false);
-    this->setTriggerLevel(this->digitizer->getTriggerLevel());
+    this->invalidateTriggerLevels();
+}
+
+void AcquisitionChannelSettingsTab::invalidateTriggerLevels()
+{
+    int absolute, relative, bias;
+    double absoluteMv, relativeMv, biasMv;
+    absolute = this->digitizer->getTriggerLevel();
+    bias = this->digitizer->getDCBias(this->channel);
+    relative = absolute - bias;
+    absoluteMv = codeToMv(absolute, this->digitizer->getObtainedRange(this->channel));
+    biasMv = codeToMv(bias, this->digitizer->getObtainedRange(this->channel));
+    relativeMv = absoluteMv - biasMv;
+    this->ui->triggerLevelCode->blockSignals(true);
+    this->ui->triggerLevelMv->blockSignals(true);
+    if(this->config->getOffsetTriggerFromZero()) {
+        this->ui->triggerLevelCode->setValue(absolute);
+        this->ui->triggerLevelMv->setValue(absoluteMv);
+    }
+    else {
+        this->ui->triggerLevelCode->setValue(relative);
+        this->ui->triggerLevelMv->setValue(relativeMv);
+    }
+    this->ui->triggerLevelCodeAbsolute->setText(QString::fromStdString(fmt::format("{}", absolute)));
+    this->ui->triggerLevelMvAbsolute->setText(QString::fromStdString(fmt::format("{:.2f} mV", absoluteMv)));
+    this->ui->triggerLevelCode->blockSignals(false);
+    this->ui->triggerLevelMv->blockSignals(false);
+}
+
+void AcquisitionChannelSettingsTab::invalidateDCOffset()
+{
+    this->ui->dcOffsetCode->blockSignals(true);
+    this->ui->dcOffsetMv->blockSignals(true);
+    double channelInputRange = this->digitizer->getObtainedRange(this->channel);
+    int code = this->digitizer->getDCBias(this->channel);
+    this->ui->dcOffsetCode->setValue(code);
+    this->ui->dcOffsetMv->setValue(codeToMv(code, channelInputRange));
+    this->ui->dcOffsetCode->blockSignals(false);
+    this->ui->dcOffsetMv->blockSignals(false);
 }
 
 AcquisitionChannelSettingsTab::~AcquisitionChannelSettingsTab()
@@ -202,7 +240,7 @@ void AcquisitionChannelSettingsTab::reloadUI()
     {
         this->ui->triggerOffsetFromBias->setChecked(true);
     }
-    this->setTriggerLevel(this->digitizer->getTriggerLevel());
+    this->invalidateTriggerLevels();
     this->ui->inputRange->setCurrentIndex(this->digitizer->getInputRange(this->channel));
     this->setDCOffset(this->digitizer->getDCBias(this->channel));
 }

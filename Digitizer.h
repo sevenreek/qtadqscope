@@ -31,6 +31,7 @@ public:
         EXTERNAL3
     };
 
+
     Q_ENUM(DIGITIZER_TRIGGER_MODE)
     Q_ENUM(DIGITIZER_STATE)
     Q_ENUM(CLOCK_SOURCES)
@@ -89,6 +90,7 @@ public:
     void appendRecordProcessor(IRecordProcessor *rp);
     void removeRecordProcessor(IRecordProcessor *rp);
 
+    bool writeUserRegister(unsigned int ul, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *returval);
 
     DIGITIZER_STATE getDigitizerState();
     DIGITIZER_TRIGGER_MODE getTriggerMode();

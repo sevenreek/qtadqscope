@@ -48,10 +48,8 @@ else()
 endif()
 
 add_subdirectory(include/spdlog-1.8.2)
-include_directories(include/nlohmann_json)
 include_directories(include/qcustomplot)
 
-set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 set(PROJECT_SOURCES
         main.cpp
@@ -115,6 +113,7 @@ set(PROJECT_SOURCES
         FullCalibrationDialog.cpp
         FullCalibrationDialog.h
         FullCalibrationDialog.ui
+        GUILogger.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

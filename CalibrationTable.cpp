@@ -1,6 +1,4 @@
-#include "json.hpp"
 #include "CalibrationTable.h"
-using json = nlohmann::json;
 
 QJsonObject CalibrationTable::toJson()
 {

@@ -1,7 +1,35 @@
 #include "GUIApplication.h"
 #include "BinaryFileWriter.h"
+spdlog::level::level_enum ScopeApplication::getFileLevel(LOGGING_LEVELS lvl)
+{
+    switch(lvl)
+    {
+        case LOGGING_LEVELS::DISABLED:
+            return spdlog::level::level_enum::off;
+        break;
+        case LOGGING_LEVELS::DEBUG:
+            return spdlog::level::level_enum::debug;
+        break;
+        case LOGGING_LEVELS::INFO:
+            return spdlog::level::level_enum::info;
+        break;
+        case LOGGING_LEVELS::WARN:
+            return spdlog::level::level_enum::warn;
+        break;
+        case LOGGING_LEVELS::ERR:
+            return spdlog::level::level_enum::err;
+        break;
+    }
+    return spdlog::level::trace;
+}
+
 bool ScopeApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 {
+    this->stdSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+    this->primaryLogger = std::make_shared<spdlog::logger>("primary", stdSink);
+    spdlog::set_default_logger(this->primaryLogger);
+    this->primaryLogger->set_pattern(LOGGER_PATTERN);
+    this->primaryLogger->set_level(this->getFileLevel(cfg.getFileLoggingLevel()));
     this->adqControlUnit = CreateADQControlUnit();
 #ifdef MOCK_ADQAPI
     spdlog::warn("Using mock ADQAPI");
@@ -41,7 +69,11 @@ bool GUIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 {
     if(!this->ScopeApplication::start(cfg, acq)) { return false; }
     this->scopeUpdater = std::unique_ptr<ScopeUpdater>(new ScopeUpdater(this->digitizer->getRecordLength()));
-    this->context = std::unique_ptr<ApplicationContext>(new ApplicationContext(&this->config, this->digitizer.get(), this->scopeUpdater.get()));
+    this->context = std::unique_ptr<ApplicationContext>(
+        new ApplicationContext(
+            &this->config, this->digitizer.get(), this->scopeUpdater.get(), this->primaryLogger.get()
+        )
+    );
     this->primaryWindow = std::unique_ptr<PrimaryWindow>(new PrimaryWindow(this->context.get()));
     this->primaryWindow->reloadUI();
     this->primaryWindow->show();

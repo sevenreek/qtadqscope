@@ -36,10 +36,13 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     );
     this->calibrationDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this));
     this->buffersDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog(this));
+    this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog(this));
     this->calibrationDialog->initialize(this->context);
     this->buffersDialog->initialize(this->context);
+    this->registerDialog->initialize(this->context);
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
+    connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
     connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
 }
