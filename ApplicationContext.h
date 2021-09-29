@@ -61,7 +61,7 @@ public:
 private:
     bool startGUI = true;
     unsigned int deviceNumber = 1;
-    unsigned int periodicUpdatePeriod = 100;
+    unsigned int periodicUpdatePeriod = 10;
     unsigned long dmaCheckMinimumTimeout = 500;
     bool allowMultichannel = false;
     bool offsetTriggerFromZero = true;

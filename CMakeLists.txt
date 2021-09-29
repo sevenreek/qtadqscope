@@ -14,8 +14,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 
-
-
 option(MOCK_ADQAPI "Use a mock ADQ library" ON)
 option(LINUX_BUILD "Build on Linux" OFF)
 
@@ -23,6 +21,8 @@ option(LINUX_BUILD "Build on Linux" OFF)
 if(LINUX_BUILD)
     add_compile_definitions(LINUX)
     message(STATUS "Linux build")
+    #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.

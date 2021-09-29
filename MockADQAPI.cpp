@@ -1,6 +1,7 @@
 #ifdef MOCK_ADQAPI
 #include "MockADQAPI.h"
 const char* FILE_DATA_SOURCE[] = {"ch1.mock", "ch2.mock", "ch3.mock", "ch4.mock"};
+const float BUFFER_FILL_PROBABILITY = 0.0001;
 #include <algorithm>
 #include <random>
 
@@ -13,7 +14,8 @@ ADQInterface::ADQInterface()
         std::ifstream file;
         file.open(FILE_DATA_SOURCE[ch], std::ios::binary);
         if(!file.good()) continue;
-        file.read((char*)this->sourceData[ch], sizeof(short)*DEFAULT_BUFFER_SIZE);
+        file.read(reinterpret_cast<char*>(this->sourceData[ch]), sizeof(short)*DEFAULT_BUFFER_SIZE);
+        file.close();
     }
 }
 const unsigned long ADQInterface::DEFAULT_BUFFER_SIZE = 4096UL;
@@ -33,6 +35,14 @@ void ADQControlUnit_FindDevices(void* adq_cu)
 int ADQControlUnit_NofADQ(void* adq_cu)
 {
     return 1;
+}
+void DeleteADQControlUnit(void* adq_cu_ptr)
+{
+    return;
+}
+void ADQControlUnit_DeleteADQ(void* adq_cu_ptr, int ADQ_num)
+{
+    return;
 }
 ADQInterface * ADQControlUnit_GetADQ(void* adq_cu, unsigned int devicenum)
 {
@@ -116,7 +126,7 @@ int ADQInterface::SWTrig()
 
 int ADQInterface::GetTransferBufferStatus(unsigned int * buffersFilled)
 {
-    *buffersFilled = rand()/(float)(RAND_MAX)>0.9?1:0;
+    *buffersFilled = rand()/(float)(RAND_MAX)>(1-BUFFER_FILL_PROBABILITY)?1:0;
     return 1;
 }
 int ADQInterface::GetStreamOverflow()
@@ -161,7 +171,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             long rcount = this->bufferSize / ( this->recordLength * sizeof(short) );
             for (long i = 0; i < rcount; i++)
             {
-                short * dp = (short*)(d[ch]);
+                short * dp = reinterpret_cast<short*>(d[ch]);
                 memcpy(&(dp[i*this->recordLength]), this->sourceData[ch], this->recordLength*sizeof(short));
                 ADQRecordHeader * hp = (ADQRecordHeader *)(h[ch]);
                 hp[i].Channel = ch;

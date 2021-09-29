@@ -61,6 +61,9 @@ int main(int argc, char *argv[])
         spdlog::info("Starting CLI.");
     }
     app->start(config, acq);
-    return a.exec();
+    int appres = a.exec();
+    spdlog::info("Application exit");
+    app.reset();
+    return appres;
 }
 

@@ -20,6 +20,10 @@ public:
     {
 
     }
+    virtual void enableVolatileSettings(bool enabled)
+    {
+
+    }
 };
 
 

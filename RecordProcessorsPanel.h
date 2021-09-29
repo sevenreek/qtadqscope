@@ -24,6 +24,10 @@ private:
     void autosetFileSaver();
     bool scopeUpdaterAdded = false;
     void autosetUpdateScope();
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // RECORDPROCESSORSPANEL_H

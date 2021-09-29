@@ -29,6 +29,10 @@ public slots:
     void handleSetChannelActive(int channel, bool active);
     void handleSetChannelTriggerActive(int channel, bool active);
     void handleTabNameChange(int channel, bool recreateAll=false);
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // ACQUISITIONSETTINGS_H

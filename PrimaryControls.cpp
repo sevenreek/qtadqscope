@@ -10,6 +10,7 @@ PrimaryControls::PrimaryControls(QWidget *parent) :
 
 PrimaryControls::~PrimaryControls()
 {
+    this->periodicUpdateTimer.stop();
     delete ui;
 }
 void PrimaryControls::reloadUI()
@@ -138,4 +139,12 @@ void PrimaryControls::periodicUIUpdate()
         this->ui->FileFillStatus->setValue(100*double(this->context->fileSaver->getProcessedBytes())/this->digitizer->getFileSizeLimit());
     this->ui->DMAFillStatus->setValue(100*double(this->digitizer->getLastBuffersFill())/(this->digitizer->getTransferBufferCount()-1));
     this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getQueueFill())/this->digitizer->getTransferBufferQueueSize());
+}
+
+
+void PrimaryControls::enableVolatileSettings(bool enabled)
+{
+    this->ui->timedRunCheckbox->setEnabled(enabled);
+    this->ui->timedRunValue->setEnabled(enabled);
+
 }

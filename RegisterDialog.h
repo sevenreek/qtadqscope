@@ -22,6 +22,10 @@ public:
     void initialize(ApplicationContext *context) override;
     void reloadUI() override;
     void apply();
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // REGISTERDIALOG_H

@@ -55,3 +55,9 @@ void RegisterDialog::apply()
     this->digitizer->writeUserRegister(1, 0x12, 0, algParam1, &retval);
     if(algParam1 != (short)retval) spdlog::error("Failed to set algParam1 register");
 }
+
+
+void RegisterDialog::enableVolatileSettings(bool enabled)
+{
+
+}

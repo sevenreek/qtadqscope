@@ -5,7 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QFile>
-
+#include "util.h"
 
 BinaryFileWriter::BinaryFileWriter(unsigned long long sizeLimit)
 {
@@ -33,14 +33,17 @@ void BinaryFileWriter::startNewAcquisition(Acquisition& config)
         if((1<<ch) & this->channelMask)
         {
             int adqch = ch+1;
-            std::string s_data = fmt::format("{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, adqch);
-            this->dataStream[ch].open(s_data.c_str(), std::ios_base::binary | std::ios_base::out);
+            std::string s_data = fmt::format("{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", config.getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, adqch);
+            s_data = removeIllegalFilenameChars(s_data, ILLEGAL_CHAR_REPLACE);
+            const char* cstr = s_data.c_str();
+            this->dataStream[ch].open(cstr, std::ios_base::binary | std::ios_base::out);
         }
     }
     // save config
     std::string s_cfg = fmt::format(
-        "{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
+        "{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", config.getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
     );
+    s_cfg = removeIllegalFilenameChars(s_cfg, ILLEGAL_CHAR_REPLACE);
     QJsonObject json = config.toJson();
     QJsonDocument doc;
     doc.setObject(json);
@@ -50,17 +53,17 @@ void BinaryFileWriter::startNewAcquisition(Acquisition& config)
     cfgFile.close();
 }
 
-bool BinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS BinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved > this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
         this->dataStream[channel].write((char*)buffer, sizeof(short)*length);
-        return true;
+        return STATUS::OK;
     }
 }
 
@@ -116,7 +119,7 @@ void BufferedBinaryFileWriter::startNewAcquisition(Acquisition& config)
     }
 }
 
-bool BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
@@ -125,7 +128,7 @@ bool BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buf
     // from the header, this is done in the Verbose Writer
     if(this->bytesSaved >= this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
@@ -134,7 +137,7 @@ bool BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buf
         //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
         std::memcpy(&(this->dataBuffer[ch][this->samplesSaved[ch]]), buffer, length*sizeof(short));
         this->samplesSaved[ch] += length;
-        return true;
+        return STATUS::OK;
     }
 }
 
@@ -168,11 +171,11 @@ VerboseBufferedBinaryWriter::~VerboseBufferedBinaryWriter()
 {
 
 }
-bool VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved >= this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else if(this->isContinuousStream)
     {
@@ -181,7 +184,7 @@ bool VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* 
         //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
         std::memcpy(&(this->dataBuffer[ch][this->samplesSaved[ch]]), buffer, length*sizeof(short));
         this->samplesSaved[ch] += length;
-        return true;
+        return STATUS::OK;
     }
     else
     {
@@ -195,7 +198,7 @@ bool VerboseBufferedBinaryWriter::processRecord(ADQRecordHeader* header, short* 
         std::memcpy(dataPointer + this->bytesSaved, buffer, length*sizeof(short));
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved[ch] += length;
-        return true;
+        return STATUS::OK;
     }
 }
 
@@ -222,17 +225,17 @@ VerboseBinaryWriter::VerboseBinaryWriter(unsigned long long sizeLimit) : BinaryF
 
 }
 
-bool VerboseBinaryWriter::processRecord(ADQRecordHeader *header, short *buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS VerboseBinaryWriter::processRecord(ADQRecordHeader *header, short *buffer, unsigned long length, int channel)
 {
     if(this->bytesSaved >= this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else if(this->isContinuousStream)
     {
         this->bytesSaved += length*sizeof(short);
         this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
-        return true;
+        return STATUS::OK;
     }
     else
     {
@@ -243,7 +246,7 @@ bool VerboseBinaryWriter::processRecord(ADQRecordHeader *header, short *buffer, 
 
         this->dataStream[channel].write(reinterpret_cast<char*>(buffer), length*sizeof(short));
         this->bytesSaved += length*sizeof(short);
-        return true;
+        return STATUS::OK;
     }
 }
 

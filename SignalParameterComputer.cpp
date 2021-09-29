@@ -24,7 +24,7 @@ void SignalParameterComputer::startNewAcquisition(Acquisition &config)
         this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
     }
 }
-bool SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
+IRecordProcessor::STATUS SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
@@ -33,17 +33,17 @@ bool SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer
     // from the header
     if(this->bytesSaved > this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved += length;
         std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
-        return true;
+        return STATUS::OK;
     }
 }
-bool SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(header == NULL) // if that is the case it is a continuous (no trigger and headers) stream
     {
@@ -54,18 +54,18 @@ bool SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buff
         return this->writeRecord(header, buffer, length);
     }
 }
-bool SignalParameterComputer::writeContinuousBuffer(short* buffer, unsigned int length)
+IRecordProcessor::STATUS SignalParameterComputer::writeContinuousBuffer(short* buffer, unsigned int length)
 {
     if(this->bytesSaved > this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved += length;
         std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
-        return true;
+        return STATUS::OK;
     }
 
 }

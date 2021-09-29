@@ -27,6 +27,7 @@ PACK_STRUCTURES = 0
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filepath', metavar='path', type=str, help='path to the data file')
+    parser.add_argument('-v', '--verify', action='store_true', help='run the script in verify mode; checks record headers for mistakes')
     parser.add_argument('-o', '--output_ascii', default=None, help='path to destination ascii file')
     parser.add_argument('-l', '--limit_records', default=0, help='number of records to extract, 0 for all')
     parser.add_argument('-n', '--no_pack', action='store_true', help='do not pack strucutres')
@@ -90,7 +91,12 @@ if __name__ == '__main__':
                 # do anything else you need with the header
                 print('#{} {}ps'.format(head.recordNumber, head.timestamp*125))
                 record_length = head.recordLength
+                if(parser.verify):
+                    if(head.recordNumber != record_count):
+                        print("Mismatch detected: record number is {}, should be {}".format(head.recordNumber, record_count))
                 record_count += 1
+                
+
                 
             bsamples = f.read(record_length*ct.sizeof(ct.c_int16))
             if(len(bsamples) == 0):
@@ -109,3 +115,5 @@ if __name__ == '__main__':
     
     if(parser.output_ascii):
         output_file.close()
+
+

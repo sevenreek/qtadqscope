@@ -45,6 +45,7 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
     connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
+    connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
 }
 
 PrimaryWindow::~PrimaryWindow()
@@ -126,4 +127,27 @@ void PrimaryWindow::autoSetTriggerLine()
     this->triggerLine->start->setCoords(0, pos);
     this->triggerLine->end->setCoords(sampleCount-1, pos);
     this->replot();
+}
+
+void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
+{
+    if(state == Digitizer::DIGITIZER_STATE::ACTIVE)
+    {
+        this->calibrationDialog->enableVolatileSettings(false);
+        this->buffersDialog->enableVolatileSettings(false);
+        this->registerDialog->enableVolatileSettings(false);
+        this->primaryControls->enableVolatileSettings(false);
+        this->acqSettings->enableVolatileSettings(false);
+        this->ui->centralwidget->setStyleSheet("#centralwidget {border: 4px solid red;}");
+    }
+    else if (state == Digitizer::DIGITIZER_STATE::READY)
+    {
+        this->calibrationDialog->enableVolatileSettings(true);
+        this->buffersDialog->enableVolatileSettings(true);
+        this->registerDialog->enableVolatileSettings(true);
+        this->primaryControls->enableVolatileSettings(true);
+        this->acqSettings->enableVolatileSettings(true);
+        this->ui->centralwidget->setStyleSheet("#centralwidget {border: 0px solid red;}");
+    }
+
 }

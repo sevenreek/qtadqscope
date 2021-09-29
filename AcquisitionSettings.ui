@@ -12,12 +12,15 @@
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>12</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" columnstretch="0,1,0,1" columnminimumwidth="0,100,0,100">
    <property name="sizeConstraint">

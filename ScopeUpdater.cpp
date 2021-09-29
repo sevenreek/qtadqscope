@@ -17,7 +17,7 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
     }
     this->y.resize(sampleCount);
 }
-bool ScopeUpdater::processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel)
+IRecordProcessor::STATUS ScopeUpdater::processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel)
 {
     //spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
     for(unsigned long s = 0; s < sampleCount; s++)
@@ -25,7 +25,7 @@ bool ScopeUpdater::processRecord(ADQRecordHeader* header, short* buffer, unsigne
         this->y[s] = (double)(buffer[s]);
     }
     emit this->onScopeUpdate(x, y); // scope must update from the GUI thread
-    return true;
+    return STATUS::OK;
 }
 void ScopeUpdater::startNewAcquisition(Acquisition& config)
 {

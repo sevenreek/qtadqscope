@@ -14,12 +14,13 @@ class AcquisitionChannelSettingsTab : public QWidget, public DigitizerGUICompone
 public:
     explicit AcquisitionChannelSettingsTab(QWidget *parent = nullptr);
     ~AcquisitionChannelSettingsTab();
-    void reloadUI();
+    void reloadUI() override;
     void setChannelActive(bool act, bool exclusive=false);
     void setTriggerActive(bool act, bool exclusive=false);
     void setExclusive(bool exc);
     void setObtainedRange(double val);
     void initialize(ApplicationContext * context, int index);
+    void enableVolatileSettings(bool enabled) override;
 private:
     int channel;
     static int lastActivatedChannel;
@@ -30,6 +31,8 @@ private:
     void setDCOffset(int val);
     void invalidateTriggerLevels();
     void invalidateDCOffset();
+    bool allowAcqChange = true;
+    bool allowTriggerChange = true;
 
 signals:
     void channelActiveChanged(bool act);

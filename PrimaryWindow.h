@@ -38,6 +38,7 @@ private slots:
     void replot();
     void updateScope(QVector<double> &x, QVector<double> y);
     void autoSetTriggerLine();
+    void onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state);
 };
 
 #endif // PRIMARYWINDOW_H

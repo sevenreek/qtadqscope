@@ -11,6 +11,7 @@ public:
     virtual bool reallocateBuffers(unsigned long recordLength) = 0;
     virtual void resetBuffers() = 0;
     virtual void resetRecordsToStore(unsigned long long recordsToStore) = 0;
+    virtual int getStatus() const = 0;
 };
 
 class BaseBufferProcessor : public IBufferProcessor {
@@ -39,6 +40,10 @@ public:
     // reallocateBuffers() calls this function, so no need to call it manually if the record length changes
     void resetBuffers();
     void resetRecordsToStore(unsigned long long recordsToStore);
+    int getStatus() const;
+
+protected:
+    int status = IRecordProcessor::STATUS::OK;
 };
 
 

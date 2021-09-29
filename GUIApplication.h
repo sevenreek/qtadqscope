@@ -23,6 +23,7 @@ protected:
     static spdlog::level::level_enum getFileLevel(LOGGING_LEVELS lvl);
 public:
     virtual bool start(ApplicationConfiguration cfg, Acquisition acq);
+    virtual ~ScopeApplication();
 };
 
 class GUIApplication : public ScopeApplication
@@ -40,7 +41,8 @@ public:
 class CLIApplication : public ScopeApplication
 {
 private:
-    std::unique_ptr<IRecordProcessor> fileSaver;
+    QTimer periodicUpdateTimer;
+    std::unique_ptr<FileWriter> fileSaver;
 public:
     CLIApplication();
     bool start(ApplicationConfiguration cfg, Acquisition acq);

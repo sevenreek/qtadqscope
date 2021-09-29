@@ -9,18 +9,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>386</width>
-    <height>411</height>
+    <width>425</width>
+    <height>461</height>
    </rect>
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>10</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="0" colspan="2">
@@ -412,7 +415,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_2"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_2"/>
  </buttongroups>
 </ui>

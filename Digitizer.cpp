@@ -168,9 +168,9 @@ Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
     this->bufferProcessorHandler->moveToThread(&this->bufferProcessingThread);
     this->dmaChecker->moveToThread(&this->ADQThread);
     connect(this, &Digitizer::acquisitionStarted, bufferProcessorHandler.get(), &LoopBufferProcessor::runLoop, Qt::ConnectionType::QueuedConnection);
-    connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onLoopStopped, this, &Digitizer::loopStopped);
+    connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onLoopStopped, this, &Digitizer::processorLoopStopped);
     connect(this, &Digitizer::acquisitionStarted, dmaChecker.get(), &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
-    connect(dmaChecker.get(), &DMAChecker::onLoopStopped, this, &Digitizer::loopStopped);
+    connect(dmaChecker.get(), &DMAChecker::onLoopStopped, this, &Digitizer::DMALoopStopped);
 
     this->bufferProcessingThread.start();
     this->ADQThread.start();
@@ -185,6 +185,7 @@ Digitizer::~Digitizer()
 
 bool Digitizer::stopAcquisition()
 {
+    this->acquisitionTimer.stop();
     if(this->currentState == DIGITIZER_STATE::READY) return false;
     else if(this->currentState == DIGITIZER_STATE::STOPPING && this->isStreamFullyStopped())
     {
@@ -193,7 +194,6 @@ bool Digitizer::stopAcquisition()
     }
     this->changeDigitizerState(DIGITIZER_STATE::STOPPING);
     this->dmaChecker->stopLoop();
-    this->bufferProcessorHandler->stopLoop();
     if(this->isStreamFullyStopped())
     {
         this->handleAcquisitionFullyStopped();
@@ -205,10 +205,24 @@ bool Digitizer::runAcquisition()
 {
     return this->runOverridenAcquisition(this->defaultAcquisition, this->defaultRecordProcessors, this->defaultCalibrationTable);
 }
-
-void Digitizer::loopStopped()
+void Digitizer::DMALoopStopped()
 {
-    this->stopAcquisition();
+    this->bufferProcessorHandler->stopLoop();
+    if(this->isStreamFullyStopped())
+    {
+        this->handleAcquisitionFullyStopped();
+    }
+}
+void Digitizer::processorLoopStopped()
+{
+    if(this->isStreamFullyStopped())
+    {
+        this->handleAcquisitionFullyStopped();
+    }
+    else
+    {
+        spdlog::error("One thread was not stopped.");
+    }
 }
 
 bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)

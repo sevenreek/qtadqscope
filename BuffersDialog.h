@@ -35,6 +35,10 @@ public:
     void initialize(ApplicationContext *context);
     void reloadUI();
 private:
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // BUFFERSDIALOG_H

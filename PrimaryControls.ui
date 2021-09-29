@@ -12,12 +12,15 @@
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>12</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
    <property name="leftMargin">
@@ -36,8 +39,8 @@
     <widget class="QLabel" name="streamStatusLabel">
      <property name="font">
       <font>
-       <family>Calibri Light</family>
-       <pointsize>16</pointsize>
+       <family>Roboto</family>
+       <pointsize>-1</pointsize>
       </font>
      </property>
      <property name="text">
@@ -100,9 +103,12 @@
     <widget class="QPushButton" name="streamStartStopButton">
      <property name="font">
       <font>
-       <family>Calibri Light</family>
-       <pointsize>16</pointsize>
+       <family>Roboto</family>
+       <pointsize>-1</pointsize>
       </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font-family: Roboto; font-size: 16px;</string>
      </property>
      <property name="text">
       <string>START</string>
@@ -155,8 +161,8 @@
      </property>
      <property name="font">
       <font>
-       <family>Courier New</family>
-       <pointsize>9</pointsize>
+       <family>Roboto</family>
+       <pointsize>-1</pointsize>
       </font>
      </property>
     </widget>

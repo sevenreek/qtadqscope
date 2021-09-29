@@ -85,3 +85,9 @@ RecordProcessorsPanel::~RecordProcessorsPanel()
     delete ui;
 }
 
+
+
+void RecordProcessorsPanel::enableVolatileSettings(bool enabled)
+{
+    this->ui->analysisSettingsContainer->setEnabled(enabled);
+}

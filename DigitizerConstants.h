@@ -2,12 +2,12 @@
 #define DIGITIZERCONSTANTS_H
 #include <climits>
 #include <string>
+#include "util.h"
 const int MAX_NOF_CHANNELS = 4;
 const unsigned long long MAX_SAMPLING_RATE = 1000000000UL;
 const unsigned int MAX_FINITE_RECORD_COUNT = 0x7FFFFFFF;
 const int DEFAULT_DIGITAL_USER_GAIN = 1024;
 const int DEFAULT_DIGITAL_USER_OFFSET = 0;
-const char UNIT_PREFIXES[7]  = {' ', 'k', 'M', 'G', 'P', 'Y', 'Z'};
 const unsigned int INFINITE_RECORDS = -1;
 const int CODE_MAX = SHRT_MAX;
 const int CODE_MIN = SHRT_MIN;

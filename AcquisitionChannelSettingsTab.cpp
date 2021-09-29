@@ -251,6 +251,7 @@ void AcquisitionChannelSettingsTab::setChannelActive(bool act, bool exclusive)
     this->ui->channelActive->setEnabled(!exclusive);
     this->ui->channelActive->setChecked(act);
     this->ui->channelActive->blockSignals(false);
+    this->allowAcqChange = !exclusive;
 }
 
 void AcquisitionChannelSettingsTab::setTriggerActive(bool act, bool exclusive)
@@ -259,6 +260,7 @@ void AcquisitionChannelSettingsTab::setTriggerActive(bool act, bool exclusive)
     this->ui->useTriggerSource->setEnabled(!exclusive);
     this->ui->useTriggerSource->setChecked(act);
     this->ui->useTriggerSource->blockSignals(false);
+    this->allowTriggerChange = !exclusive;
 }
 
 void AcquisitionChannelSettingsTab::setExclusive(bool exc)
@@ -277,3 +279,11 @@ void AcquisitionChannelSettingsTab::setObtainedRange(double val)
     this->ui->obtainedInputRange->setText(QString::fromStdString(fmt::format("{:.2f} mV", val)));
 }
 
+
+
+void AcquisitionChannelSettingsTab::enableVolatileSettings(bool enabled)
+{
+    this->ui->inputRange->setEnabled(enabled);
+    this->ui->channelActive->setEnabled(enabled?this->allowAcqChange:false);
+    this->ui->useTriggerSource->setEnabled(enabled?this->allowTriggerChange:false);
+}

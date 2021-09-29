@@ -81,7 +81,8 @@ private:
 public slots:
     bool stopAcquisition();
     bool runAcquisition();
-    void loopStopped();
+    void DMALoopStopped();
+    void processorLoopStopped();
 public:
     Digitizer(ADQInterfaceWrapper &digitizerWrapper);
     ~Digitizer();

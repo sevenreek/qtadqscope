@@ -390,3 +390,9 @@ void FullCalibrationDialog::save()
     file.write(doc.toJson());
     file.close();
 }
+
+
+void FullCalibrationDialog::enableVolatileSettings(bool enabled)
+{
+    this->setEnabled(enabled);
+}

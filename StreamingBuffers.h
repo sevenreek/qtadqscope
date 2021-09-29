@@ -28,7 +28,7 @@ public:
   WriteBuffers(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength);
   ~WriteBuffers();
   void reconfigure(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength);
-  std::vector<StreamingBuffers*> buffers = {nullptr};
+  std::vector<StreamingBuffers*> buffers;
   Semaphore sWrite;
   Semaphore sRead;
   StreamingBuffers* awaitWrite(int timeout);

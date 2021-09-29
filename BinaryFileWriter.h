@@ -13,10 +13,11 @@ protected:
     unsigned long long sizeLimit;
     std::ofstream dataStream[MAX_NOF_CHANNELS];
 public:
+    static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
     void startNewAcquisition(Acquisition& config);
-    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -26,7 +27,7 @@ class VerboseBinaryWriter : public BinaryFileWriter
 {
 public:
     explicit VerboseBinaryWriter(unsigned long long sizeLimit);
-    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBinaryWriter();
     const char* getName();
     void startNewAcquisition(Acquisition& config);
@@ -40,7 +41,7 @@ class BufferedBinaryFileWriter: public BinaryFileWriter {
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     virtual ~BufferedBinaryFileWriter();
     void startNewAcquisition(Acquisition& config);
-    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
     unsigned long long getProcessedBytes();
@@ -49,7 +50,7 @@ class BufferedBinaryFileWriter: public BinaryFileWriter {
 class VerboseBufferedBinaryWriter : public BufferedBinaryFileWriter {
 public:
     explicit VerboseBufferedBinaryWriter(unsigned long long sizeLimit);
-    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBufferedBinaryWriter();
     const char* getName();
     void startNewAcquisition(Acquisition& config);

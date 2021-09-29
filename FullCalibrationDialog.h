@@ -63,6 +63,10 @@ public slots:
     void initialize(ApplicationContext *context);
 signals:
     void calibrationApply(CalibrationTable& table);
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // FULLCALIBRATIONDIALOG_H

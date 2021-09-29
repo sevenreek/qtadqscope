@@ -2,6 +2,7 @@
 #define GUILOGGER_H
 #include "spdlog/sinks/base_sink.h"
 #include <QTextBrowser>
+#include <QScrollBar>
 #include "DigitizerConstants.h"
 template<typename Mutex>
 class QGUILogSink : public spdlog::sinks::base_sink <Mutex>
@@ -9,7 +10,6 @@ class QGUILogSink : public spdlog::sinks::base_sink <Mutex>
 public:
     QGUILogSink(QTextBrowser *txt) : textBrowser(txt)
     {
-
     }
 protected:
     QTextBrowser *textBrowser;
@@ -23,7 +23,11 @@ protected:
         spdlog::memory_buf_t formatted;
         spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
         std::string color = LOG_COLORS[msg.level];
-        textBrowser->append(QString::fromStdString(fmt::format("<span style=\"color:{}\">{}</span>", color, fmt::to_string(formatted))));
+        this->textBrowser->append(QString::fromStdString(fmt::format("<span style=\"color:{}\">{}</span>", color, fmt::to_string(formatted))));
+        this->textBrowser->verticalScrollBar()->connect(this->textBrowser->verticalScrollBar(), &QScrollBar::rangeChanged, [=](int min, int max) {
+            this->textBrowser->verticalScrollBar()->setValue(max);
+        });
+
     }
 
     void flush_() override

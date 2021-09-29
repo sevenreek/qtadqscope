@@ -31,6 +31,10 @@ private slots:
 
 signals:
     void resetPlot();
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // PRIMARYCONTROLS_H

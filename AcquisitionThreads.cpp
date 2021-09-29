@@ -74,13 +74,13 @@ void DMAChecker::runLoop()
         {
             StreamingBuffers* sbuf = nullptr;
             do{
-             sbuf = this->writeBuffers.awaitWrite(250);
-             if(!this->shouldLoopRun)
-             {
-                 //this->writeBuffers.notifyWritten(); maybe?
-                 if(sbuf != nullptr) this->writeBuffers.notifyRead();
-                 goto DMA_CHECKER_LOOP_EXIT;
-             }
+                if(!this->shouldLoopRun) // inverse the order if things break
+                {
+                    //this->writeBuffers.notifyWritten(); maybe?
+                    //if(sbuf != nullptr) this->writeBuffers.notifyRead();
+                    goto DMA_CHECKER_LOOP_EXIT;
+                }
+                sbuf = this->writeBuffers.awaitWrite(250);
             } while(sbuf == nullptr);
             //spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
@@ -159,21 +159,31 @@ void LoopBufferProcessor::runLoop()
     this->shouldLoopRun = true;
     spdlog::debug("Processor thread active");
     this->loopStopped = false;
-    while(this->shouldLoopRun)
+    while(this->shouldLoopRun || this->writeBuffers.getReadCount()) // process all that are still left in memory
     {
         StreamingBuffers * b = nullptr;
         do{
             b = this->writeBuffers.awaitRead(1000);
-            if(!this->shouldLoopRun)
+            if(!b && !this->shouldLoopRun) // inverse the order of this if and b=.. if shit breaks
             {
-                //this->writeBuffers.notifyRead(); maybe?
                 goto BUFFER_PROCESSOR_LOOP_EXIT; // break if we want to join the thread
             }
         } while(b==nullptr);
 
         //spdlog::debug("Got read lock on {}", fmt::ptr(b));
         if(!this->processor.processBuffers(*b, this->isTriggeredStreaming)) {
-            spdlog::error("Could not process buffers. Stopping.");
+            if(this->processor.getStatus() & IRecordProcessor::STATUS::ERROR)
+            {
+                spdlog::error("Error while processing buffers. Stopping stream.");
+            }
+            else if(this->processor.getStatus() & IRecordProcessor::STATUS::LIMIT_REACHED)
+            {
+                spdlog::info("Record processor at limit. Stopping stream.");
+            }
+            else
+            {
+                spdlog::error("Stream stopped due to an exception.");
+            }
             emit this->onError();
             break;
         }

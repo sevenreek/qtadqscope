@@ -15,7 +15,7 @@ private:
     unsigned long bufferSize;
     unsigned long bufferCount;
     unsigned long recordLength = 0;
-    short *sourceData[4];
+    short *sourceData[4] = {nullptr,nullptr,nullptr,nullptr};
     unsigned long long recordNumber = 0;
 public:
     static const unsigned long DEFAULT_BUFFER_SIZE;
@@ -53,6 +53,8 @@ void * CreateADQControlUnit();
 void ADQControlUnit_EnableErrorTrace(void* adq_cu, unsigned int trace_level, const char *dir);
 void ADQControlUnit_FindDevices(void* adq_cu);
 int ADQControlUnit_NofADQ(void* adq_cu);
+void DeleteADQControlUnit(void* adq_cu_ptr);
+void ADQControlUnit_DeleteADQ(void* adq_cu_ptr, int ADQ_num);
 ADQInterface * ADQControlUnit_GetADQ(void* adq_cu, unsigned int devicenum);
 
 

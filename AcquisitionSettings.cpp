@@ -286,3 +286,25 @@ void AcquisitionSettings::handleTabNameChange(int channel, bool recreateAll)
 }
 
 
+
+
+void AcquisitionSettings::enableVolatileSettings(bool enabled)
+{
+    this->ui->bypassUL1->setEnabled(enabled);
+    this->ui->bypassUL2->setEnabled(enabled);
+    this->ui->acquisitionTag->setEnabled(enabled);
+    this->ui->frequency->setEnabled(enabled);
+    this->ui->delay->setEnabled(enabled);
+    this->ui->enableMultichannel->setEnabled(enabled);
+    this->ui->limitRecords->setEnabled(enabled);
+    this->ui->pretrigger->setEnabled(enabled);
+    this->ui->recordCount->setEnabled(enabled);
+    this->ui->recordLength->setEnabled(enabled);
+    this->ui->sampleSkip->setEnabled(enabled);
+    this->ui->triggerMode->setEnabled(enabled);
+    for(int ch = 0; ch < this->ui->channelTabs->count(); ch++)
+    {
+        this->tabs.at(ch)->enableVolatileSettings(enabled);
+    }
+    this->ui->recordProcessorsPanel->enableVolatileSettings(enabled);
+}

@@ -4,3 +4,4 @@ include/qcustomplot/documentation
 *.autosave
 *.user
 *.dat
+wslbuild

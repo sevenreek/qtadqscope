@@ -1,5 +1,6 @@
 #include "GUIApplication.h"
 #include "BinaryFileWriter.h"
+#include <algorithm>
 spdlog::level::level_enum ScopeApplication::getFileLevel(LOGGING_LEVELS lvl)
 {
     switch(lvl)
@@ -60,6 +61,12 @@ bool ScopeApplication::start(ApplicationConfiguration cfg, Acquisition acq)
     return true;
 }
 
+ScopeApplication::~ScopeApplication()
+{
+    ADQControlUnit_DeleteADQ(this->adqControlUnit, this->config.getDeviceNumber());
+    DeleteADQControlUnit(this->adqControlUnit);
+}
+
 GUIApplication::GUIApplication()
 {
 
@@ -102,6 +109,7 @@ bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
                 {
                     case Digitizer::READY:
                         spdlog::info("Acquisition finished. Exiting...");
+                        this->periodicUpdateTimer.stop();
                         QApplication::exit();
                     break;
                     case Digitizer::STOPPING:
@@ -116,19 +124,20 @@ bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
     switch(this->config.getFileSaveMode())
     {
         case ApplicationConfiguration::FILE_SAVE_MODES::DISABLED:
+            spdlog::warn("No file save mode selected. No data will be acquired.");
             this->fileSaver.reset();
         //break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY:
-            this->fileSaver = std::unique_ptr<IRecordProcessor>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<FileWriter>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<IRecordProcessor>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY:
-            this->fileSaver = std::unique_ptr<IRecordProcessor>(new BufferedBinaryFileWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<FileWriter>(new BufferedBinaryFileWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<IRecordProcessor>(new VerboseBufferedBinaryWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBufferedBinaryWriter(this->digitizer->getFileSizeLimit()));
         break;
     }
     if(this->fileSaver)
@@ -136,6 +145,11 @@ bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
         this->digitizer->appendRecordProcessor(this->fileSaver.get());
     }
     this->digitizer->runAcquisition();
+    this->periodicUpdateTimer.connect(&this->periodicUpdateTimer, &QTimer::timeout, [=](){
+        spdlog::info("Update: {}B acquired.", doubleToPrefixNotation(this->fileSaver->getProcessedBytes()));
+    });
+    this->periodicUpdateTimer.setInterval(std::min(this->digitizer->getDuration()/5,1000ul));
+    this->periodicUpdateTimer.start();
     return true;
 }
 

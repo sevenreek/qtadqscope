@@ -13,7 +13,7 @@ private:
 public:
     void startNewAcquisition(Acquisition& config);
     ScopeUpdater(unsigned long long sampleCount);
-    bool processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     void reallocate(unsigned long long sampleCount);
     const char* getName();

@@ -190,8 +190,12 @@ void Acquisition::setTriggerReset(int value)
 
 void Acquisition::log()
 {
-    spdlog::info("Acquisition {}", this->tag);
-    spdlog::info("continuous = {}", this->isContinuous);
+
+    QJsonObject j = this->toJson();
+    QJsonDocument doc(j);
+    spdlog::info("=== {} ===\n{}\n=========", this->tag, doc.toJson().toStdString());
+
+    /*spdlog::info("continuous = {}", this->isContinuous);
     spdlog::info("duration = {}", this->duration);
     spdlog::info("transferBufferSize = {}", this->transferBufferSize);
     spdlog::info("transferBufferCount = {}", this->transferBufferCount);
@@ -213,7 +217,7 @@ void Acquisition::log()
     spdlog::info("digitalGain = {}, {}, {}, {}", this->digitalGain[0], this->digitalGain[1], this->digitalGain[2], this->digitalGain[3]);
     spdlog::info("digitalOffset = {}, {}, {}, {}", this->digitalOffset[0], this->digitalOffset[1], this->digitalOffset[2], this->digitalOffset[3]);
     spdlog::info("analogOffset = {}, {}, {}, {}", this->analogOffset[0], this->analogOffset[1], this->analogOffset[2], this->analogOffset[3]);
-    spdlog::info("obtainedInputRange = {}, {}, {}, {}", this->obtainedInputRange[0], this->obtainedInputRange[1], this->obtainedInputRange[2], this->obtainedInputRange[3]);
+    spdlog::info("obtainedInputRange = {}, {}, {}, {}", this->obtainedInputRange[0], this->obtainedInputRange[1], this->obtainedInputRange[2], this->obtainedInputRange[3]);*/
 }
 
 std::string Acquisition::getTag() const

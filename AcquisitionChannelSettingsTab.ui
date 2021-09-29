@@ -12,12 +12,15 @@
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>12</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0">
    <item>
@@ -27,7 +30,7 @@
        <property name="font">
         <font>
          <family>Roboto</family>
-         <pointsize>12</pointsize>
+         <pointsize>-1</pointsize>
          <weight>75</weight>
          <bold>true</bold>
          <underline>false</underline>
