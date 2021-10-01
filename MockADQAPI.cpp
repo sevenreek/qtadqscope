@@ -4,21 +4,29 @@ const char* FILE_DATA_SOURCE[] = {"ch1.mock", "ch2.mock", "ch3.mock", "ch4.mock"
 const float BUFFER_FILL_PROBABILITY = 0.0001;
 #include <algorithm>
 #include <random>
-
+const unsigned long ADQInterface::DEFAULT_BUFFER_SIZE = 4096UL;
+//#define LOAD_FROM_FILE
 ADQInterface::ADQInterface()
 {
     spdlog::debug("Created new mock ADQInterface");
     for(int ch = 0; ch < 4; ch++)
     {
-        this->sourceData[ch] = (short*)malloc(sizeof(short)*DEFAULT_BUFFER_SIZE);
+        this->sourceData[ch] = reinterpret_cast<short*>(std::malloc(sizeof(short)*DEFAULT_BUFFER_SIZE));
+#ifdef LOAD_FROM_FILE
         std::ifstream file;
         file.open(FILE_DATA_SOURCE[ch], std::ios::binary);
         if(!file.good()) continue;
+        std::memset(this->sourceData[ch], 0, sizeof(short)*DEFAULT_BUFFER_SIZE);
         file.read(reinterpret_cast<char*>(this->sourceData[ch]), sizeof(short)*DEFAULT_BUFFER_SIZE);
         file.close();
+#else
+        for(size_t sa = 0; sa < DEFAULT_BUFFER_SIZE/sizeof(short); sa++)
+        {
+            this->sourceData[ch][sa] = (sa+1) * (ch+1);
+        }
+#endif
     }
 }
-const unsigned long ADQInterface::DEFAULT_BUFFER_SIZE = 4096UL;
 
 void * CreateADQControlUnit()
 {
