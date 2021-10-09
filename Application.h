@@ -6,7 +6,7 @@
 #else
     #include "ADQAPI.h"
 #endif
-#include "Acquisition.h"
+#include "Digitizer.h"
 #include <memory>
 #include "ApplicationConfiguration.h"
 #include "ScopeUpdater.h"
@@ -24,7 +24,7 @@ private:
     MainWindow& mainWindow;
     // Control unit created by the appropriate ADQAPI function.
     void* adqControlUnit;
-    std::shared_ptr<ApplicationConfiguration> config;
+    ApplicationConfiguration config;
     //std::shared_ptr<ADQInterface> adqDevice;
     std::unique_ptr<QTimer> updateTimer;
     // Instance of object responsible for updating the plot in real time.
@@ -32,12 +32,11 @@ private:
     // Currently used instance of file writer object that stores the incoming data.
     std::shared_ptr<FileWriter> fileWriter;
     // Pointer to the helper object Acquisition.
-    std::shared_ptr<Acquisition> acquisition;
     std::unique_ptr<BuffersDialog> buffersConfigurationDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
-    std::shared_ptr<ADQInterfaceWrapper> adqDevice;
     std::unique_ptr<FullCalibrationDialog> autoCalibrateDialog;
-    std::list<std::shared_ptr<RecordProcessor>> recordProcessors;
+    std::unique_ptr<ADQInterfaceWrapper> adqWrapper;
+    std::unique_ptr<Digitizer> digitizer;
     /*
      * Connects all UI signals to appropriate slots in Application and Acquisition.
      */
@@ -116,9 +115,6 @@ public slots:
     void triggerSoftwareTrig();
     void loadConfig();
     void saveConfig();
-
-    void appendRecordProcessor(std::shared_ptr<RecordProcessor> rp);
-    void removeRecordProcessor(std::shared_ptr<RecordProcessor> rp);
 
     void openCalibrateDialog();
     void useCalculatedOffset(CALIBRATION_MODES mode, int offset);

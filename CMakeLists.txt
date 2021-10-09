@@ -14,8 +14,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 
-
-
 option(MOCK_ADQAPI "Use a mock ADQ library" ON)
 option(LINUX_BUILD "Build on Linux" OFF)
 
@@ -23,6 +21,8 @@ option(LINUX_BUILD "Build on Linux" OFF)
 if(LINUX_BUILD)
     add_compile_definitions(LINUX)
     message(STATUS "Linux build")
+    #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
@@ -48,22 +48,13 @@ else()
 endif()
 
 add_subdirectory(include/spdlog-1.8.2)
-include_directories(include/nlohmann_json)
 include_directories(include/qcustomplot)
 
-set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 set(PROJECT_SOURCES
         main.cpp
-        ADQDeviceConfiguration.cpp
-        ADQDeviceConfiguration.h
-        MainWindow.cpp
-        MainWindow.h
-        MainWindow.ui
         include/qcustomplot/qcustomplot.cpp
         include/qcustomplot/qcustomplot.h
-        Acquisition.cpp
-        Acquisition.h
         BufferProcessor.cpp
         BufferProcessor.h
         Semaphore.h
@@ -71,12 +62,10 @@ set(PROJECT_SOURCES
         StreamingBuffers.h
         StreamingHeader.h
         RecordProcessor.h
-        Application.cpp
-        Application.h
         ScopeUpdater.cpp
         ScopeUpdater.h
-        ApplicationConfiguration.cpp
-        ApplicationConfiguration.h
+        ApplicationContext.cpp
+        ApplicationContext.h
         AcquisitionThreads.cpp
         AcquisitionThreads.h
         BinaryFileWriter.cpp
@@ -91,14 +80,40 @@ set(PROJECT_SOURCES
         SignalParameterComputer.h
         MockADQAPI.cpp
         MockADQAPI.h
-        FullCalibrationDialog.cpp
-        FullCalibrationDialog.h
-        FullCalibrationDialog.ui
         CalibrationTable.h
         CalibrationTable.cpp
         MinifiedRecordHeader.h
         QADQWrapper.cpp
         QADQWrapper.h
+        Digitizer.cpp
+        Digitizer.h
+        DigitizerConstants.h
+        DigitizerConfiguration.cpp
+        DigitizerConfiguration.h
+        util.h
+        util.cpp
+        AcquisitionChannelSettingsTab.cpp
+        AcquisitionChannelSettingsTab.h
+        AcquisitionChannelSettingsTab.ui
+        AcquisitionSettings.cpp
+        AcquisitionSettings.h
+        AcquisitionSettings.ui
+        PrimaryWindow.cpp
+        PrimaryWindow.h
+        PrimaryWindow.ui
+        PrimaryControls.cpp
+        PrimaryControls.h
+        PrimaryControls.ui
+        RecordProcessorsPanel.cpp
+        RecordProcessorsPanel.h
+        RecordProcessorsPanel.ui
+        GUIApplication.cpp
+        GUIApplication.h
+        DigitizerGUIComponent.h
+        FullCalibrationDialog.cpp
+        FullCalibrationDialog.h
+        FullCalibrationDialog.ui
+        GUILogger.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -106,16 +121,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
     )
 else()
-    if(ANDROID)
-        add_library(qtadqscope SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(qtadqscope
-            ${PROJECT_SOURCES}
-        )
-    endif()
+    add_executable(qtadqscope
+        ${PROJECT_SOURCES}
+    )
 endif()
+
 if(MOCK_ADQAPI)
     message(WARNING "Using MockADQ API")
     add_compile_definitions(MOCK_ADQAPI)

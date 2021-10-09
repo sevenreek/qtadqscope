@@ -9,18 +9,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>386</width>
-    <height>411</height>
+    <width>425</width>
+    <height>461</height>
    </rect>
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>10</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="0" colspan="2">
@@ -144,7 +147,7 @@
     </widget>
    </item>
    <item row="8" column="0" colspan="2">
-    <widget class="QLabel" name="label_8">
+    <widget class="QLabel" name="ch1label">
      <property name="text">
       <string>CH1</string>
      </property>
@@ -209,7 +212,7 @@
    <item row="12" column="0">
     <widget class="QLabel" name="currentStage">
      <property name="text">
-      <string>CH1(0.25V)</string>
+      <string>...</string>
      </property>
     </widget>
    </item>
@@ -224,7 +227,7 @@
     </widget>
    </item>
    <item row="11" column="0" colspan="2">
-    <widget class="QLabel" name="label_11">
+    <widget class="QLabel" name="ch4label">
      <property name="text">
       <string>CH4</string>
      </property>
@@ -309,14 +312,14 @@
     </widget>
    </item>
    <item row="10" column="0" colspan="2">
-    <widget class="QLabel" name="label_10">
+    <widget class="QLabel" name="ch3label">
      <property name="text">
       <string>CH3</string>
      </property>
     </widget>
    </item>
    <item row="9" column="0" colspan="2">
-    <widget class="QLabel" name="label_9">
+    <widget class="QLabel" name="ch2label">
      <property name="text">
       <string>CH2</string>
      </property>
@@ -403,7 +406,7 @@
    <item row="6" column="0" colspan="2">
     <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>Channel</string>
+      <string>Channel (A|D)</string>
      </property>
     </widget>
    </item>

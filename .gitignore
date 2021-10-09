@@ -3,3 +3,6 @@ include/qcustomplot/examples
 include/qcustomplot/documentation
 *.autosave
 *.user
+*.dat
+wslbuild
+CMakeFiles

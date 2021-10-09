@@ -15,21 +15,26 @@ class DMAChecker : public QObject
 {
     Q_OBJECT
 private:
-    bool loopActive = false;
-    std::shared_ptr<WriteBuffers> writeBuffers;
+    bool shouldLoopRun = false;
+    bool loopStopped = true;
+    WriteBuffers &writeBuffers;
     unsigned long transferBufferCount;
     ADQRecordHeader lastHeaders[MAX_NOF_CHANNELS];
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;
     std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
     unsigned int flushTimeout = 50;
-    std::shared_ptr<ADQInterfaceWrapper> adqDevice;
+    ADQInterfaceWrapper &adqDevice;
 public:
-    DMAChecker(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<ADQInterfaceWrapper> adqDevice, unsigned long transferBufferCount);
+    DMAChecker(WriteBuffers &writeBuffers, ADQInterfaceWrapper &adqDevice, unsigned long transferBufferCount);
 
     unsigned int getFlushTimeout() const;
 
     void setFlushTimeout(unsigned int value);
+
+    bool isLoopStopped() const;
+
+    unsigned int getLastFilledBufferCount() const;
 
 public slots:
     void setTransferBufferCount(unsigned long count);
@@ -48,16 +53,19 @@ class LoopBufferProcessor : public QObject
 {
     Q_OBJECT
 private:
-    bool loopActive = false;
-    std::shared_ptr<WriteBuffers> writeBuffers;
+    bool loopStopped = true;
+    bool shouldLoopRun = false;
+    WriteBuffers &writeBuffers;
     unsigned long transferBufferCount;
-    std::shared_ptr<BufferProcessor> processor;
+    IBufferProcessor &processor;
     bool isTriggeredStreaming;
 public:
-    LoopBufferProcessor(std::shared_ptr<WriteBuffers> writeBuffers, std::shared_ptr<BufferProcessor> processor);
+    LoopBufferProcessor(WriteBuffers &writeBuffers, IBufferProcessor &processor);
+
+    bool isLoopStopped() const;
 
 public slots:
-    void changeStreamingType(bool isTriggered);
+    void changeStreamingType(bool isContinuous);
     void runLoop();
     void stopLoop();
 signals:

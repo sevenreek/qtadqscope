@@ -2,17 +2,18 @@
 #define BUFFERSDIALOG_H
 
 #include <QDialog>
+#include "DigitizerGUIComponent.h"
 
 namespace Ui {
 class BuffersDialog;
 }
 
-class BuffersDialog : public QDialog
+class BuffersDialog : public QDialog, public DigitizerGUIComponent
 {
 
     Q_OBJECT
 public:
-    enum DEFAULT_CONFIGS {
+    enum CONFIG_PRESETS {
         NONE,
         BALANCED,
         SHORT_PULSE_DISPLAY,
@@ -20,19 +21,24 @@ public:
         FILE_SAVE,
         LARGE_FILE_SAVE
     };
-    struct DefaultConfig {
+    struct ConfigPreset {
         unsigned int bufferCount;
         unsigned long long bufferSize;
         unsigned int queueSize;
     };
     static const int DEFAULT_CONFIG_COUNT = 6;
-    static const DefaultConfig DEFAULT_CONFIG_VALUES[DEFAULT_CONFIG_COUNT];
+    static const ConfigPreset DEFAULT_CONFIG_VALUES[DEFAULT_CONFIG_COUNT];
     static double FILE_SIZE_LIMIT_SPINBOX_MULTIPLIER;
     explicit BuffersDialog(QWidget *parent = nullptr);
     ~BuffersDialog();
     Ui::BuffersDialog *ui;
-
+    void initialize(ApplicationContext *context);
+    void reloadUI();
 private:
+
+    // DigitizerGUIComponent interface
+public:
+    void enableVolatileSettings(bool enabled) override;
 };
 
 #endif // BUFFERSDIALOG_H

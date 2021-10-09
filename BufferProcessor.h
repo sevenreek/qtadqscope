@@ -1,20 +1,20 @@
 #ifndef BUFFERPROCESSOR_H
 #define BUFFERPROCESSOR_H
 #include "RecordProcessor.h"
-#include "ADQDeviceConfiguration.h"
 #include "StreamingBuffers.h"
 #include <vector>
 #include <list>
-class BufferProcessor {
+class IBufferProcessor {
 public:
     virtual bool processBuffers(StreamingBuffers &buffers, bool isTriggeredStreaming) = 0;
-    virtual ~BufferProcessor() = 0;
+    virtual ~IBufferProcessor() = 0;
     virtual bool reallocateBuffers(unsigned long recordLength) = 0;
     virtual void resetBuffers() = 0;
     virtual void resetRecordsToStore(unsigned long long recordsToStore) = 0;
+    virtual int getStatus() const = 0;
 };
 
-class BaseBufferProcessor : public BufferProcessor {
+class BaseBufferProcessor : public IBufferProcessor {
 private:
     // buffer for storing incomplete record's samples
     short* recordBuffer[MAX_NOF_CHANNELS] = {nullptr};
@@ -24,13 +24,13 @@ private:
     // expected record length, used for sanity checks and debugging only, the real record length is pulled from headers
     unsigned long recordLength;
     // record completion listeners
-    std::list<std::shared_ptr<RecordProcessor>> &recordProcessors;
+    std::list<IRecordProcessor*> &recordProcessors;
     // notify record listeners (processors)
     bool completeRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, char channel);
     unsigned long long recordsStored = 0;
     unsigned long long recordsToStore = 0;
 public:
-    BaseBufferProcessor(std::list<std::shared_ptr<RecordProcessor>> &recordProcessors, unsigned long recordLength);
+    BaseBufferProcessor(std::list<IRecordProcessor*> &recordProcessors, unsigned long recordLength);
     ~BaseBufferProcessor();
     bool processBuffers(StreamingBuffers &buffers, bool isTriggeredStreaming);
     // call if the record length changes, as the internal buffers for storing incomplete records must be reallocated
@@ -40,6 +40,10 @@ public:
     // reallocateBuffers() calls this function, so no need to call it manually if the record length changes
     void resetBuffers();
     void resetRecordsToStore(unsigned long long recordsToStore);
+    int getStatus() const;
+
+protected:
+    int status = IRecordProcessor::STATUS::OK;
 };
 
 

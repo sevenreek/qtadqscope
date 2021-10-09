@@ -8,7 +8,6 @@
     #include "ADQAPI.h"
 #endif
 #include <memory>
-#include <QThread>
 #include "spdlog/spdlog.h"
 Q_DECLARE_METATYPE(float*)
 

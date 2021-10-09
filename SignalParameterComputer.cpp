@@ -12,19 +12,19 @@ SignalParameterComputer::~SignalParameterComputer()
 {
     std::free(this->dataBuffer);
 }
-void SignalParameterComputer::startNewStream(ApplicationConfiguration& config)
+void SignalParameterComputer::startNewAcquisition(Acquisition &config)
 {
     this->finished = false;
     this->samplesSaved = 0;
     this->bytesSaved = 0;
-    if(this->sizeLimit != config.fileSizeLimit)
+    if(this->sizeLimit != config.getFileSizeLimit())
     {
-        this->sizeLimit = config.fileSizeLimit;
+        this->sizeLimit = config.getFileSizeLimit();
         std::free(this->dataBuffer);
         this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
     }
 }
-bool SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
+IRecordProcessor::STATUS SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
 {
     // record length is stored in the cfg file
     // an alternative is to prefix every buffer with the header
@@ -33,17 +33,17 @@ bool SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer
     // from the header
     if(this->bytesSaved > this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved += length;
         std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
-        return true;
+        return STATUS::OK;
     }
 }
-bool SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
+IRecordProcessor::STATUS SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
 {
     if(header == NULL) // if that is the case it is a continuous (no trigger and headers) stream
     {
@@ -54,18 +54,18 @@ bool SignalParameterComputer::processRecord(ADQRecordHeader* header, short* buff
         return this->writeRecord(header, buffer, length);
     }
 }
-bool SignalParameterComputer::writeContinuousBuffer(short* buffer, unsigned int length)
+IRecordProcessor::STATUS SignalParameterComputer::writeContinuousBuffer(short* buffer, unsigned int length)
 {
     if(this->bytesSaved > this->sizeLimit)
     {
-        return false;
+        return STATUS::LIMIT_REACHED;
     }
     else
     {
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved += length;
         std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
-        return true;
+        return STATUS::OK;
     }
 
 }
@@ -84,6 +84,7 @@ std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
         result->average = 0;
         result->rms = 0;
         spdlog::warn("SignalParameterComputer did not collect any samples. Returning average of 0.");
+        return result;
     }
     for(unsigned long i = 0; i < samplesSaved; i++)
     {

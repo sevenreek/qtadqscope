@@ -2,6 +2,7 @@
 #define SEMAPHORE_H
 
 #include <QSemaphore>
+#include "spdlog/spdlog.h"
 using namespace std;
 
 class Semaphore
@@ -26,7 +27,8 @@ public:
   }
   void reset(int count)
   {
-      this->qsem.release(count - this->qsem.available());
+      //this->qsem = QSemaphore(count);
+      spdlog::warn("Omitting semaphore reset for testing! Available = {}", this->qsem.available());
   }
   int getCount()
   {
@@ -35,7 +37,7 @@ public:
 
 private:
     int count;
-  QSemaphore qsem;
+    QSemaphore qsem;
 };
 
 #endif

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>658</width>
-    <height>303</height>
+    <width>576</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,12 +18,15 @@
   </property>
   <property name="font">
    <font>
-    <family>Calibri Light</family>
-    <pointsize>12</pointsize>
+    <family>Roboto</family>
+    <pointsize>-1</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Roboto; font-size: 14px;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -48,7 +51,10 @@
         <number>4</number>
        </property>
        <property name="maximum">
-        <number>65535</number>
+        <number>256</number>
+       </property>
+       <property name="singleStep">
+        <number>4</number>
        </property>
       </widget>
      </item>
@@ -75,10 +81,13 @@
      <item row="4" column="1">
       <widget class="QSpinBox" name="writeBufferCount">
        <property name="minimum">
-        <number>1</number>
+        <number>4</number>
        </property>
        <property name="maximum">
         <number>65535</number>
+       </property>
+       <property name="singleStep">
+        <number>4</number>
        </property>
       </widget>
      </item>
