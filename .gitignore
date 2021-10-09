@@ -5,3 +5,4 @@ include/qcustomplot/documentation
 *.user
 *.dat
 wslbuild
+CMakeFiles
