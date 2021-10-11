@@ -63,7 +63,6 @@ bool ScopeApplication::start(ApplicationConfiguration cfg, Acquisition acq)
 
 ScopeApplication::~ScopeApplication()
 {
-    ADQControlUnit_DeleteADQ(this->adqControlUnit, this->config.getDeviceNumber());
     DeleteADQControlUnit(this->adqControlUnit);
 }
 
@@ -144,12 +143,29 @@ bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
     {
         this->digitizer->appendRecordProcessor(this->fileSaver.get());
     }
-    this->digitizer->runAcquisition();
     this->periodicUpdateTimer.connect(&this->periodicUpdateTimer, &QTimer::timeout, [=](){
-        spdlog::info("Update: {}B acquired.", doubleToPrefixNotation(this->fileSaver->getProcessedBytes()));
+        spdlog::info("Update: {}B acquired. Remaining {:.2f} seconds.",
+            doubleToPrefixNotation(this->fileSaver->getProcessedBytes()),
+            this->digitizer->durationRemaining()/1000.0
+        );
     });
-    this->periodicUpdateTimer.setInterval(std::min(this->digitizer->getDuration()/5,1000ul));
+    this->periodicUpdateTimer.setInterval(this->digitizer->getDuration()/10);
     this->periodicUpdateTimer.start();
+
+    if(this->digitizer->getDuration()>3000)
+    {
+        spdlog::debug("Fast update timer active.");
+        this->fastUpdateTimer.connect(&this->fastUpdateTimer, &QTimer::timeout, [=](){
+            std::cout << fmt::format("@{}B {:.2f} s left\r",
+                doubleToPrefixNotation(this->fileSaver->getProcessedBytes()),
+                this->digitizer->durationRemaining()/1000.0
+            );
+        });
+        this->fastUpdateTimer.setInterval(500);
+        this->fastUpdateTimer.start();
+    }
+
+    this->digitizer->runAcquisition();
     return true;
 }
 

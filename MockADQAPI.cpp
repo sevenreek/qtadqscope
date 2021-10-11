@@ -9,7 +9,7 @@ const unsigned long ADQInterface::DEFAULT_BUFFER_SIZE = 4096UL;
 ADQInterface::ADQInterface()
 {
     spdlog::debug("Created new mock ADQInterface");
-    for(int ch = 0; ch < 4; ch++)
+    for(int ch = 0; ch < 4 ; ch++)
     {
         this->sourceData[ch] = reinterpret_cast<short*>(std::malloc(sizeof(short)*DEFAULT_BUFFER_SIZE));
 #ifdef LOAD_FROM_FILE

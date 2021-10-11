@@ -93,7 +93,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             // the sanity check below can likely be removed for a tiny performance boost, as its cause was pinpointed to be a fixed bug in WriteBuffers
             if(buffers.headers[ch][0].RecordLength != this->recordLength)
             {
-                spdlog::warn("Recieved a record(i=0) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][0].RecordLength);
+                spdlog::warn("Recieved a record(#{}) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].RecordLength);
                 spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRSTART={}",buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Timestamp, buffers.headers[ch][0].RecordStart);
                 buffers.headers[ch][0].RecordLength = this->recordLength;
             }
@@ -117,7 +117,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             {
                 if(buffers.headers[ch][recordIndex].RecordLength != this->recordLength)
                 {
-                    spdlog::warn("Recieved a record(i={}) longer than buffer({}). Data might be mangled. Attempting to recover.", recordIndex, buffers.headers[ch][recordIndex].RecordLength);
+                    spdlog::warn("Recieved a record(#{}) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][recordIndex].RecordNumber, buffers.headers[ch][recordIndex].RecordLength);
                     spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRSTART={}",buffers.headers[ch][recordIndex].Channel, buffers.headers[ch][recordIndex].RecordNumber, buffers.headers[ch][recordIndex].Timestamp, buffers.headers[ch][recordIndex].RecordStart);
                     buffers.headers[ch][recordIndex].RecordLength = this->recordLength;
                 }

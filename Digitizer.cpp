@@ -295,6 +295,11 @@ Digitizer::DIGITIZER_TRIGGER_MODE Digitizer::getTriggerMode()
     return DIGITIZER_TRIGGER_MODE::CONTINUOUS;
 }
 
+int Digitizer::durationRemaining()
+{
+    return this->acquisitionTimer.remainingTime();
+}
+
 unsigned long Digitizer::getDuration()
 {
     return this->defaultAcquisition.getDuration();

@@ -42,6 +42,7 @@ class CLIApplication : public ScopeApplication
 {
 private:
     QTimer periodicUpdateTimer;
+    QTimer fastUpdateTimer;
     std::unique_ptr<FileWriter> fileSaver;
 public:
     CLIApplication();

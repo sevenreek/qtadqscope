@@ -258,7 +258,8 @@ bool MutexADQWrapper::GetDataStreaming(void **targetBuffers, void **targetHeader
 
 ADQInterfaceWrapper::ADQInterfaceWrapper(void *adqCU, unsigned int deviceNumber):
     deviceNumber(deviceNumber),
-    adq(ADQControlUnit_GetADQ(adqCU, deviceNumber))
+    adq(ADQControlUnit_GetADQ(adqCU, deviceNumber)),
+    adqCU(adqCU)
 {
 
 }
@@ -380,5 +381,5 @@ bool ADQInterfaceWrapper::GetDataStreaming(void **targetBuffers, void **targetHe
 
 ADQInterfaceWrapper::~ADQInterfaceWrapper()
 {
-
+    ADQControlUnit_DeleteADQ(this->adqCU, this->deviceNumber);
 }

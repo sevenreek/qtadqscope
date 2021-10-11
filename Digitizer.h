@@ -95,6 +95,7 @@ public:
 
     DIGITIZER_STATE getDigitizerState();
     DIGITIZER_TRIGGER_MODE getTriggerMode();
+    int durationRemaining();
     unsigned long getDuration();
     unsigned long getTransferBufferSize();
     unsigned long getTransferBufferCount();

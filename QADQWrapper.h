@@ -12,9 +12,10 @@
 Q_DECLARE_METATYPE(float*)
 
 class ADQInterfaceWrapper {
-private:
+protected:
     unsigned int deviceNumber;
-    std::unique_ptr<ADQInterface> adq;
+    ADQInterface* adq;
+    void* adqCU;
 public:
     ADQInterfaceWrapper(void* adqCU, unsigned int devnum);
     virtual bool SetAdjustableBias(int channel, int code);
