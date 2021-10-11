@@ -79,9 +79,7 @@ void AcquisitionChannelSettingsTab::initialize(ApplicationContext * context, int
         this->ui->dcOffsetMv,
         static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
         [=](double d){
-            double range = this->digitizer->getObtainedRange(this->channel);
-            int code = mvToCode(d, range);
-            this->setDCOffset(code);
+            this->setDCOffsetMv(d);
         }
     );
 }
@@ -174,10 +172,27 @@ void AcquisitionChannelSettingsTab::setDCOffset(int val)
     double mv = codeToMv(code, channelInputRange);
     this->ui->dcOffsetCode->setValue(code);
     this->ui->dcOffsetMv->setValue(mv);
+    this->ui->approximateOffset->setText(QString::fromStdString(fmt::format("{:.2f} mV", mv)));
     this->ui->dcOffsetCode->blockSignals(false);
     this->ui->dcOffsetMv->blockSignals(false);
     this->invalidateTriggerLevels();
 }
+
+void AcquisitionChannelSettingsTab::setDCOffsetMv(double mv)
+{
+    this->ui->dcOffsetCode->blockSignals(true);
+    this->ui->dcOffsetMv->blockSignals(true);
+    double range = this->digitizer->getObtainedRange(this->channel);
+    int code = mvToCode(mv, range);
+    this->digitizer->setDCBias(this->channel, code);
+    this->ui->dcOffsetCode->setValue(code);
+    double approxRealValue = codeToMv(code, range);
+    this->ui->approximateOffset->setText(QString::fromStdString(fmt::format("{:.2f} mV", approxRealValue)));
+    this->ui->dcOffsetCode->blockSignals(false);
+    this->ui->dcOffsetMv->blockSignals(false);
+    this->invalidateTriggerLevels();
+}
+
 
 void AcquisitionChannelSettingsTab::invalidateTriggerLevels()
 {

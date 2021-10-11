@@ -221,7 +221,7 @@ void Digitizer::processorLoopStopped()
     }
     else
     {
-        spdlog::error("One thread was not stopped.");
+        spdlog::warn("Threads stopped in an incorrect order: BUFFERS STOPPED:{} DMA STOPPED: {}.", this->bufferProcessorHandler->isLoopStopped(), this->dmaChecker->isLoopStopped());
     }
 }
 

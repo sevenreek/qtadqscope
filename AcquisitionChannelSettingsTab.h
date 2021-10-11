@@ -31,6 +31,7 @@ private:
     void setDCOffset(int val);
     void invalidateTriggerLevels();
     void invalidateDCOffset();
+    void setDCOffsetMv(double mv);
     bool allowAcqChange = true;
     bool allowTriggerChange = true;
 
