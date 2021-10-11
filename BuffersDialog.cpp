@@ -1,9 +1,14 @@
 #include "BuffersDialog.h"
 #include "ui_BuffersDialog.h"
+
+// 256 is the maximum buffer count
+// buffer size limit is unknown might be 2^24, must be a multiple of 1024
+// queue size is limited by user's ram
+
 const BuffersDialog::ConfigPreset BuffersDialog::DEFAULT_CONFIG_VALUES[BuffersDialog::DEFAULT_CONFIG_COUNT]  = {
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul, .queueSize=256}, // NONE
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul, .queueSize=256}, // BALANCED
-    (BuffersDialog::ConfigPreset){.bufferCount=512, .bufferSize=2ul*256ul, .queueSize=4ul*1024}, // SHORT PULSE
+    (BuffersDialog::ConfigPreset){.bufferCount=256, .bufferSize=1ul*1024ul, .queueSize=4ul*1024}, // SHORT PULSE
     (BuffersDialog::ConfigPreset){.bufferCount=128, .bufferSize=2ul*1024ul, .queueSize=512}, // LONG PULSE
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=1024ul*1024ul, .queueSize=512}, // FILE SAVE
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul*1024ul, .queueSize=256} // LARGE FILE SAVE
@@ -38,6 +43,7 @@ void BuffersDialog::initialize(ApplicationContext *context)
     connect(
         this->ui->defaultRestore,
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
         [this](int index) {
             if(index != 0)
             {

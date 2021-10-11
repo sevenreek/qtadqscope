@@ -228,6 +228,8 @@ void Digitizer::processorLoopStopped()
 bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)
 {
     if(this->currentState != DIGITIZER_STATE::READY) return false;
+    this->changeDigitizerState(DIGITIZER_STATE::STARTING);
+
     if(!this->configureAcquisition(acq, recordProcessors, calibrations)) goto START_FAILED;
     this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
     if(!this->adq.StartStreaming())

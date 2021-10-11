@@ -82,7 +82,20 @@ void PrimaryControls::initialize(ApplicationContext *context)
         &QTimer::timeout,
         this,
         &PrimaryControls::periodicUIUpdate
-    );
+                );
+}
+
+void PrimaryControls::dumpAppConfig()
+{
+    QFile file("last_app_config.json");
+    file.open(QFile::OpenModeFlag::WriteOnly);
+    QJsonDocument doc;
+    QJsonObject cfg = this->context->config->toJson();
+    QJsonObject acq = this->context->digitizer->getAcquisition().toJson();
+    cfg.insert("acquisition", acq);
+    doc.setObject(cfg);
+    file.write(doc.toJson());
+    file.close();
 }
 
 void PrimaryControls::primaryButtonClicked()
@@ -97,6 +110,7 @@ void PrimaryControls::primaryButtonClicked()
             this->ui->streamStartStopButton->setText("STOP");
             this->ui->streamStatusLabel->setText("STARTING");
             this->ui->streamStartStopButton->setEnabled(false);
+            this->dumpAppConfig();
             this->digitizer->runAcquisition();
         break;
         case Digitizer::DIGITIZER_STATE::STOPPING:

@@ -18,6 +18,7 @@ class Digitizer : public QObject
 public:
     enum DIGITIZER_STATE {
         READY,
+        STARTING,
         STOPPING,
         ACTIVE
     };

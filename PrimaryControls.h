@@ -17,6 +17,7 @@ public:
     ~PrimaryControls();
     void reloadUI();
     void initialize(ApplicationContext * context);
+    void dumpAppConfig();
 public slots:
     void resetFillIndicators();
 private:
