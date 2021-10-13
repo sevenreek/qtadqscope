@@ -118,7 +118,7 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
         )) {spdlog::error("TriggeredStreamingSetup failed."); return false;};
     }
     this->writeBuffers.reconfigure(
-        acq.getTransferBufferCount(),
+        acq.getTransferBufferQueueSize(),
         acq.getTransferBufferSize(),
         acq.getChannelMask(),
         acq.getRecordLength()
@@ -154,7 +154,7 @@ Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
     adq(digitizerWrapper),
     defaultAcquisition(),
     writeBuffers(
-        defaultAcquisition.getTransferBufferCount(),
+        defaultAcquisition.getTransferBufferQueueSize(),
         defaultAcquisition.getTransferBufferSize(),
         defaultAcquisition.getChannelMask(),
         defaultAcquisition.getRecordLength()
@@ -169,6 +169,7 @@ Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
     this->dmaChecker->moveToThread(&this->ADQThread);
     connect(this, &Digitizer::acquisitionStarted, bufferProcessorHandler.get(), &LoopBufferProcessor::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onLoopStopped, this, &Digitizer::processorLoopStopped);
+    connect(bufferProcessorHandler.get(), &LoopBufferProcessor::onError, this, &Digitizer::stopAcquisition);
     connect(this, &Digitizer::acquisitionStarted, dmaChecker.get(), &DMAChecker::runLoop, Qt::ConnectionType::QueuedConnection);
     connect(dmaChecker.get(), &DMAChecker::onLoopStopped, this, &Digitizer::DMALoopStopped);
 
@@ -221,7 +222,7 @@ void Digitizer::processorLoopStopped()
     }
     else
     {
-        spdlog::warn("Threads stopped in an incorrect order: BUFFERS STOPPED:{} DMA STOPPED: {}.", this->bufferProcessorHandler->isLoopStopped(), this->dmaChecker->isLoopStopped());
+        this->dmaChecker->stopLoop();
     }
 }
 

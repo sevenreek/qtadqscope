@@ -21,7 +21,7 @@ class StreamingBuffers {
 
 class WriteBuffers {
 private:
-  unsigned int bufferCount;
+  unsigned int bufferCount = 0;
   unsigned int readPosition = 0;
   unsigned int writePosition = 0;
 public:

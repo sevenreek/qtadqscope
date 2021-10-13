@@ -16,6 +16,7 @@ private:
     unsigned long bufferCount;
     unsigned long recordLength = 0;
     short *sourceData[4] = {nullptr,nullptr,nullptr,nullptr};
+    unsigned long remainingSamplesInRecord[4] = {0,0,0,0};
     unsigned long long recordNumber = 0;
 public:
     static const unsigned long DEFAULT_BUFFER_SIZE;

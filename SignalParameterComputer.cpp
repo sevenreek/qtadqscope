@@ -6,17 +6,24 @@ SignalParameterComputer::SignalParameterComputer(unsigned long long sizeLimit)
     this->sizeLimit = sizeLimit;
     this->bytesSaved = 0;
     this->samplesSaved = 0;
-    this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
+    this->dataBuffer = nullptr;
 }
 SignalParameterComputer::~SignalParameterComputer()
 {
-    std::free(this->dataBuffer);
+    if(this->dataBuffer)
+        std::free(this->dataBuffer);
 }
 void SignalParameterComputer::startNewAcquisition(Acquisition &config)
 {
     this->finished = false;
     this->samplesSaved = 0;
     this->bytesSaved = 0;
+    if(!this->dataBuffer) {
+        this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
+        if(!this->dataBuffer) {
+            spdlog::critical("Failed to allocate space for SignalParameterComputer. The application will likely crash!");
+        }
+    }
     if(this->sizeLimit != config.getFileSizeLimit())
     {
         this->sizeLimit = config.getFileSizeLimit();
@@ -71,6 +78,8 @@ IRecordProcessor::STATUS SignalParameterComputer::writeContinuousBuffer(short* b
 }
 unsigned long long SignalParameterComputer::finish(){
     this->finished = true;
+    std::free(this->dataBuffer);
+    this->dataBuffer = nullptr;
     return this->bytesSaved;
 }
 std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()

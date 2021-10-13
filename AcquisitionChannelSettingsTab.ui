@@ -212,12 +212,12 @@
          <widget class="QComboBox" name="triggerEdge">
           <item>
            <property name="text">
-            <string>RISING</string>
+            <string>FALLING</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>FALLING</string>
+            <string>RISING</string>
            </property>
           </item>
           <item>

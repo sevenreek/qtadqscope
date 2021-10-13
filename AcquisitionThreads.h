@@ -19,6 +19,7 @@ private:
     bool loopStopped = true;
     WriteBuffers &writeBuffers;
     unsigned long transferBufferCount;
+    bool lastStatus[MAX_NOF_CHANNELS] = {true, true, true, true};
     ADQRecordHeader lastHeaders[MAX_NOF_CHANNELS];
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;

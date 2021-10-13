@@ -35,6 +35,7 @@ void DMAChecker::runLoop()
         return;
     }
     this->shouldLoopRun = true;
+    spdlog::debug("DMA thread active");
     this->loopStopped = false;
     while(this->shouldLoopRun)
     {
@@ -86,11 +87,8 @@ void DMAChecker::runLoop()
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
-                if(sbuf == nullptr)
-                    spdlog::debug("sbuf is null");
-                if(sbuf->headers[ch] == nullptr)
-                    spdlog::debug("headers[ch] are null");
-                sbuf->headers[ch][0] = this->lastHeaders[ch];
+                if(!this->lastStatus[ch])
+                    sbuf->headers[ch][0] = this->lastHeaders[ch];
                 // copy last header
             }
             if(!this->adqDevice.GetDataStreaming(
@@ -111,8 +109,11 @@ void DMAChecker::runLoop()
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
-                //spdlog::debug("Copying headers from channel {} should have {} headers", ch, sbuf->nof_headers[ch]);
-                this->lastHeaders[ch] = sbuf->headers[ch][sbuf->nof_headers[ch]==0?0:(sbuf->nof_headers[ch]-1)];
+                if(!sbuf->header_status[ch] && sbuf->nof_headers[ch] > 0) {
+                    ADQRecordHeader *headerPtr = reinterpret_cast<ADQRecordHeader*>(sbuf->headers[ch]);
+                    this->lastHeaders[ch] = headerPtr[sbuf->nof_headers[ch] - 1];
+                }
+                this->lastStatus[ch] = sbuf->header_status[ch];
             }
             //spdlog::debug("Wrote buffers. Notifying.");
             this->writeBuffers.notifyWritten();

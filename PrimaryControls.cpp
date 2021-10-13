@@ -114,6 +114,7 @@ void PrimaryControls::primaryButtonClicked()
             this->digitizer->runAcquisition();
         break;
         case Digitizer::DIGITIZER_STATE::STOPPING:
+        case Digitizer::DIGITIZER_STATE::STARTING:
 
         break;
     }
@@ -143,6 +144,10 @@ void PrimaryControls::digitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         case Digitizer::DIGITIZER_STATE::STOPPING:
             this->ui->streamStartStopButton->setEnabled(false);
             this->ui->streamStatusLabel->setText("STOPPING");
+        break;    
+        case Digitizer::DIGITIZER_STATE::STARTING:
+            this->ui->streamStartStopButton->setEnabled(false);
+            this->ui->streamStatusLabel->setText("STARTING");
         break;
     }
 }

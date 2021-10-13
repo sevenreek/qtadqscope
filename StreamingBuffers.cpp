@@ -1,5 +1,6 @@
 #include "StreamingBuffers.h"
 #include "spdlog/spdlog.h"
+#include <algorithm>
 
 StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength)
 {
@@ -16,7 +17,8 @@ StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char chann
           spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
         }
         unsigned int headerCount = bufferSize/sizeof(short)/recordLength + 1; // a single buffer can contain bufferSize/sizeof(short) samples so a total of that/recordLength + 1 headers
-        this->headers[ch] = (ADQRecordHeader*)std::malloc(bufferSize);
+        unsigned long headerBuffferSize = (headerCount+1)*sizeof(ADQRecordHeader);
+        this->headers[ch] = (ADQRecordHeader*)std::malloc(std::max(bufferSize,headerBuffferSize));
         if(this->headers[ch] == nullptr)
         {
           spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);
@@ -75,7 +77,6 @@ WriteBuffers::~WriteBuffers()
 StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
 {
   if(!this->sWrite.tryAcquire(timeout)) return nullptr;
-  //spdlog::debug("Lock on write buffer {} obtained.", this->writePosition);
   unsigned int returnWritePos = this->writePosition;
   this->writePosition = (this->writePosition+1)%this->bufferCount;
   return this->buffers[returnWritePos];
@@ -83,7 +84,6 @@ StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
 StreamingBuffers* WriteBuffers::awaitRead(int timeout=-1)
 {
   if(!this->sRead.tryAcquire(timeout)) return nullptr;
-  //spdlog::debug("Lock on read buffer {} obtained.", this->readPosition);
   unsigned int returnReadPos = this->readPosition;
   this->readPosition = (this->readPosition+1)%this->bufferCount;
   return this->buffers[returnReadPos];

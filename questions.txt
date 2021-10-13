@@ -1,0 +1,8 @@
+What is the recommended malloc size to allocate for header buffers (target_headers) in calls to GetDataStreaming(). The standard_example seems to suggest using the same value as for the sample buffers (target_buffers). 
+Would a value equal to (sample_buffer_size/record_length+2)*sizeof(ADQRecordHeader) rounded up to the next multiple of 1024 be sufficient? The reasoning here being that it is necessary to have a header for every full record that can fit within a single samples buffer, plus two for the potentially incomplete records at the beginning and end of the samples buffer.
+
+Are there limits of values that can be passed to SetTransferBuffers(). Experimentally I seem to have found out that the maximum nOfBuffers that would not cause the function to return 0 (failure) is 256. Is there a hard cap or is this behaviour caused by a failing malloc?
+
+In the DevKit, can the record bits be inserted at varying distances to change the record length? If so, does the RecordLength field in the record header also change appropriately, or does it have to be somehow inserted in the user logic as well?
+
+The DevKit, defines macros for inserting record header fields like "insert_timestamp" and "insert_general_purpose_vector". Are these available to both of the user logic cores? Do these insertions have to happen on the same clock cycle as the end record bit, or at some other point?

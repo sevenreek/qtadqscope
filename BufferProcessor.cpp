@@ -14,7 +14,7 @@ BaseBufferProcessor::BaseBufferProcessor(
     for(int i = 0; i < MAX_NOF_CHANNELS; i++)
     {
         //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-        recordBuffer[i] = (short*)std::malloc(recordLength*sizeof(short));
+        recordBuffer[i] = (short*)std::malloc(2UL*(size_t)recordLength*sizeof(short));
         if(recordBuffer[i] == nullptr)
         {
             spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
@@ -31,7 +31,7 @@ bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
         {
             if(recordBuffer[i] != nullptr) free(recordBuffer[i]);
             //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-            recordBuffer[i] = (short*)std::malloc(recordLength*sizeof(short));
+            recordBuffer[i] = (short*)std::malloc(2UL*(size_t)recordLength*sizeof(short));
             if(recordBuffer[i] == nullptr)
             {
                 spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
@@ -94,13 +94,13 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             if(buffers.headers[ch][0].RecordLength != this->recordLength)
             {
                 spdlog::warn("Recieved a record(#{}) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].RecordLength);
-                spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRSTART={}",buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Timestamp, buffers.headers[ch][0].RecordStart);
+                spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRBL={}",buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Timestamp, this->recordBufferLength[ch]);
                 buffers.headers[ch][0].RecordLength = this->recordLength;
             }
             unsigned long samplesToCompleteRecord = buffers.headers[ch][0].RecordLength - this->recordBufferLength[ch];
             std::memcpy(
-                &(this->recordBuffer[ch][this->recordBufferLength[ch]]),
-                buffers.data[ch],
+                (void*)&this->recordBuffer[ch][this->recordBufferLength[ch]],
+                &buffers.data[ch][0],
                 samplesToCompleteRecord*sizeof(short)
             );
             //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{} , ts:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength, buffers.headers[ch][0].Timestamp);
