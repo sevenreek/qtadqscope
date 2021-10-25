@@ -239,6 +239,7 @@ AcquisitionChannelSettingsTab::~AcquisitionChannelSettingsTab()
 
 void AcquisitionChannelSettingsTab::reloadUI()
 {
+    this->ui->triggerEdge->setCurrentIndex(this->digitizer->getTriggerEdge());
     if(isBitSet(this->channel, this->digitizer->getChannelMask()))
     {
         this->setChannelActive(true, !this->config->getAllowMultichannel());

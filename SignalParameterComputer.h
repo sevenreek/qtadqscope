@@ -11,7 +11,7 @@ class SignalParameterComputer : public IRecordProcessor
 {
 private:
     unsigned long long bytesSaved;
-    unsigned long long sizeLimit;
+    size_t sizeLimit;
     short* dataBuffer;
     unsigned long long samplesSaved = 0;
     bool finished;

@@ -6,10 +6,10 @@
 // queue size is limited by user's ram
 
 const BuffersDialog::ConfigPreset BuffersDialog::DEFAULT_CONFIG_VALUES[BuffersDialog::DEFAULT_CONFIG_COUNT]  = {
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul, .queueSize=256}, // NONE
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul, .queueSize=256}, // BALANCED
-    (BuffersDialog::ConfigPreset){.bufferCount=256, .bufferSize=1ul*1024ul, .queueSize=4ul*1024}, // SHORT PULSE
-    (BuffersDialog::ConfigPreset){.bufferCount=128, .bufferSize=2ul*1024ul, .queueSize=512}, // LONG PULSE
+    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=16ul*1024ul, .queueSize=256}, // NONE
+    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=16ul*1024ul, .queueSize=256}, // BALANCED
+    (BuffersDialog::ConfigPreset){.bufferCount=256, .bufferSize=4ul*1024ul, .queueSize=4ul*1024}, // SHORT PULSE
+    (BuffersDialog::ConfigPreset){.bufferCount=128, .bufferSize=8ul*1024ul, .queueSize=512}, // LONG PULSE
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=1024ul*1024ul, .queueSize=512}, // FILE SAVE
     (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul*1024ul, .queueSize=256} // LARGE FILE SAVE
 };

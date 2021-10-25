@@ -44,6 +44,8 @@ void RecordProcessorsPanel::autosetFileSaver()
     }
     switch(this->config->getFileSaveMode())
     {
+        default:
+            spdlog::error("Unsupported file save mode. Defaulting to disabled.");
         case ApplicationConfiguration::FILE_SAVE_MODES::DISABLED:
             this->fileSaver.reset();
         break;
@@ -52,12 +54,6 @@ void RecordProcessorsPanel::autosetFileSaver()
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY_VERBOSE:
             this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
-        break;
-        case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY:
-            this->fileSaver = std::unique_ptr<FileWriter>(new BufferedBinaryFileWriter(this->digitizer->getFileSizeLimit()));
-        break;
-        case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBufferedBinaryWriter(this->digitizer->getFileSizeLimit()));
         break;
     }
     if(this->fileSaver)

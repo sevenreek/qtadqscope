@@ -243,6 +243,7 @@ Acquisition FullCalibrationDialog::acquisitionFromStage(const FullCalibrationSet
     acq.setTriggerMode(TRIGGER_MODES::SOFTWARE);
     acq.setUserLogicBypassMask(0b11);
     acq.setDuration(this->ui->calibrationDuration->value());
+    acq.setFileSizeLimit(1000000000UL);
     return acq;
 }
 void FullCalibrationDialog::onStateChanged(Digitizer::DIGITIZER_STATE newState)

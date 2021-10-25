@@ -23,7 +23,7 @@ private:
     ADQRecordHeader lastHeaders[MAX_NOF_CHANNELS];
     unsigned int lastFilledBufferCount = 1;
     unsigned long long totalRecordsGathered = 0;
-    std::chrono::high_resolution_clock::time_point nextBufferCheckTime;
+    std::chrono::system_clock::time_point nextBufferCheckTime;
     unsigned int flushTimeout = 50;
     ADQInterfaceWrapper &adqDevice;
 public:

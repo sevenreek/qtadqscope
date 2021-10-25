@@ -27,8 +27,9 @@ public:
   }
   void reset(int count)
   {
-      //this->qsem = QSemaphore(count);
-      spdlog::warn("Omitting semaphore reset for testing! Available = {}", this->qsem.available());
+      this->qsem.acquire(this->qsem.available());
+      this->qsem.release(count);
+      //spdlog::warn("Omitting semaphore reset for testing! Available = {}", this->qsem.available());
   }
   int getCount()
   {

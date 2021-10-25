@@ -1,11 +1,12 @@
 #include "BinaryFileWriter.h"
 #include "spdlog/spdlog.h"
 #include <ctime>
-#include "MinifiedRecordHeader.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QFile>
 #include "util.h"
+
+#include "MinifiedRecordHeader.h"
 
 BinaryFileWriter::BinaryFileWriter(unsigned long long sizeLimit)
 {
@@ -214,6 +215,7 @@ void VerboseBufferedBinaryWriter::startNewAcquisition(Acquisition& config)
         if((1<<i) & this->channelMask)
         {
             spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedAcquisitionConfiguration), i);
+            spdlog::debug("Header size is {}", sizeof(ADQRecordHeader));
             MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(config, i);
             this->dataStream[i].write((char*)&m,sizeof(MinifiedAcquisitionConfiguration));
         }
@@ -268,10 +270,13 @@ void VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
     {
         if((1<<i) & this->channelMask)
         {
-            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(MinifiedAcquisitionConfiguration), i);
+            spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(struct MinifiedAcquisitionConfiguration), i);
+            spdlog::debug("Header size is {}", sizeof(MinifiedRecordHeader));
             MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(config, i);
-            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(MinifiedAcquisitionConfiguration));
+            this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(struct MinifiedAcquisitionConfiguration));
         }
     }
 }
+
+
 

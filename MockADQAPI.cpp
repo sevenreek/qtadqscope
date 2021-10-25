@@ -183,7 +183,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
         }
         else
         {
-            spdlog::debug("=== Buffer ===");
+            //spdlog::debug("=== Buffer ===");
             samplesAdded[ch] = 0;
             headersAdded[ch] = 0;
             headerStatus[ch] = 1;
@@ -213,7 +213,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
                     hp[0].Channel = ch;
                     hp[0].RecordLength = this->recordLength;
                     hp[0].RecordNumber = this->recordNumber++;
-                    spdlog::debug("Stored [{} {} {}] at i={}", hp[0].Channel, hp[0].RecordLength,  hp[0].RecordNumber, 0);
+                    //spdlog::debug("Stored [{} {} {}] at i={}", hp[0].Channel, hp[0].RecordLength,  hp[0].RecordNumber, 0);
                 }
             }
             unsigned long samplesToAddInBuffer = samplesPerBuffer - remainingSamplesToAdd;
@@ -230,14 +230,14 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
                 hp[headersAdded[ch]].Channel = ch;
                 hp[headersAdded[ch]].RecordLength = this->recordLength;
                 hp[headersAdded[ch]].RecordNumber = this->recordNumber++;
-                spdlog::debug("Stored [{} {} {}] at i={}", hp[headersAdded[ch]].Channel, hp[headersAdded[ch]].RecordLength,  hp[headersAdded[ch]].RecordNumber, headersAdded[ch]);
+                //spdlog::debug("Stored [{} {} {}] at i={}", hp[headersAdded[ch]].Channel, hp[headersAdded[ch]].RecordLength,  hp[headersAdded[ch]].RecordNumber, headersAdded[ch]);
                 samplesAdded[ch] += this->recordLength;
                 headersAdded[ch] += 1;
             }
             unsigned long leftoverBufferSpace = samplesToAddInBuffer - fullRecordsToAddInBuffer*this->recordLength;
             if(leftoverBufferSpace)
             {
-                spdlog::debug("Leftover {}", leftoverBufferSpace);
+                //spdlog::debug("Leftover {}", leftoverBufferSpace);
                 if(this->remainingSamplesInRecord[ch])
                 {
                     for(size_t sa = 0; sa < leftoverBufferSpace; sa++)

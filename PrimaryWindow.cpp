@@ -7,7 +7,10 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     context(context)
 {
     ui->setupUi(this);
-    this->primaryControls = ui->primaryControls;
+#ifdef MOCK_ADQAPI
+    this->setWindowTitle("TEST ENVIRONMENT - MockQADQScope - TEST ENVIRONMENT");
+#endif
+    this->primaryControls = this->ui->primaryControls;
     this->primaryControls->initialize(this->context);
     this->acqSettings = ui->sideSettings;
     this->acqSettings->initialize(this->context);

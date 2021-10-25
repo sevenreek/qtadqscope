@@ -18,7 +18,7 @@ StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char chann
         }
         unsigned int headerCount = bufferSize/sizeof(short)/recordLength + 1; // a single buffer can contain bufferSize/sizeof(short) samples so a total of that/recordLength + 1 headers
         unsigned long headerBuffferSize = (headerCount+1)*sizeof(ADQRecordHeader);
-        this->headers[ch] = (ADQRecordHeader*)std::malloc(std::max(bufferSize,headerBuffferSize));
+        this->headers[ch] = (ADQRecordHeader*)std::malloc(bufferSize);
         if(this->headers[ch] == nullptr)
         {
           spdlog::critical("Out of memory for headers buffer for channel {}", ch+1);

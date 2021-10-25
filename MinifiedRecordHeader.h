@@ -4,7 +4,18 @@
 #include "DigitizerConfiguration.h"
 #include <cinttypes>
 #include <string>
-struct __attribute__ ((packed))  MinifiedRecordHeader {
+
+const unsigned long CURRENT_VERSION = 1;
+
+#ifdef __GNUC__
+#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#endif
+
+#ifdef _MSC_VER
+#define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop))
+#endif
+
+struct MinifiedRecordHeader {
     uint32_t recordLength;
     uint32_t recordNumber;
     uint64_t timestamp;
@@ -16,35 +27,37 @@ MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
     return MinifiedRecordHeader {.recordLength = h.RecordLength, .recordNumber = h.RecordNumber, .timestamp = h.Timestamp};
 }
 const unsigned int MAX_TAG_LENGTH = 128;
-struct __attribute__ ((packed)) MinifiedAcquisitionConfiguration {
+struct  MinifiedAcquisitionConfiguration {
+    uint64_t version = CURRENT_VERSION;
     char fileTag[MAX_TAG_LENGTH];
-    uint8_t isContinuous;
-    uint8_t userLogicBypass;
-    uint8_t channelMask;
-    uint8_t channel;
-    uint16_t sampleSkip;
-    float_t obtainedInputRange;
+    uint32_t isContinuous;
+    uint32_t userLogicBypass;
+    uint32_t channelMask;
+    uint32_t channel;
+    uint32_t sampleSkip;
+    double_t obtainedInputRange;
 
-    uint8_t triggerEdge;
-    uint8_t triggerMode;
-    int16_t triggerLevelCode;
-    int16_t triggerLevelReset;
+    uint32_t triggerEdge;
+    uint32_t triggerMode;
+    int32_t triggerLevelCode;
+    int32_t triggerLevelReset;
 
-    int16_t digitalOffset;
-    int16_t analogOffset;
-    int16_t digitalGain;
-    int16_t dcBias;
+    int32_t digitalOffset;
+    int32_t analogOffset;
+    int32_t digitalGain;
+    int32_t dcBias;
 
     uint32_t recordLength;
     uint32_t recordCount;
-    uint16_t pretrigger;
-    uint16_t triggerDelay;
+    uint32_t pretrigger;
+    uint32_t triggerDelay;
 
 };
 MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel);
 MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel)
 {
     MinifiedAcquisitionConfiguration returnValue;
+    returnValue.version = CURRENT_VERSION;
     returnValue.channel = channel;
     returnValue.channelMask = c.getChannelMask();
     returnValue.userLogicBypass = c.getUserLogicBypassMask();

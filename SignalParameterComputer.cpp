@@ -18,17 +18,13 @@ void SignalParameterComputer::startNewAcquisition(Acquisition &config)
     this->finished = false;
     this->samplesSaved = 0;
     this->bytesSaved = 0;
-    if(!this->dataBuffer) {
-        this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
-        if(!this->dataBuffer) {
-            spdlog::critical("Failed to allocate space for SignalParameterComputer. The application will likely crash!");
-        }
-    }
     if(this->sizeLimit != config.getFileSizeLimit())
     {
-        this->sizeLimit = config.getFileSizeLimit();
-        std::free(this->dataBuffer);
-        this->dataBuffer = (short*)std::malloc(sizeof(short)*this->sizeLimit);
+        this->sizeLimit = (size_t)config.getFileSizeLimit();
+    }
+    this->dataBuffer = (short*)std::malloc(this->sizeLimit);
+    if(!this->dataBuffer) {
+        spdlog::critical("Failed to allocate space for SignalParameterComputer. The application will likely crash!");
     }
 }
 IRecordProcessor::STATUS SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
