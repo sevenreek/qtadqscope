@@ -1,6 +1,7 @@
 #include "AcquisitionThreads.h"
 #include "spdlog/spdlog.h"
 #include <QThread>
+#include <iostream>
 unsigned int DMAChecker::getFlushTimeout() const
 {
     return flushTimeout;
@@ -35,7 +36,6 @@ void DMAChecker::runLoop()
         return;
     }
     this->shouldLoopRun = true;
-    spdlog::debug("DMA thread active");
     this->loopStopped = false;
     while(this->shouldLoopRun)
     {
@@ -81,14 +81,17 @@ void DMAChecker::runLoop()
                     //if(sbuf != nullptr) this->writeBuffers.notifyRead();
                     goto DMA_CHECKER_LOOP_EXIT;
                 }
-                sbuf = this->writeBuffers.awaitWrite(250);
+                sbuf = this->writeBuffers.popWriteBuffer();
             } while(sbuf == nullptr);
             //spdlog::debug("Got write lock on {}", fmt::ptr(sbuf));
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
-                if(!this->lastStatus[ch])
-                    sbuf->headers[ch][0] = this->lastHeaders[ch];
+                if(sbuf == nullptr)
+                    spdlog::debug("sbuf is null");
+                if(sbuf->headers[ch] == nullptr)
+                    spdlog::debug("headers[ch] are null");
+                sbuf->headers[ch][0] = this->lastHeaders[ch];
                 // copy last header
             }
             if(!this->adqDevice.GetDataStreaming(
@@ -101,23 +104,21 @@ void DMAChecker::runLoop()
             )) {
                 if(this->shouldLoopRun)
                 {
-                    spdlog::error("Could not get data stream. Stopping.");
-                    emit this->onError(); // stop if error
+                    std::cout << "COULD NOT GETDATASTREAMING";
+                    /*spdlog::error("Could not get data stream. Stopping.");
+                    emit this->onError(); // stop if error*/
                 }
                 break;
             }
             for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
             {
                 if(!(sbuf->channelMask & (1<<ch))) continue;
-                if(!sbuf->header_status[ch] && sbuf->nof_headers[ch] > 0) {
-                    ADQRecordHeader *headerPtr = reinterpret_cast<ADQRecordHeader*>(sbuf->headers[ch]);
-                    this->lastHeaders[ch] = headerPtr[sbuf->nof_headers[ch] - 1];
-                }
-                this->lastStatus[ch] = sbuf->header_status[ch];
+                //spdlog::debug("Copying headers from channel {} should have {} headers", ch, sbuf->nof_headers[ch]);
+                this->lastHeaders[ch] = sbuf->headers[ch][sbuf->nof_headers[ch]==0?0:(sbuf->nof_headers[ch]-1)];
             }
             //spdlog::debug("Wrote buffers. Notifying.");
-            this->writeBuffers.notifyWritten();
-            emit this->onBufferWritten(this->writeBuffers.getWriteCount());
+            this->writeBuffers.pushWrittenBuffer(sbuf);
+            emit this->onBufferWritten(this->writeBuffers.getWriteBufferCount());
             //spdlog::debug("Notify written");
         }
         this->lastFilledBufferCount = buffersFilled;
@@ -160,11 +161,11 @@ void LoopBufferProcessor::runLoop()
     this->shouldLoopRun = true;
     spdlog::debug("Processor thread active");
     this->loopStopped = false;
-    while(this->shouldLoopRun || this->writeBuffers.getReadCount()) // process all that are still left in memory
+    while(this->shouldLoopRun || this->writeBuffers.getReadBufferCount()) // process all that are still left in memory
     {
         StreamingBuffers * b = nullptr;
         do{
-            b = this->writeBuffers.awaitRead(1000);
+            b = this->writeBuffers.popReadBuffer();
             if(!b && !this->shouldLoopRun) // inverse the order of this if and b=.. if shit breaks
             {
                 goto BUFFER_PROCESSOR_LOOP_EXIT; // break if we want to join the thread
@@ -190,7 +191,7 @@ void LoopBufferProcessor::runLoop()
         }
 
         //spdlog::debug("Read succeful");
-        this->writeBuffers.notifyRead();
+        this->writeBuffers.pushReadDoneBuffer(b);
         //spdlog::debug("Read notify");
     }
 BUFFER_PROCESSOR_LOOP_EXIT:

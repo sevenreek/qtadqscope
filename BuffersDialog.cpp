@@ -6,12 +6,12 @@
 // queue size is limited by user's ram
 
 const BuffersDialog::ConfigPreset BuffersDialog::DEFAULT_CONFIG_VALUES[BuffersDialog::DEFAULT_CONFIG_COUNT]  = {
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=16ul*1024ul, .queueSize=256}, // NONE
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=16ul*1024ul, .queueSize=256}, // BALANCED
-    (BuffersDialog::ConfigPreset){.bufferCount=256, .bufferSize=4ul*1024ul, .queueSize=4ul*1024}, // SHORT PULSE
-    (BuffersDialog::ConfigPreset){.bufferCount=128, .bufferSize=8ul*1024ul, .queueSize=512}, // LONG PULSE
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=1024ul*1024ul, .queueSize=512}, // FILE SAVE
-    (BuffersDialog::ConfigPreset){.bufferCount=64, .bufferSize=4ul*1024ul*1024ul, .queueSize=256} // LARGE FILE SAVE
+    {64,   16ul*1024ul,        256}, // NONE
+    {64,   16ul*1024ul,        256}, // BALANCED
+    {256,  4ul*1024ul,         4ul*1024}, // SHORT PULSE
+    {128,  8ul*1024ul,         512}, // LONG PULSE
+    {64,   1024ul*1024ul,      512}, // FILE SAVE
+    {64,   4ul*1024ul*1024ul,  256} // LARGE FILE SAVE
 };
 
 BuffersDialog::BuffersDialog(QWidget *parent) :

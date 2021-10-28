@@ -1,6 +1,5 @@
 #include "StreamingBuffers.h"
 #include "spdlog/spdlog.h"
-#include <algorithm>
 
 StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength)
 {
@@ -17,7 +16,7 @@ StreamingBuffers::StreamingBuffers(unsigned long bufferSize, unsigned char chann
           spdlog::critical("Out of memory for data buffer for channel {}", ch+1);
         }
         unsigned int headerCount = bufferSize/sizeof(short)/recordLength + 1; // a single buffer can contain bufferSize/sizeof(short) samples so a total of that/recordLength + 1 headers
-        unsigned long headerBuffferSize = (headerCount+1)*sizeof(ADQRecordHeader);
+        //this->headers[ch] = (ADQRecordHeader*)std::malloc(headerCount*sizeof(ADQRecordHeader));
         this->headers[ch] = (ADQRecordHeader*)std::malloc(bufferSize);
         if(this->headers[ch] == nullptr)
         {
@@ -46,7 +45,7 @@ StreamingBuffers::~StreamingBuffers()
 }
 
 WriteBuffers::WriteBuffers(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength) :
-  sWrite(bufferCount), sRead(0)
+    readQueue(bufferCount), writeQueue(bufferCount)
 {
     if(recordLength == 0) recordLength = 2; // for continuous streaming;
     this->bufferCount = bufferCount;
@@ -74,30 +73,10 @@ WriteBuffers::~WriteBuffers()
   }
   //this->buffers.clear();
 }
-StreamingBuffers* WriteBuffers::awaitWrite(int timeout=-1)
-{
-  if(!this->sWrite.tryAcquire(timeout)) return nullptr;
-  unsigned int returnWritePos = this->writePosition;
-  this->writePosition = (this->writePosition+1)%this->bufferCount;
-  return this->buffers[returnWritePos];
-}
-StreamingBuffers* WriteBuffers::awaitRead(int timeout=-1)
-{
-  if(!this->sRead.tryAcquire(timeout)) return nullptr;
-  unsigned int returnReadPos = this->readPosition;
-  this->readPosition = (this->readPosition+1)%this->bufferCount;
-  return this->buffers[returnReadPos];
-}
-void WriteBuffers::notifyWritten()
-{
-  this->sRead.notify();
-}
-void WriteBuffers::notifyRead()
-{
-  this->sWrite.notify();
-}
 void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength)
 {
+    this->readQueue.clear(bufferCount);
+    this->writeQueue.clear(bufferCount);
     if(recordLength == 0) recordLength = 2; // for continuous streaming;
     for(auto p : this->buffers)
     {
@@ -123,22 +102,36 @@ void WriteBuffers::reconfigure(unsigned int bufferCount, unsigned long bufferSiz
       }
       //spdlog::debug("Pushing buffer {} address {}", b, fmt::ptr(bfp));
       this->buffers.push_back(bfp);
+      this->writeQueue.push(bfp);
     }
-    this->resetSemaphores();
 
 }
-void WriteBuffers::resetSemaphores()
+
+StreamingBuffers* WriteBuffers::popReadBuffer()
 {
-    this->writePosition = 0;
-    this->readPosition = 0;
-    this->sRead.reset(0);
-    this->sWrite.reset(this->bufferCount);
+    return this->readQueue.pop();
 }
-int WriteBuffers::getWriteCount()
+
+StreamingBuffers*  WriteBuffers::popWriteBuffer()
 {
-    return this->sWrite.getCount();
+    return this->writeQueue.pop();
 }
-int WriteBuffers::getReadCount()
+bool WriteBuffers::pushWrittenBuffer(StreamingBuffers *buffer)
 {
-    return this->sRead.getCount();
+    return this->readQueue.push(buffer);
+}
+
+bool WriteBuffers::pushReadDoneBuffer(StreamingBuffers *buffer)
+{
+    return this->writeQueue.push(buffer);
+}
+
+long WriteBuffers::getWriteBufferCount()
+{
+    return this->writeQueue.size();
+}
+
+long WriteBuffers::getReadBufferCount()
+{
+    return this->readQueue.size();
 }

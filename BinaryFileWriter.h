@@ -12,11 +12,12 @@ protected:
     unsigned long long bytesSaved = 0;
     unsigned long long sizeLimit;
     std::ofstream dataStream[MAX_NOF_CHANNELS];
+    unsigned long expectedRecordLength = 0;
 public:
     static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
@@ -30,7 +31,7 @@ public:
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBinaryWriter();
     const char* getName();
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
 };
 
 class BufferedBinaryFileWriter: public BinaryFileWriter {
@@ -40,7 +41,7 @@ class BufferedBinaryFileWriter: public BinaryFileWriter {
     public:
     explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
     virtual ~BufferedBinaryFileWriter();
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();
     const char* getName();
@@ -53,7 +54,7 @@ public:
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     ~VerboseBufferedBinaryWriter();
     const char* getName();
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
 
 };
 

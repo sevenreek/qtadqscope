@@ -5,6 +5,7 @@
 #include <memory>
 #include "StreamingHeader.h"
 #include "DigitizerConstants.h"
+#include "ThreadSafeQueue.h"
 class StreamingBuffers {
   public:
   StreamingBuffers(unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength);
@@ -21,7 +22,7 @@ class StreamingBuffers {
 
 class WriteBuffers {
 private:
-  unsigned int bufferCount = 0;
+  unsigned int bufferCount;
   unsigned int readPosition = 0;
   unsigned int writePosition = 0;
 public:
@@ -29,14 +30,13 @@ public:
   ~WriteBuffers();
   void reconfigure(unsigned int bufferCount, unsigned long bufferSize, unsigned char channelMask, unsigned int recordLength);
   std::vector<StreamingBuffers*> buffers;
-  Semaphore sWrite;
-  Semaphore sRead;
-  StreamingBuffers* awaitWrite(int timeout);
-  StreamingBuffers* awaitRead(int timeout);
-  int getWriteCount();
-  int getReadCount();
-  void notifyWritten();
-  void notifyRead();
-  void resetSemaphores();
+  ThreadsafeQueue<StreamingBuffers*> readQueue;
+  ThreadsafeQueue<StreamingBuffers*> writeQueue;
+  StreamingBuffers* popReadBuffer();
+  StreamingBuffers* popWriteBuffer();
+  bool pushWrittenBuffer(StreamingBuffers * buffer);
+  bool pushReadDoneBuffer(StreamingBuffers * buffer);
+  long getWriteBufferCount();
+  long getReadBufferCount();
 };
 #endif

@@ -17,6 +17,11 @@ set(CMAKE_BUILD_TYPE Debug)
 option(MOCK_ADQAPI "Use a mock ADQ library" ON)
 option(LINUX_BUILD "Build on Linux" OFF)
 
+if(USE_ASAN)
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
+    message(STATUS "AddressSanitizer enabled")
+endif()
 
 if(LINUX_BUILD)
     add_compile_definitions(LINUX)
@@ -114,6 +119,7 @@ set(PROJECT_SOURCES
         FullCalibrationDialog.h
         FullCalibrationDialog.ui
         GUILogger.h
+        ThreadSafeQueue.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -21,12 +21,13 @@ unsigned long long BinaryFileWriter::getProcessedBytes()
 {
     return this->bytesSaved;
 }
-void BinaryFileWriter::startNewAcquisition(Acquisition& config)
+bool BinaryFileWriter::startNewAcquisition(Acquisition& config)
 {
     this->channelMask = config.getChannelMask();
     this->bytesSaved = 0;
     this->sizeLimit = config.getFileSizeLimit();
     this->isContinuousStream = config.getIsContinuous();
+    this->expectedRecordLength = config.getRecordLength();
     std::time_t t = std::time(nullptr); // get current time
     auto tm = *std::localtime(&t);
     for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
@@ -52,6 +53,7 @@ void BinaryFileWriter::startNewAcquisition(Acquisition& config)
     cfgFile.open(QFile::OpenModeFlag::WriteOnly);
     cfgFile.write(doc.toJson());
     cfgFile.close();
+    return true;
 }
 
 IRecordProcessor::STATUS BinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
@@ -100,7 +102,7 @@ BufferedBinaryFileWriter::~BufferedBinaryFileWriter()
         }
     }
 }
-void BufferedBinaryFileWriter::startNewAcquisition(Acquisition& config)
+bool BufferedBinaryFileWriter::startNewAcquisition(Acquisition& config)
 {
     this->BinaryFileWriter::startNewAcquisition(config);
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
@@ -118,6 +120,7 @@ void BufferedBinaryFileWriter::startNewAcquisition(Acquisition& config)
             //spdlog::debug("Allocated buffer for ch{}; size:{}",ch, this->sizeLimit);
         }
     }
+    return true;
 }
 
 IRecordProcessor::STATUS BufferedBinaryFileWriter::processRecord(ADQRecordHeader* header, short* buffer, unsigned long length, int channel)
@@ -207,7 +210,7 @@ const char *VerboseBufferedBinaryWriter::getName()
 {
     return "VerboseBufferedBinaryWriter";
 }
-void VerboseBufferedBinaryWriter::startNewAcquisition(Acquisition& config)
+bool VerboseBufferedBinaryWriter::startNewAcquisition(Acquisition& config)
 {
     this->BufferedBinaryFileWriter::startNewAcquisition(config); // call super
     for(int i = 0; i< MAX_NOF_CHANNELS; i++)
@@ -220,6 +223,7 @@ void VerboseBufferedBinaryWriter::startNewAcquisition(Acquisition& config)
             this->dataStream[i].write((char*)&m,sizeof(MinifiedAcquisitionConfiguration));
         }
     }
+    return true;
 }
 
 VerboseBinaryWriter::VerboseBinaryWriter(unsigned long long sizeLimit) : BinaryFileWriter(sizeLimit)
@@ -241,8 +245,17 @@ IRecordProcessor::STATUS VerboseBinaryWriter::processRecord(ADQRecordHeader *hea
     }
     else
     {
+        if(header->RecordLength != this->expectedRecordLength)
+        {
+            spdlog::debug("Bad record detected in binaryfilewriter before minification; expected {} got {}",this->expectedRecordLength, header->RecordLength);
+        }
         //spdlog::debug("Copying data from ch{} to shift {}", ch, this->samplesSaved[ch]);
         MinifiedRecordHeader mh = minifyRecordHeader(*header);
+
+        if(mh.recordLength != this->expectedRecordLength)
+        {
+            spdlog::debug("Bad record detected in binaryfilewriter after minification; expected {} got {}",this->expectedRecordLength, mh.recordLength);
+        }
         this->dataStream[channel].write(reinterpret_cast<char*>(&mh), sizeof(MinifiedRecordHeader));
         this->bytesSaved += sizeof(MinifiedRecordHeader);
 
@@ -263,7 +276,7 @@ const char *VerboseBinaryWriter::getName()
 }
 
 
-void VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
+bool VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
 {
     this->BinaryFileWriter::startNewAcquisition(config); // call super
     for(int i = 0; i< MAX_NOF_CHANNELS; i++)
@@ -276,6 +289,7 @@ void VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
             this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(struct MinifiedAcquisitionConfiguration));
         }
     }
+    return true;
 }
 
 

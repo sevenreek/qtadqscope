@@ -127,7 +127,12 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     this->bufferProcessor->resetRecordsToStore(acq.getRecordCount()==Acquisition::INFINITE_RECORDS?0:acq.getRecordCount());
     for(auto rp : this->recordProcessors)
     {
-        rp->startNewAcquisition(acq);
+        bool rpSuccess = rp->startNewAcquisition(acq);
+        if(!rpSuccess)
+        {
+            spdlog::error("{} failed to configure for new stream.", rp->getName());
+            return false;
+        }
     }
     spdlog::info("Configured acquisition successfully.");
     this->dmaChecker->setTransferBufferCount(this->getTransferBufferCount());
@@ -445,7 +450,7 @@ unsigned long long Digitizer::getLastBuffersFill()
 
 unsigned long long Digitizer::getQueueFill()
 {
-    return this->writeBuffers.getReadCount();
+    return this->writeBuffers.getReadBufferCount();
 }
 
 void Digitizer::setTriggerMode(Digitizer::DIGITIZER_TRIGGER_MODE triggerMode)

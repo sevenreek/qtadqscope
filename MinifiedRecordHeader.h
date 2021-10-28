@@ -24,7 +24,9 @@ struct MinifiedRecordHeader {
 MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h);
 MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
 {
-    return MinifiedRecordHeader {.recordLength = h.RecordLength, .recordNumber = h.RecordNumber, .timestamp = h.Timestamp};
+    MinifiedRecordHeader mrh;
+    mrh.recordLength = h.RecordLength; mrh.recordNumber = h.RecordNumber; mrh.timestamp = h.Timestamp;
+    return mrh;
 }
 const unsigned int MAX_TAG_LENGTH = 128;
 struct  MinifiedAcquisitionConfiguration {

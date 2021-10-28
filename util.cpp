@@ -4,7 +4,7 @@
 std::vector<char> ILLEGAL_CHARACTERS = {'/', '<', '>', ':', '"', '/', '\\','|', '?', '*'};
 int mvToCode(double val, double inputRange)
 {
-    return std::round ( val / ( inputRange / 2 ) * std::pow(2,15) );
+    return std::lround ( val / ( inputRange / 2 ) * std::pow(2,15) );
 }
 
 double codeToMv(int val, double inputRange)

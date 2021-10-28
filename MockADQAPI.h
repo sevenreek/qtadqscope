@@ -51,6 +51,7 @@ public:
     int FlushDMA();
 };
 void * CreateADQControlUnit();
+extern ADQInterface * adqInterface;
 void ADQControlUnit_EnableErrorTrace(void* adq_cu, unsigned int trace_level, const char *dir);
 void ADQControlUnit_FindDevices(void* adq_cu);
 int ADQControlUnit_NofADQ(void* adq_cu);

@@ -11,7 +11,7 @@ private:
     QVector<double> x, y;
     unsigned long long sampleCount;
 public:
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
     ScopeUpdater(unsigned long long sampleCount);
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     unsigned long long finish();

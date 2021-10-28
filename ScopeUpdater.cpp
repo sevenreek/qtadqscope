@@ -27,7 +27,7 @@ IRecordProcessor::STATUS ScopeUpdater::processRecord(ADQRecordHeader* header, sh
     emit this->onScopeUpdate(x, y); // scope must update from the GUI thread
     return STATUS::OK;
 }
-void ScopeUpdater::startNewAcquisition(Acquisition& config)
+bool ScopeUpdater::startNewAcquisition(Acquisition& config)
 {
     if(config.getIsContinuous()) // continuous
     {
@@ -37,6 +37,7 @@ void ScopeUpdater::startNewAcquisition(Acquisition& config)
     {
         this->reallocate(config.getRecordLength());
     }
+    return true;
 }
 unsigned long long ScopeUpdater::finish()
 {

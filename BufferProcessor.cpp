@@ -75,7 +75,7 @@ bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTrigg
             //spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
             //buffers.headers[ch][0].Channel = ch;
             //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength);
-            success = this->completeRecord(&buffers.headers[ch][0], buffers.data[ch], buffers.nof_samples[ch], ch);
+            success = this->completeRecord(nullptr, buffers.data[ch], buffers.nof_samples[ch], ch);
             if(!success) return false;
             continue;
         }

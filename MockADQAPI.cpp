@@ -50,11 +50,14 @@ void DeleteADQControlUnit(void* adq_cu_ptr)
 }
 void ADQControlUnit_DeleteADQ(void* adq_cu_ptr, int ADQ_num)
 {
+    delete adqInterface;
     return;
 }
+ADQInterface * adqInterface;
 ADQInterface * ADQControlUnit_GetADQ(void* adq_cu, unsigned int devicenum)
 {
-    return new ADQInterface();
+    adqInterface = new ADQInterface();
+    return adqInterface;
 }
 
 int ADQInterface::StopStreaming()

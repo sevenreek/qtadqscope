@@ -14,7 +14,6 @@ AcquisitionSettings::AcquisitionSettings( QWidget *parent) :
 AcquisitionSettings::~AcquisitionSettings()
 {
     this->ui->channelTabs->disconnect(this);
-    this->tabs.empty();
     delete ui;
 }
 

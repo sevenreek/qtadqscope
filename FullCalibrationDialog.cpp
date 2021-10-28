@@ -235,7 +235,7 @@ Acquisition FullCalibrationDialog::acquisitionFromStage(const FullCalibrationSet
     acq.setDigitalOffset(ch, this->calibrationTable.digitalOffset[ch][ir]);
     acq.setSampleSkip(this->ui->sampleSkip->value());
     acq.setTransferBufferCount(32);
-    acq.setTransferBufferSize(4UL*1024UL*1024UL);
+    acq.setTransferBufferSize(2UL*1024UL*1024UL);
     acq.setTransferBufferQueueSize(64);
     acq.setDcBias(ch, 0);
     acq.setIsContinuous(true);
@@ -295,7 +295,7 @@ void FullCalibrationDialog::onStateChanged(Digitizer::DIGITIZER_STATE newState)
         }
         else
         {
-            this->ui->progressBar->setValue(100*this->currentSetupIndex/this->setups.size());
+            this->ui->progressBar->setValue(100*this->currentSetupIndex/(int)this->setups.size());
 
             if(!this->runStage()) {
                 this->stopAcquisitions();

@@ -10,10 +10,10 @@ SignalParameterComputer::SignalParameterComputer(unsigned long long sizeLimit)
 }
 SignalParameterComputer::~SignalParameterComputer()
 {
-    if(this->dataBuffer)
+    if(this->dataBuffer != nullptr)
         std::free(this->dataBuffer);
 }
-void SignalParameterComputer::startNewAcquisition(Acquisition &config)
+bool SignalParameterComputer::startNewAcquisition(Acquisition &config)
 {
     this->finished = false;
     this->samplesSaved = 0;
@@ -21,11 +21,22 @@ void SignalParameterComputer::startNewAcquisition(Acquisition &config)
     if(this->sizeLimit != config.getFileSizeLimit())
     {
         this->sizeLimit = (size_t)config.getFileSizeLimit();
+        if(this->dataBuffer != nullptr)
+        {
+            std::free(this->dataBuffer);
+            this->dataBuffer = nullptr;
+        }
     }
-    this->dataBuffer = (short*)std::malloc(this->sizeLimit);
-    if(!this->dataBuffer) {
-        spdlog::critical("Failed to allocate space for SignalParameterComputer. The application will likely crash!");
+    if(this->dataBuffer == nullptr)
+    {
+        short * newptr = (short*)std::malloc(this->sizeLimit);
+        this->dataBuffer = newptr;
     }
+    if(this->dataBuffer == nullptr) {
+        spdlog::critical("Failed to allocate space for SignalParameterComputer. Cannot start calibration!");
+        return false;
+    }
+    return true;
 }
 IRecordProcessor::STATUS SignalParameterComputer::writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length)
 {
@@ -59,23 +70,21 @@ IRecordProcessor::STATUS SignalParameterComputer::processRecord(ADQRecordHeader*
 }
 IRecordProcessor::STATUS SignalParameterComputer::writeContinuousBuffer(short* buffer, unsigned int length)
 {
-    if(this->bytesSaved > this->sizeLimit)
+    if(this->sizeLimit/sizeof(short) < this->samplesSaved+length)
     {
         return STATUS::LIMIT_REACHED;
     }
     else
     {
+        std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
         this->bytesSaved += length*sizeof(short);
         this->samplesSaved += length;
-        std::memcpy(&this->dataBuffer[this->samplesSaved], buffer, length*sizeof(short));
         return STATUS::OK;
     }
 
 }
 unsigned long long SignalParameterComputer::finish(){
     this->finished = true;
-    std::free(this->dataBuffer);
-    this->dataBuffer = nullptr;
     return this->bytesSaved;
 }
 std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
@@ -99,7 +108,11 @@ std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
     result->average /= samplesSaved;
     result->rms /= samplesSaved;
     result->rms = std::sqrt(result->rms);
-
+    if(this->dataBuffer != nullptr)
+    {
+        std::free(this->dataBuffer);
+        this->dataBuffer = nullptr;
+    }
     return result;
 }
 const char* SignalParameterComputer::getName()

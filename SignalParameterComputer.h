@@ -10,7 +10,7 @@ struct SignalParameters {
 class SignalParameterComputer : public IRecordProcessor
 {
 private:
-    unsigned long long bytesSaved;
+    size_t bytesSaved;
     size_t sizeLimit;
     short* dataBuffer;
     unsigned long long samplesSaved = 0;
@@ -18,7 +18,7 @@ private:
 public:
     explicit SignalParameterComputer(unsigned long long sizeLimit);
     ~SignalParameterComputer();
-    void startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config);
     STATUS writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length);
     STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
     STATUS writeContinuousBuffer(short* buffer, unsigned int length);
