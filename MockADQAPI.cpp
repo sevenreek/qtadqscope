@@ -1,5 +1,6 @@
 #ifdef MOCK_ADQAPI
 #include "MockADQAPI.h"
+#include <stdexcept>
 const char* FILE_DATA_SOURCE[] = {"ch1.mock", "ch2.mock", "ch3.mock", "ch4.mock"};
 const float BUFFER_FILL_PROBABILITY = 0.0001;
 #include <algorithm>
@@ -32,13 +33,13 @@ void * CreateADQControlUnit()
 {
     return nullptr;
 }
-void ADQControlUnit_EnableErrorTrace(void* adq_cu, unsigned int trace_level, const char *dir)
+unsigned int ADQControlUnit_EnableErrorTrace(void* adq_cu, unsigned int trace_level, const char *dir)
 {
-    return;
+    return 0;
 }
-void ADQControlUnit_FindDevices(void* adq_cu)
+int ADQControlUnit_FindDevices(void* adq_cu)
 {
-    return;
+    return 0;
 }
 int ADQControlUnit_NofADQ(void* adq_cu)
 {
@@ -84,36 +85,36 @@ int ADQInterface::SetTriggerMode(int tm)
 {
     return 1;
 }
-int ADQInterface::SetSampleSkip(int tm)
+unsigned int ADQInterface::SetSampleSkip(unsigned int tm)
 {
     return 1;
 }
-int ADQInterface::SetInputRange(int channel, float in, float* out)
+unsigned int ADQInterface::SetInputRange(unsigned int channel, float in, float* out)
 {
     *out = in;
     return 1;
 }
-int ADQInterface::BypassUserLogic(int channel, int bypass)
+unsigned int ADQInterface::BypassUserLogic(unsigned int channel, unsigned int bypass)
 {
     return 1;
 }
-int ADQInterface::SetAdjustableBias(int channel, int bias)
+unsigned int ADQInterface::SetAdjustableBias(unsigned int channel, int bias)
 {
     return 1;
 }
-int ADQInterface::SetTransferBuffers(unsigned long count, unsigned long size)
+int ADQInterface::SetTransferBuffers(unsigned int count, unsigned int size)
 {
     this->bufferCount = count;
     this->bufferSize = size;
     return 1;
 }
-int ADQInterface::ContinuousStreamingSetup(unsigned char channelMask)
+unsigned int ADQInterface::ContinuousStreamingSetup(unsigned char channelMask)
 {
     this->recordLength = 0;
     this->channelMask = channelMask;
     return 1;
 }
-int ADQInterface::SetPreTrigSamples(int pt)
+int ADQInterface::SetPreTrigSamples(unsigned int pt)
 {
     return 1;
 }
@@ -129,7 +130,7 @@ int ADQInterface::SetLvlTrigEdge(int edge)
 {
     return 1;
 }
-int ADQInterface::TriggeredStreamingSetup(unsigned long recordCount, unsigned long recordLength, unsigned long pretrigger, unsigned long delay, int channelMask)
+unsigned int ADQInterface::TriggeredStreamingSetup(unsigned int recordCount, unsigned int recordLength, unsigned int pretrigger, unsigned int delay, unsigned char channelMask)
 {
     this->recordLength = recordLength;
     this->channelMask = channelMask;
@@ -141,7 +142,7 @@ int ADQInterface::SWTrig()
     return 1;
 }
 
-int ADQInterface::GetTransferBufferStatus(unsigned int * buffersFilled)
+unsigned int ADQInterface::GetTransferBufferStatus(unsigned int * buffersFilled)
 {
     *buffersFilled = rand()/(float)(RAND_MAX)>(1-BUFFER_FILL_PROBABILITY)?2:0;
     return 1;
@@ -150,7 +151,7 @@ int ADQInterface::GetStreamOverflow()
 {
     return 1;
 }
-int ADQInterface::SetGainAndOffset(unsigned char cahnnel, int Gain, int Offset)
+unsigned int ADQInterface::SetGainAndOffset(unsigned char cahnnel, int Gain, int Offset)
 {
     return 1;
 }
@@ -158,11 +159,56 @@ int ADQInterface::SetTrigLevelResetValue(int val)
 {
     return 1;
 }
-int ADQInterface::FlushDMA()
+unsigned int ADQInterface::FlushDMA()
 {
     return 1;
 }
-int ADQInterface::WriteUserRegister(unsigned int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval)
+
+int ADQInterface::StartDataAcquisition()
+{
+    return 0;
+}
+
+int ADQInterface::StopDataAcquisition()
+{
+    return 0;
+}
+
+int64_t ADQInterface::WaitForRecordBuffer(int *channel, void **buffer, int timeout, ADQDataReadoutStatus *status)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+int ADQInterface::ReturnRecordBuffer(int channel, void *buffer)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+int ADQInterface::GetParameters(ADQParameterId id, void * const parameters)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+int ADQInterface::SetParameters(void * const parameters)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+int ADQInterface::InitializeParameters(ADQParameterId id, void * const parameters)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+int ADQInterface::SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+
+unsigned int ADQInterface::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
+{
+    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+}
+int ADQInterface::WriteUserRegister(int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval)
 {
     *retval = data;
     return 1;
@@ -221,7 +267,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             }
             unsigned long samplesToAddInBuffer = samplesPerBuffer - remainingSamplesToAdd;
             unsigned long fullRecordsToAddInBuffer = samplesToAddInBuffer / this->recordLength;
-            for (long i = 0; i < fullRecordsToAddInBuffer; i++)
+            for (unsigned long i = 0; i < fullRecordsToAddInBuffer; i++)
             {
                 for(size_t sa = 0; sa < this->recordLength; sa++)
                 {
@@ -266,6 +312,11 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
 
     }
     return 1;
+}
+
+void ADQInterface::loadBuffersFromFile(int channel, const char *file)
+{
+    throw std::exception("lodaBuffersFromFile is not implemented");
 }
 
 

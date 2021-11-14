@@ -299,6 +299,8 @@ void AcquisitionChannelSettingsTab::setObtainedRange(double val)
 
 void AcquisitionChannelSettingsTab::enableVolatileSettings(bool enabled)
 {
+    this->ui->AFE->setEnabled(enabled);
+    this->ui->trigger->setEnabled(enabled);
     this->ui->inputRange->setEnabled(enabled);
     this->ui->channelActive->setEnabled(enabled?this->allowAcqChange:false);
     this->ui->useTriggerSource->setEnabled(enabled?this->allowTriggerChange:false);

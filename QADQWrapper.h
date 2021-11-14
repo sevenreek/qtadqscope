@@ -2,11 +2,8 @@
 #define QADQWRAPPER_H
 
 #include <QObject>
-#ifdef MOCK_ADQAPI
-    #include "MockADQAPI.h"
-#else
-    #include "ADQAPI.h"
-#endif
+
+#include "ADQAPIIncluder.h"
 #include <memory>
 #include "spdlog/spdlog.h"
 Q_DECLARE_METATYPE(float*)
@@ -54,7 +51,19 @@ public:
         unsigned int * headersAdded,
         unsigned int * headerStatus
     );
+
+
+    // Gen3 functions
+    virtual int StartDataAcquisition(void);
+    virtual int StopDataAcquisition(void);
+    virtual int64_t WaitForRecordBuffer(int *channel, void **buffer, int timeout, struct ADQDataReadoutStatus *status);
+    virtual int ReturnRecordBuffer(int channel, void *buffer);
+    virtual int GetParameters(enum ADQParameterId id, void *const parameters);
+    virtual int SetParameters(void *const parameters);
+    virtual int InitializeParameters(enum ADQParameterId id, void *const parameters);
     virtual ~ADQInterfaceWrapper();
+    virtual int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
+    virtual unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
 };
 
 class MutexADQWrapper : public ADQInterfaceWrapper
@@ -89,8 +98,18 @@ public:
     bool GetStreamOverflow() override;
     bool GetTransferBufferStatus(unsigned int *buffersFilled) override;
     bool GetDataStreaming(void **targetBuffers, void **targetHeaders, unsigned char channelMask, unsigned int *samplesAdded, unsigned int *headersAdded, unsigned int *headerStatus) override;
-};
 
+    // Gen3 functions
+    int StartDataAcquisition(void) override;
+    int StopDataAcquisition(void) override;
+    int64_t WaitForRecordBuffer(int *channel, void **buffer, int timeout, struct ADQDataReadoutStatus *status) override;
+    int ReturnRecordBuffer(int channel, void *buffer) override;
+    int GetParameters(enum ADQParameterId id, void *const parameters) override;
+    int SetParameters(void *const parameters) override;
+    int InitializeParameters(enum ADQParameterId id, void *const parameters) override;
+    int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor) override;
+    unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode) override;
+};
 class QADQWrapper : public QObject
 {
     Q_OBJECT

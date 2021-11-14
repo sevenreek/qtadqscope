@@ -1,11 +1,11 @@
 #ifndef BINARYFILEWRITER_H
 #define BINARYFILEWRITER_H
 #include "RecordProcessor.h"
-#include "StreamingHeader.h"
+#include "ADQAPIIncluder.h"
 #include <iostream>
 #include <fstream>
 
-class BinaryFileWriter: public FileWriter {
+class BinaryFileWriter: public IRecordProcessor {
 protected:
     bool isContinuousStream;
     unsigned char channelMask;
@@ -17,45 +17,22 @@ public:
     static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
-    bool startNewAcquisition(Acquisition& config);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
-    unsigned long long finish();
-    const char* getName();
-    unsigned long long getProcessedBytes();
+    bool startNewAcquisition(Acquisition& config) override;
+    STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
+    unsigned long long finish() override;
+    const char* getName() override;
+    unsigned long long getProcessedBytes() override;
 };
 
 class VerboseBinaryWriter : public BinaryFileWriter
 {
 public:
     explicit VerboseBinaryWriter(unsigned long long sizeLimit);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
+    STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
     ~VerboseBinaryWriter();
-    const char* getName();
-    bool startNewAcquisition(Acquisition& config);
+    const char* getName() override;
+    bool startNewAcquisition(Acquisition& config) override;
 };
 
-class BufferedBinaryFileWriter: public BinaryFileWriter {
-    protected:
-    short * dataBuffer[MAX_NOF_CHANNELS];
-    unsigned long long samplesSaved[MAX_NOF_CHANNELS] = {0};
-    public:
-    explicit BufferedBinaryFileWriter(unsigned long long sizeLimit);
-    virtual ~BufferedBinaryFileWriter();
-    bool startNewAcquisition(Acquisition& config);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
-    unsigned long long finish();
-    const char* getName();
-    unsigned long long getProcessedBytes();
-};
-
-class VerboseBufferedBinaryWriter : public BufferedBinaryFileWriter {
-public:
-    explicit VerboseBufferedBinaryWriter(unsigned long long sizeLimit);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
-    ~VerboseBufferedBinaryWriter();
-    const char* getName();
-    bool startNewAcquisition(Acquisition& config);
-
-};
 
 #endif // BINARYFILEWRITER_H

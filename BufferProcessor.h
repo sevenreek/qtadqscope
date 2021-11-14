@@ -1,7 +1,7 @@
 #ifndef BUFFERPROCESSOR_H
 #define BUFFERPROCESSOR_H
+#include "ADQAPIIncluder.h"
 #include "RecordProcessor.h"
-#include "StreamingBuffers.h"
 #include <vector>
 #include <list>
 class IBufferProcessor {
@@ -42,9 +42,11 @@ public:
     void resetRecordsToStore(unsigned long long recordsToStore);
     int getStatus() const;
 
+
 protected:
     int status = IRecordProcessor::STATUS::OK;
 };
+
 
 
 #endif // BUFFERPROCESSOR_H

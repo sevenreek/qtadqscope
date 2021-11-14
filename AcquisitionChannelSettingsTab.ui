@@ -52,7 +52,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="AFE">
      <property name="title">
       <string>AFE</string>
      </property>
@@ -188,7 +188,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="trigger">
      <property name="title">
       <string>Trigger</string>
      </property>

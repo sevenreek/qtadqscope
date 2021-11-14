@@ -77,7 +77,7 @@ public:
     ApplicationConfiguration * config = nullptr;
     Digitizer * digitizer = nullptr;
     ScopeUpdater *scopeUpdater = nullptr;
-    FileWriter *fileSaver = nullptr;
+    IRecordProcessor *fileSaver = nullptr;
     spdlog::logger *primaryLogger = nullptr;
 };
 #endif // APPLICATIONCONFIGURATION_H

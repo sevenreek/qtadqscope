@@ -202,7 +202,7 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
     this->ui->recordProcessorsPanel->initialize(context);
 }
 
-string AcquisitionSettings::calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip)
+std::string AcquisitionSettings::calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip)
 {
     int timesDivided = 0;
     double sr = double(samplingRate)/sampleSkip;

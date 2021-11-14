@@ -6,9 +6,7 @@
 #include "QADQWrapper.h"
 #include "RecordProcessor.h"
 #include <QThread>
-#include "StreamingBuffers.h"
-#include "BufferProcessor.h"
-#include "AcquisitionThreads.h"
+#include "BufferProcessorThread.h"
 #include <QTimer>
 #include "CalibrationTable.h"
 class Digitizer : public QObject
@@ -66,11 +64,7 @@ private:
     DIGITIZER_STATE currentState = DIGITIZER_STATE::READY;
     DIGITIZER_TRIGGER_MODE currentTriggerMode = DIGITIZER_TRIGGER_MODE::CONTINUOUS;
     void changeDigitizerState(DIGITIZER_STATE newState);
-    WriteBuffers writeBuffers;
-    std::unique_ptr<IBufferProcessor> bufferProcessor;
-    std::unique_ptr<LoopBufferProcessor> bufferProcessorHandler;
-    std::unique_ptr<DMAChecker> dmaChecker;
-    QThread bufferProcessingThread;
+    std::unique_ptr<BufferProcessor> bufferProcessorHandler;
     QThread ADQThread;
     QTimer acquisitionTimer;
     CalibrationTable defaultCalibrationTable;
@@ -82,8 +76,7 @@ private:
 public slots:
     bool stopAcquisition();
     bool runAcquisition();
-    void DMALoopStopped();
-    void processorLoopStopped();
+    void processorLoopStateChanged(BufferProcessor::STATE newState);
 public:
     Digitizer(ADQInterfaceWrapper &digitizerWrapper);
     ~Digitizer();
@@ -129,7 +122,7 @@ public:
 
     CalibrationTable getDefaultCalibrationTable() const;
 
-
+    void SWTrig();
     void setTriggerMode(DIGITIZER_TRIGGER_MODE triggerMode);
     void setDuration(unsigned long duration);
     void setTransferBufferSize(unsigned long bufferSize);

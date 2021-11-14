@@ -235,8 +235,8 @@ Acquisition FullCalibrationDialog::acquisitionFromStage(const FullCalibrationSet
     acq.setDigitalOffset(ch, this->calibrationTable.digitalOffset[ch][ir]);
     acq.setSampleSkip(this->ui->sampleSkip->value());
     acq.setTransferBufferCount(32);
-    acq.setTransferBufferSize(2UL*1024UL*1024UL);
-    acq.setTransferBufferQueueSize(64);
+    acq.setTransferBufferSize(1UL*1024UL*1024UL);
+    acq.setTransferBufferQueueSize(1024);
     acq.setDcBias(ch, 0);
     acq.setIsContinuous(true);
     acq.setRecordCount(Acquisition::INFINITE_RECORDS);

@@ -256,6 +256,65 @@ bool MutexADQWrapper::GetDataStreaming(void **targetBuffers, void **targetHeader
     return ADQInterfaceWrapper::GetDataStreaming(targetBuffers, targetHeaders, channelMask, samplesAdded, headersAdded, headerStatus);
 }
 
+int MutexADQWrapper::StartDataAcquisition()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::StartDataAcquisition();
+    
+}
+
+int MutexADQWrapper::StopDataAcquisition()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::StopDataAcquisition();
+}
+
+int64_t MutexADQWrapper::WaitForRecordBuffer(int *channel, void **buffer, int timeout, ADQDataReadoutStatus *status)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::WaitForRecordBuffer(channel, buffer, timeout, status);
+    
+}
+
+int MutexADQWrapper::ReturnRecordBuffer(int channel, void *buffer)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::ReturnRecordBuffer(channel, buffer);
+}
+
+int MutexADQWrapper::GetParameters(ADQParameterId id, void * const parameters)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::GetParameters(id, parameters);
+    
+}
+
+int MutexADQWrapper::SetParameters(void * const parameters)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetParameters(parameters);
+}
+
+int MutexADQWrapper::InitializeParameters(ADQParameterId id, void * const parameters)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::InitializeParameters(id, parameters);
+
+}
+
+int MutexADQWrapper::SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetChannelSampleSkip(channel, skipfactor);
+}
+
+unsigned int MutexADQWrapper::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetupLevelTrigger(level, edge, resetLevel, channelMask, individualMode);
+
+}
+
 ADQInterfaceWrapper::ADQInterfaceWrapper(void *adqCU, unsigned int deviceNumber):
     deviceNumber(deviceNumber),
     adq(ADQControlUnit_GetADQ(adqCU, deviceNumber)),
@@ -379,7 +438,56 @@ bool ADQInterfaceWrapper::GetDataStreaming(void **targetBuffers, void **targetHe
     return this->adq->GetDataStreaming(targetBuffers, targetHeaders, channelMask, samplesAdded, headersAdded, headerStatus);
 }
 
+int ADQInterfaceWrapper::StartDataAcquisition()
+{
+    return this->adq->StartDataAcquisition();
+}
+
+int ADQInterfaceWrapper::StopDataAcquisition()
+{
+    return this->adq->StopDataAcquisition();
+}
+
+int64_t ADQInterfaceWrapper::WaitForRecordBuffer(int *channel, void **buffer, int timeout, ADQDataReadoutStatus *status)
+{
+    return this->adq->WaitForRecordBuffer(channel, buffer, timeout, status);
+
+}
+
+int ADQInterfaceWrapper::ReturnRecordBuffer(int channel, void *buffer)
+{
+    return this->adq->ReturnRecordBuffer(channel, buffer);
+
+}
+
+int ADQInterfaceWrapper::GetParameters(ADQParameterId id, void * const parameters)
+{
+    return this->adq->GetParameters(id, parameters);
+
+}
+
+int ADQInterfaceWrapper::SetParameters(void * const parameters)
+{
+    return this->adq->SetParameters(parameters);
+
+}
+
+int ADQInterfaceWrapper::InitializeParameters(ADQParameterId id, void * const parameters)
+{
+    return this->adq->InitializeParameters(id, parameters);
+}
+
 ADQInterfaceWrapper::~ADQInterfaceWrapper()
 {
     ADQControlUnit_DeleteADQ(this->adqCU, this->deviceNumber);
+}
+
+int ADQInterfaceWrapper::SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor)
+{
+    return this->adq->SetChannelSampleSkip(channel, skipfactor);
+}
+
+unsigned int ADQInterfaceWrapper::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
+{
+    return this->adq->SetupLevelTrigger(level, edge, resetLevel, channelMask, individualMode);
 }

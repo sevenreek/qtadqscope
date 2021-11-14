@@ -27,6 +27,10 @@ private:
     int triggerLevel = 0;
     int triggerReset = 0;
 
+    int triggerLevelArray[MAX_NOF_CHANNELS];
+    int triggerResetArray[MAX_NOF_CHANNELS];
+    int triggerEdgeArray[MAX_NOF_CHANNELS];
+
     unsigned short pretrigger = 0;
     unsigned short triggerDelay = 0;
 
@@ -101,6 +105,9 @@ public:
     QJsonObject toJson();
     int getTriggerReset() const;
     void setTriggerReset(int value);
+    int * getTriggerLevelArray();
+    int * getTriggerResetArray();
+    int * getTriggerEdgeArray ();
 };
 
 

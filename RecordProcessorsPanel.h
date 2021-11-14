@@ -14,13 +14,13 @@ class RecordProcessorsPanel : public QWidget, public DigitizerGUIComponent
 public:
     explicit RecordProcessorsPanel(QWidget *parent = nullptr);
     ~RecordProcessorsPanel();
-    void initialize(ApplicationContext * context);
-    void reloadUI();
+    void initialize(ApplicationContext * context) override;
+    void reloadUI() override;
 private:
     Ui::RecordProcessorsPanel *ui;
     ScopeUpdater *scopeUpdater;
     ApplicationContext *context;
-    std::unique_ptr<FileWriter> fileSaver = std::unique_ptr<FileWriter>(nullptr);
+    std::unique_ptr<IRecordProcessor> fileSaver = std::unique_ptr<IRecordProcessor>(nullptr);
     void autosetFileSaver();
     bool scopeUpdaterAdded = false;
     void autosetUpdateScope();

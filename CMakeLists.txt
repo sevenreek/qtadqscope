@@ -60,19 +60,12 @@ set(PROJECT_SOURCES
         main.cpp
         include/qcustomplot/qcustomplot.cpp
         include/qcustomplot/qcustomplot.h
-        BufferProcessor.cpp
-        BufferProcessor.h
         Semaphore.h
-        StreamingBuffers.cpp
-        StreamingBuffers.h
-        StreamingHeader.h
         RecordProcessor.h
         ScopeUpdater.cpp
         ScopeUpdater.h
         ApplicationContext.cpp
         ApplicationContext.h
-        AcquisitionThreads.cpp
-        AcquisitionThreads.h
         BinaryFileWriter.cpp
         BinaryFileWriter.h
         BuffersDialog.cpp
@@ -119,7 +112,10 @@ set(PROJECT_SOURCES
         FullCalibrationDialog.h
         FullCalibrationDialog.ui
         GUILogger.h
-        ThreadSafeQueue.h
+        MockADQAPIGen3Constants.h
+        BufferProcessorThread.h
+        BufferProcessorThread.cpp
+        ADQAPIIncluder.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

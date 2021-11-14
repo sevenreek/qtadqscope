@@ -127,16 +127,15 @@ bool CLIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
             this->fileSaver.reset();
         //break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY:
-            this->fileSaver = std::unique_ptr<FileWriter>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<IRecordProcessor>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<IRecordProcessor>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY:
-            this->fileSaver = std::unique_ptr<FileWriter>(new BufferedBinaryFileWriter(this->digitizer->getFileSizeLimit()));
-        break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BUFFERED_BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBufferedBinaryWriter(this->digitizer->getFileSizeLimit()));
+            spdlog::critical("Buffered file writers no longer supported.");
+            return false;
         break;
     }
     if(this->fileSaver)

@@ -6,25 +6,24 @@ struct SignalParameters {
     double average;
     double rms;
 };
-
+extern const double MAX_SAMPLE;
 class SignalParameterComputer : public IRecordProcessor
 {
 private:
     size_t bytesSaved;
     size_t sizeLimit;
-    short* dataBuffer;
     unsigned long long samplesSaved = 0;
     bool finished;
+    double avg = 0;
+    double rms = 0;
 public:
     explicit SignalParameterComputer(unsigned long long sizeLimit);
     ~SignalParameterComputer();
-    bool startNewAcquisition(Acquisition& config);
-    STATUS writeRecord(ADQRecordHeader* header, short* buffer, unsigned int length);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
-    STATUS writeContinuousBuffer(short* buffer, unsigned int length);
-    unsigned long long finish();
-    const char* getName();
-    unsigned long long getProcessedBytes();
+    bool startNewAcquisition(Acquisition& config) override;
+    STATUS processRecord(ADQRecord* record, size_t bufferSize) override;
+    unsigned long long finish() override;
+    const char* getName() override;
+    unsigned long long getProcessedBytes() override;
     std::unique_ptr<SignalParameters> getResults();
 };
 

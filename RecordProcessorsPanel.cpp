@@ -28,6 +28,12 @@ void RecordProcessorsPanel::initialize(ApplicationContext *context)
             this->autosetUpdateScope();
         }
     );
+    this->ui->softwareTrigger->connect(
+        this->ui->softwareTrigger, &QAbstractButton::clicked,
+        [=]() {
+            this->context->digitizer->SWTrig();
+        }
+    );
 }
 
 void RecordProcessorsPanel::reloadUI()
@@ -50,10 +56,10 @@ void RecordProcessorsPanel::autosetFileSaver()
             this->fileSaver.reset();
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY:
-            this->fileSaver = std::unique_ptr<FileWriter>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<IRecordProcessor>(new BinaryFileWriter(this->digitizer->getFileSizeLimit()));
         break;
         case ApplicationConfiguration::FILE_SAVE_MODES::BINARY_VERBOSE:
-            this->fileSaver = std::unique_ptr<FileWriter>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
+            this->fileSaver = std::unique_ptr<IRecordProcessor>(new VerboseBinaryWriter(this->digitizer->getFileSizeLimit()));
         break;
     }
     if(this->fileSaver)
@@ -85,5 +91,6 @@ RecordProcessorsPanel::~RecordProcessorsPanel()
 
 void RecordProcessorsPanel::enableVolatileSettings(bool enabled)
 {
-    this->ui->analysisSettingsContainer->setEnabled(enabled);
+    this->ui->updateScopeCB->setEnabled(enabled);
+    this->ui->fileTypeSelector->setEnabled(enabled);
 }

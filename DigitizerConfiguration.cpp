@@ -92,6 +92,7 @@ int Acquisition::getTriggerLevel() const
 void Acquisition::setTriggerLevel(int value)
 {
     triggerLevel = value;
+    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerLevelArray[ch] = value;
 }
 
 Acquisition Acquisition::fromJson(const QJsonObject &json)
@@ -107,9 +108,10 @@ Acquisition Acquisition::fromJson(const QJsonObject &json)
     returnValue.userLogicBypassMask     = json["ul_bypass"].toInt(0b11);
     returnValue.clockSource             = static_cast<CLOCK_SOURCES>(json["clock_source"].toInt(static_cast<int>(CLOCK_SOURCES::INTSRC_INTREF_10MHZ)));
     returnValue.triggerMode             = static_cast<TRIGGER_MODES>(json["trigger_mode"].toInt(static_cast<int>(TRIGGER_MODES::SOFTWARE)));
-    returnValue.triggerEdge             = static_cast<TRIGGER_EDGES>(json["trigger_edge"].toInt(static_cast<int>(TRIGGER_EDGES::RISING)));
+    returnValue.setTriggerEdge(           static_cast<TRIGGER_EDGES>(json["trigger_edge"].toInt(static_cast<int>(TRIGGER_EDGES::RISING))) );
     returnValue.triggerMask             = json["trigger_mask"].toInt(0b0001);
-    returnValue.triggerLevel            = json["trigger_level"].toInt(0);
+    returnValue.setTriggerLevel(          json["trigger_level"].toInt(0));
+    returnValue.setTriggerReset(          json["trigger_reset"].toInt(0));
     returnValue.triggerDelay            = json["trigger_delay"].toInt(0);
     returnValue.pretrigger              = json["pretrigger"].toInt(0);
     returnValue.recordCount             = json["record_count"].toInt(-1);
@@ -163,6 +165,7 @@ QJsonObject Acquisition::toJson()
     returnValue.insert("trigger_edge",      QJsonValue(int(this->triggerEdge)));
     returnValue.insert("trigger_mask",      QJsonValue(int(this->triggerMask)));
     returnValue.insert("trigger_level",     QJsonValue(int( this->triggerLevel)));
+    returnValue.insert("trigger_reset",     QJsonValue(int( this->triggerReset)));
     returnValue.insert("trigger_delay",     QJsonValue(int( this->triggerDelay)));
     returnValue.insert("pretrigger",        QJsonValue(int(this->pretrigger)));
     returnValue.insert("record_count",      QJsonValue(qint64(this->recordCount)));
@@ -186,6 +189,24 @@ int Acquisition::getTriggerReset() const
 void Acquisition::setTriggerReset(int value)
 {
     triggerReset = value;
+    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerResetArray[ch] = value;
+}
+
+int * Acquisition::getTriggerLevelArray()
+{
+    return triggerLevelArray;
+}
+
+
+int * Acquisition::getTriggerResetArray()
+{
+    return triggerResetArray;
+}
+
+
+int * Acquisition::getTriggerEdgeArray()
+{
+    return triggerEdgeArray;
 }
 
 void Acquisition::log()
@@ -318,6 +339,7 @@ TRIGGER_EDGES Acquisition::getTriggerEdge() const
 void Acquisition::setTriggerEdge(const TRIGGER_EDGES &value)
 {
     triggerEdge = value;
+    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerEdgeArray[ch] = value;
 }
 
 unsigned char Acquisition::getTriggerMask() const

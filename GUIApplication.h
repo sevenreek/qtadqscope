@@ -2,7 +2,6 @@
 #define GUIAPPLICATION_H
 #include "PrimaryWindow.h"
 #include "Digitizer.h"
-#include "StreamingHeader.h"
 #include "ApplicationContext.h"
 #include <QObject>
 #include <QApplication>
@@ -43,7 +42,7 @@ class CLIApplication : public ScopeApplication
 private:
     QTimer periodicUpdateTimer;
     QTimer fastUpdateTimer;
-    std::unique_ptr<FileWriter> fileSaver;
+    std::unique_ptr<IRecordProcessor> fileSaver;
 public:
     CLIApplication();
     bool start(ApplicationConfiguration cfg, Acquisition acq);

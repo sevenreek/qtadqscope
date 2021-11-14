@@ -1,11 +1,6 @@
 #ifndef ACQUISITIONTHREADS_H
 #define ACQUISITIONTHREADS_H
-#include "StreamingBuffers.h"
-#ifdef MOCK_ADQAPI
-    #include "MockADQAPI.h"
-#else
-    #include "ADQAPI.h"
-#endif
+#include "ADQAPIIncluder.h"
 #include <QObject>
 #include "QADQWrapper.h"
 #include "BufferProcessor.h"

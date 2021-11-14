@@ -11,12 +11,13 @@ private:
     QVector<double> x, y;
     unsigned long long sampleCount;
 public:
-    bool startNewAcquisition(Acquisition& config);
+    bool startNewAcquisition(Acquisition& config) override;
     ScopeUpdater(unsigned long long sampleCount);
-    STATUS processRecord(ADQRecordHeader* header, short* buffer, unsigned long sampleCount, int channel);
-    unsigned long long finish();
+    STATUS processRecord(ADQRecord* record, size_t bufferSize) override;
+    unsigned long long finish() override;
     void reallocate(unsigned long long sampleCount);
-    const char* getName();
+    const char* getName() override;
+    unsigned long long getProcessedBytes() override;
 signals:
     void onScopeUpdate(QVector<double> &x, QVector<double> y);
 };

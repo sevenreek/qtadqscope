@@ -1,7 +1,7 @@
 #ifndef MINIFIEDRECORDHEADER_H
 #define MINIFIEDRECORDHEADER_H
-#include "StreamingHeader.h"
 #include "DigitizerConfiguration.h"
+#include "ADQAPIIncluder.h"
 #include <cinttypes>
 #include <string>
 

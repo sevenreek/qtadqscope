@@ -55,6 +55,7 @@ void DMAChecker::runLoop()
         if(buffersFilled >= this->transferBufferCount-1) {
             if(this->adqDevice.GetStreamOverflow()) {
                 spdlog::error("STREAM OVERFLOW! Some samples will be lost!");
+                break;
             }
             else {
                 spdlog::warn("Filled {}/{} DMA buffers. Overflow likely soon!", buffersFilled, this->transferBufferCount);
