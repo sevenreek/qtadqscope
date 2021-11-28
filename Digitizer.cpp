@@ -29,7 +29,7 @@ void Digitizer::setDefaultCalibrationTable(const CalibrationTable &value)
 bool Digitizer::isStreamFullyStopped()
 {
     return this->bufferProcessorHandler->getLoopState() == BufferProcessor::STATE::INACTIVE ||
-           this->bufferProcessorHandler->getLoopState() == BufferProcessor::STATE::ERROR;
+           this->bufferProcessorHandler->getLoopState() == BufferProcessor::STATE::SERROR;
 }
 
 void Digitizer::joinThreads()
@@ -119,8 +119,7 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
             }
             acqParams.channel[ch].record_length = acq.getRecordLength();
         }
-        spdlog::debug("nof_records[{}] = {}", ch, acqParams.channel[ch].nof_records);
-        spdlog::debug("record_length[{}] = {}", ch, acqParams.channel[ch].record_length);
+
     }
     result = this->adq.SetParameters(&acqParams);
     if(result == ADQ_EINVAL) {spdlog::error("Invalid ADQDataAcquisitionParameters paramaters. Could not configure acquisition."); return false;}
@@ -183,9 +182,10 @@ void Digitizer::finishRecordProcessors()
 void Digitizer::handleAcquisitionFullyStopped()
 {
     if(this->currentState == DIGITIZER_STATE::READY) return;
+    spdlog::info("Completing acquisition.");
     this->finishRecordProcessors();
-    this->changeDigitizerState(DIGITIZER_STATE::READY);
     this->bufferProcessorHandler->reset();
+    this->changeDigitizerState(DIGITIZER_STATE::READY);
 }
 
 Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
@@ -200,14 +200,25 @@ Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
     this->bufferProcessorHandler->moveToThread(&this->ADQThread);
     connect(this, &Digitizer::acquisitionStarted, bufferProcessorHandler.get(), &BufferProcessor::startBufferProcessLoop, Qt::ConnectionType::QueuedConnection);
     connect(bufferProcessorHandler.get(), &BufferProcessor::stateChanged, this, &Digitizer::processorLoopStateChanged);
+    connect(bufferProcessorHandler.get(), &BufferProcessor::ramFillChanged, this, &Digitizer::ramFillChanged);
     this->ADQThread.start();
     this->acquisitionTimer.setSingleShot(true);
-    connect(&this->acquisitionTimer, &QTimer::timeout, this, &Digitizer::stopAcquisition);
+    connect(&this->acquisitionTimer, &QTimer::timeout, this, &Digitizer::stopAcquisition, Qt::ConnectionType::QueuedConnection);
 }
 
 Digitizer::~Digitizer()
 {
     this->joinThreads();
+}
+
+float Digitizer::getAverageThreadStarvation()
+{
+    return this->bufferProcessorHandler->getAverageThreadStarvation();
+}
+
+float Digitizer::getDeviceRamFillLevel()
+{
+    return this->bufferProcessorHandler->getRamFillLevel();
 }
 
 bool Digitizer::stopAcquisition()
@@ -245,8 +256,7 @@ bool Digitizer::runAcquisition()
 }
 void Digitizer::processorLoopStateChanged(BufferProcessor::STATE newState)
 {
-    spdlog::debug("Processor changed state to {}", newState);
-    if(newState == BufferProcessor::STATE::ERROR)
+    if(newState == BufferProcessor::STATE::SERROR)
     {
         this->stopAcquisition();
     }
@@ -320,6 +330,11 @@ void Digitizer::removeRecordProcessor(IRecordProcessor *rp)
 bool Digitizer::writeUserRegister(unsigned int ul, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *returval)
 {
     return this->adq.WriteUserRegister(ul, regnum, mask, data, returval);
+}
+
+bool Digitizer::readBlockUserRegister(unsigned int ul, unsigned int start, unsigned int *data, unsigned int numBytes, unsigned int options)
+{
+    return this->adq.ReadBlockUserRegister(ul, start, data, numBytes, options);
 }
 
 Digitizer::DIGITIZER_STATE Digitizer::getDigitizerState()
@@ -489,7 +504,7 @@ unsigned long long Digitizer::getLastBuffersFill()
 
 unsigned long long Digitizer::getQueueFill()
 {
-    return 0;
+    return this->bufferProcessorHandler->getRamFillLevel();
 }
 
 void Digitizer::setTriggerMode(Digitizer::DIGITIZER_TRIGGER_MODE triggerMode)

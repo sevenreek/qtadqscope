@@ -1,6 +1,6 @@
 #ifndef BUFFERPROCESSORTHREAD_H
 #define BUFFERPROCESSORTHREAD_H
-#include "QADQWrapper.h"
+#include "ADQInterfaceWrappers.h"
 #include "RecordProcessor.h"
 #include <vector>
 #include <list>
@@ -21,21 +21,24 @@ public:
         INACTIVE,
         ACTIVE,
         STOPPING,
-        ERROR,
+        SERROR,
     };
     //Q_ENUM(STATE)
     BufferProcessor::STATE getLoopState() const;
     void reset();
     void stop();
     float getRamFillLevel();
+    float getAverageThreadStarvation();
     void configureNewAcquisition(Acquisition &acq);
 public slots:
     void startBufferProcessLoop();
 private:
+    std::mutex stateMutex;
+    float threadStarved = 0.0f;
     unsigned long recordLength;
     bool isContinuous;
     int lastRAMFillLevel = 0;
-    BufferProcessor::STATE loopState;
+    BufferProcessor::STATE loopState = BufferProcessor::STATE::INACTIVE;
     unsigned long long recordsStored = 0;
     // record completion listeners
     std::list<IRecordProcessor*> &recordProcessors;

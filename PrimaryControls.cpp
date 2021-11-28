@@ -33,7 +33,7 @@ void PrimaryControls::reloadUI()
 }
 void PrimaryControls::resetFillIndicators()
 {
-    this->ui->DMAFillStatus->setValue(0);
+    this->ui->DMAFillStatusLabel->setText("---");
     this->ui->FileFillStatus->setValue(0);
     this->ui->RAMFillStatus->setValue(0);
 }
@@ -156,8 +156,9 @@ void PrimaryControls::periodicUIUpdate()
 {
     if(this->context->fileSaver)
         this->ui->FileFillStatus->setValue(100*double(this->context->fileSaver->getProcessedBytes())/this->digitizer->getFileSizeLimit());
-    this->ui->DMAFillStatus->setValue(100*double(this->digitizer->getLastBuffersFill())/(this->digitizer->getTransferBufferCount()-1));
-    this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getQueueFill())/this->digitizer->getTransferBufferQueueSize());
+    float starvation = this->digitizer->getAverageThreadStarvation();
+    this->ui->DMAFillStatusLabel->setText(starvation>0.5f?QString::fromStdString(fmt::format(" ⚠ STARVED ({:.2f})",starvation)):" ✔️ OK");
+    this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getDeviceRamFillLevel()));
 }
 
 

@@ -24,9 +24,11 @@ bool SignalParameterComputer::startNewAcquisition(Acquisition &config)
 IRecordProcessor::STATUS SignalParameterComputer::processRecord(ADQRecord* record, size_t bufferSize)
 {
     size_t length = bufferSize/sizeof(short);
+    //spdlog::debug("rECORD LEm = {}", length);
+    short* bp = reinterpret_cast<short*>(record->data);
     for(size_t i = 0; i < length; i++)
     {
-        this->avg += static_cast<double>(reinterpret_cast<short*>(record->data)[i]);
+        this->avg += static_cast<double>(bp[i]);
         this->rms += avg*avg;
     }
     this->samplesSaved += bufferSize;
@@ -44,9 +46,16 @@ std::unique_ptr<SignalParameters> SignalParameterComputer::getResults()
     std::unique_ptr<SignalParameters> result = std::unique_ptr<SignalParameters>(new SignalParameters());
     result->average = 0;
     result->rms = 0;
-    result->average = this->avg / this->samplesSaved;
-    result->rms = this->rms / this->samplesSaved;
-    result->rms = std::sqrt(result->rms);
+    if(this->samplesSaved)
+    {
+        result->average = this->avg / this->samplesSaved;
+        result->rms = this->rms / this->samplesSaved;
+        result->rms = std::sqrt(result->rms);
+    }
+    else
+    {
+        spdlog::warn("No samples were collected in calibration.");
+    }
     return result;
 }
 const char* SignalParameterComputer::getName()

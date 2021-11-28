@@ -74,6 +74,8 @@
     <addaction name="separator"/>
     <addaction name="actionDMA_Buffers"/>
     <addaction name="actionUser_logic"/>
+    <addaction name="separator"/>
+    <addaction name="actionTest_UL_registers"/>
    </widget>
    <addaction name="menuConfiguration"/>
   </widget>
@@ -101,6 +103,11 @@
   <action name="actionUser_logic">
    <property name="text">
     <string>User logic</string>
+   </property>
+  </action>
+  <action name="actionTest_UL_registers">
+   <property name="text">
+    <string>Test UL registers</string>
    </property>
   </action>
  </widget>

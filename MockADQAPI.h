@@ -33,6 +33,8 @@ private:
     short *sourceData[4] = {nullptr,nullptr,nullptr,nullptr};
     unsigned long remainingSamplesInRecord[4] = {0,0,0,0};
     unsigned long long recordNumber = 0;
+    ADQRecord record;
+    ADQRecordHeader header;
 public:
     static const unsigned long DEFAULT_BUFFER_SIZE;
     ADQInterface();
@@ -56,6 +58,7 @@ public:
     unsigned int SetGainAndOffset(unsigned char cahnnel, int Gain, int Offset);
     int SetTrigLevelResetValue(int val);
     int WriteUserRegister(int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval);
+    int ReadBlockUserRegister(int ulTarget, uint32_t startAddr, uint32_t *data, uint32_t numBytes, uint32_t options);
 
 
     unsigned int GetTransferBufferStatus(unsigned int * buffersFilled);

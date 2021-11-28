@@ -22,6 +22,7 @@ void BufferProcessor::stop()
 }
 void BufferProcessor::changeState(BufferProcessor::STATE newState)
 {
+    spdlog::debug("Changed state to {}", newState);
     this->loopState = newState;
     emit this->stateChanged(newState);
 }
@@ -32,7 +33,7 @@ void BufferProcessor::startBufferProcessLoop()
         spdlog::critical("Buffer Processor loop already active.");
         return;
     }
-    else if(this->loopState == BufferProcessor::STATE::ERROR)
+    else if(this->loopState == BufferProcessor::STATE::SERROR)
     {
         spdlog::critical("Buffer Processor entered error state and must be reset before starting.");
         return;
@@ -46,20 +47,18 @@ void BufferProcessor::startBufferProcessLoop()
         ADQDataReadoutStatus status;
         ADQRecord * record;
         bufferPayloadSize = this->adq.WaitForRecordBuffer(&channel, reinterpret_cast<void**>(&record), 0, &status);
+        this->threadStarved += static_cast<float>(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING);
+        this->threadStarved /= 2.0f;
         if(bufferPayloadSize < 0)
         {
             if(!this->handleWaitForRecordErrors(bufferPayloadSize) && this->loopState != BufferProcessor::STATE::STOPPING)
             {
-                this->changeState(BufferProcessor::STATE::ERROR);
+                this->changeState(BufferProcessor::STATE::SERROR);
                 continue;
             }
         }
         else if (bufferPayloadSize == 0)
         {
-            if(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING)
-            {
-                spdlog::warn("Thread is starved. Some data will be discarded.");
-            }
             if(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_INCOMPLETE)
             {
                 spdlog::warn("Record is incomplete and empty??");
@@ -69,9 +68,10 @@ void BufferProcessor::startBufferProcessLoop()
         else
         {
             //spdlog::debug("Got {} buffer", bufferPayloadSize);
-            if(!this->completeRecord(record, bufferPayloadSize))
-            {
-                enterErrorCondition();
+            if(this->loopState == BufferProcessor::STATE::ACTIVE) {
+                if(!this->completeRecord(record, bufferPayloadSize)) {
+                    enterErrorCondition();
+                }
             }
             this->adq.ReturnRecordBuffer(channel, record);
         }
@@ -95,10 +95,10 @@ BufferProcessor::STATE BufferProcessor::getLoopState() const
 bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
 {
     int ramFill = (record->header->RecordStatus & 0b01110000) >> 4;
+    lastRAMFillLevel = ramFill;
     if(ramFill != lastRAMFillLevel)
     {
-        lastRAMFillLevel = ramFill;
-        emit this->ramFillChanged(this->getRamFillLevel());
+        //emit this->ramFillChanged(this->getRamFillLevel());
     }
     if(this->recordLength != 0 && record->header->RecordLength != this->recordLength)
     {
@@ -114,11 +114,12 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
 }
 void BufferProcessor::enterErrorCondition()
 {
-    this->loopState = BufferProcessor::STATE::ERROR;
+    this->changeState(BufferProcessor::STATE::SERROR);
 }
 void BufferProcessor::reset()
 {
-    this->loopState = BufferProcessor::STATE::INACTIVE;
+    if(this->loopState == BufferProcessor::STATE::SERROR)
+        this->loopState = BufferProcessor::STATE::INACTIVE;
 }
 float BufferProcessor::getRamFillLevel()
 {
@@ -158,4 +159,9 @@ void BufferProcessor::configureNewAcquisition(Acquisition &acq)
     if(acq.getIsContinuous()) this->recordLength = 0;
     else this->recordLength = acq.getRecordLength();
     this->isContinuous = acq.getIsContinuous();
+}
+
+float BufferProcessor::getAverageThreadStarvation()
+{
+    return this->threadStarved;
 }

@@ -81,8 +81,8 @@ set(PROJECT_SOURCES
         CalibrationTable.h
         CalibrationTable.cpp
         MinifiedRecordHeader.h
-        QADQWrapper.cpp
-        QADQWrapper.h
+        ADQInterfaceWrappers.cpp
+        ADQInterfaceWrappers.h
         Digitizer.cpp
         Digitizer.h
         DigitizerConstants.h

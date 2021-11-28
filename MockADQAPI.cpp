@@ -176,12 +176,21 @@ int ADQInterface::StopDataAcquisition()
 
 int64_t ADQInterface::WaitForRecordBuffer(int *channel, void **buffer, int timeout, ADQDataReadoutStatus *status)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    status->flags = 0;
+    int recordChannel = *channel==ADQ_ANY_CHANNEL?0:*channel;
+    int recordLength = this->recordLength==ADQ_INFINITE_RECORD_LENGTH?1024:this->recordLength;
+    this->record.header = &this->header;
+    this->record.header->Channel = recordChannel;
+    this->record.header->RecordLength = recordLength;
+    this->record.header->RecordStatus = 0;
+    this->record.data = this->sourceData[recordChannel];
+    *buffer = &this->record;
+    return recordLength*sizeof(short);
 }
 
 int ADQInterface::ReturnRecordBuffer(int channel, void *buffer)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    return 1;
 }
 
 int ADQInterface::GetParameters(ADQParameterId id, void * const parameters)
@@ -191,26 +200,79 @@ int ADQInterface::GetParameters(ADQParameterId id, void * const parameters)
 
 int ADQInterface::SetParameters(void * const parameters)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    ADQDataAcquisitionParameters * acqp = (ADQDataAcquisitionParameters*)parameters;
+    ADQParameterId id = acqp->id;
+    switch(id)
+    {
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_ACQUISITION:
+        {
+            this->recordLength = acqp->channel[0].record_length;
+        }
+        break;
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_TRANSFER:
+            return sizeof(ADQDataTransferParameters);
+        break;
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_READOUT:
+            return sizeof(ADQDataReadoutParameters);
+        break;
+        default:
+            return 0;
+        break;
+    }
+    return 1;
 }
 
 int ADQInterface::InitializeParameters(ADQParameterId id, void * const parameters)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    switch(id)
+    {
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_ACQUISITION: {
+            ADQDataAcquisitionParameters * adap = reinterpret_cast<ADQDataAcquisitionParameters*>(parameters);
+            adap->id = ADQParameterId::ADQ_PARAMETER_ID_DATA_ACQUISITION;
+            for(int ch = 0; ch < ADQ_MAX_NOF_CHANNELS; ch++)
+            {
+                adap->channel[ch].horizontal_offset = 0;
+                adap->channel[ch].record_length = 0;
+                adap->channel[ch].nof_records = 0;
+                adap->channel[ch].trigger_source = ADQ_EVENT_SOURCE_SOFTWARE;
+                adap->channel[ch].trigger_edge = ADQ_EDGE_RISING;
+                adap->channel[ch].trigger_blocking_source = static_cast<enum ADQFunction>(0);
+            }
+            return sizeof(ADQDataAcquisitionParameters);
+        } break;
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_TRANSFER:
+            return sizeof(ADQDataTransferParameters);
+        break;
+        case ADQParameterId::ADQ_PARAMETER_ID_DATA_READOUT:
+            return sizeof(ADQDataReadoutParameters);
+        break;
+        default:
+            return 0;
+        break;
+    }
 }
 
 int ADQInterface::SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    return 1;
 }
 
 unsigned int ADQInterface::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    return 1;
 }
 int ADQInterface::WriteUserRegister(int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval)
 {
     *retval = data;
+    return 1;
+}
+
+int ADQInterface::ReadBlockUserRegister(int ulTarget, uint32_t startAddr, uint32_t *data, uint32_t numBytes, uint32_t options)
+{
+    for(size_t i=0; i < numBytes/4; i++)
+    {
+        data[i] = i;
+    }
     return 1;
 }
 

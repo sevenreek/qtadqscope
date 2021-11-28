@@ -39,6 +39,7 @@ private slots:
     void updateScope(QVector<double> &x, QVector<double> y);
     void autoSetTriggerLine();
     void onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state);
+    void testUserRegisters();
 };
 
 #endif // PRIMARYWINDOW_H

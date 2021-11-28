@@ -46,9 +46,11 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
     connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
+    connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
     connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
+    connect(this->ui->actionTest_UL_registers, &QAction::triggered, this, &PrimaryWindow::testUserRegisters);
 }
 
 PrimaryWindow::~PrimaryWindow()
@@ -152,5 +154,19 @@ void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         this->acqSettings->enableVolatileSettings(true);
         this->ui->centralwidget->setStyleSheet("#centralwidget {border: 0px solid red;}");
     }
-
+}
+const unsigned int REGISTER_TEST_REGCOUNT = 1<<13;
+void PrimaryWindow::testUserRegisters()
+{
+    unsigned int ul = 1;
+    unsigned int data[REGISTER_TEST_REGCOUNT];
+    auto start = std::chrono::high_resolution_clock::now();
+    this->context->digitizer->readBlockUserRegister(ul, 4, data, (REGISTER_TEST_REGCOUNT)*4, 1);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    spdlog::debug("Read {} registers. Time elapsed {} us.", REGISTER_TEST_REGCOUNT, duration.count());
+    for(size_t i=0; i < REGISTER_TEST_REGCOUNT; i++)
+    {
+        if(data[i] != i+4) spdlog::debug("Bad register read. Expceted {}, got {}.", i+4, data[i]);
+    }
 }

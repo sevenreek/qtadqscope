@@ -3,7 +3,7 @@
 #include <string>
 #include <QObject>
 #include "DigitizerConfiguration.h"
-#include "QADQWrapper.h"
+#include "ADQInterfaceWrappers.h"
 #include "RecordProcessor.h"
 #include <QThread>
 #include "BufferProcessorThread.h"
@@ -80,12 +80,15 @@ public slots:
 public:
     Digitizer(ADQInterfaceWrapper &digitizerWrapper);
     ~Digitizer();
+    float getAverageThreadStarvation();
+    float getDeviceRamFillLevel();
     bool runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibration);
     bool setAcquisition(const Acquisition acq);
     void appendRecordProcessor(IRecordProcessor *rp);
     void removeRecordProcessor(IRecordProcessor *rp);
 
     bool writeUserRegister(unsigned int ul, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *returval);
+    bool readBlockUserRegister(unsigned int ul, unsigned int start, unsigned int* data, unsigned int numBytes, unsigned int options);
 
     DIGITIZER_STATE getDigitizerState();
     DIGITIZER_TRIGGER_MODE getTriggerMode();
@@ -152,6 +155,7 @@ public:
     void setDefaultCalibrationTable(const CalibrationTable &value);
 
 signals:
+    void ramFillChanged(float ramFill);
     void acquisitionStarted();
     void digitizerStateChanged(DIGITIZER_STATE newState);
     void triggerModeChanged(DIGITIZER_TRIGGER_MODE newMode);

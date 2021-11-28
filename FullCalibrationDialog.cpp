@@ -236,7 +236,7 @@ Acquisition FullCalibrationDialog::acquisitionFromStage(const FullCalibrationSet
     acq.setSampleSkip(this->ui->sampleSkip->value());
     acq.setTransferBufferCount(32);
     acq.setTransferBufferSize(1UL*1024UL*1024UL);
-    acq.setTransferBufferQueueSize(1024);
+    acq.setTransferBufferQueueSize(256);
     acq.setDcBias(ch, 0);
     acq.setIsContinuous(true);
     acq.setRecordCount(Acquisition::INFINITE_RECORDS);
@@ -298,6 +298,7 @@ void FullCalibrationDialog::onStateChanged(Digitizer::DIGITIZER_STATE newState)
             this->ui->progressBar->setValue(100*this->currentSetupIndex/(int)this->setups.size());
 
             if(!this->runStage()) {
+                spdlog::error("Failed to start stage.");
                 this->stopAcquisitions();
             }
 

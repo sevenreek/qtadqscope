@@ -259,6 +259,7 @@ void AcquisitionChannelSettingsTab::reloadUI()
     this->invalidateTriggerLevels();
     this->ui->inputRange->setCurrentIndex(this->digitizer->getInputRange(this->channel));
     this->setDCOffset(this->digitizer->getDCBias(this->channel));
+    this->ui->triggerReset->setValue(this->digitizer->getTriggerReset());
 }
 
 void AcquisitionChannelSettingsTab::setChannelActive(bool act, bool exclusive)

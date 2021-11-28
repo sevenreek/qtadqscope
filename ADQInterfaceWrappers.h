@@ -30,6 +30,7 @@ public:
     virtual bool SetTransferBuffers(unsigned long count, unsigned long size);
     virtual bool SWTrig();
     virtual bool WriteUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *retval);
+    virtual bool ReadBlockUserRegister(int ulTarget, unsigned int startAddr, unsigned int * data, unsigned int numBytes, unsigned int options);
     virtual bool FlushDMA();
     virtual bool StartStreaming();
     virtual bool StopStreaming();
@@ -90,6 +91,7 @@ public:
     bool SetTransferBuffers(unsigned long count, unsigned long size) override;
     bool SWTrig() override;
     bool WriteUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *retval) override;
+    bool ReadBlockUserRegister(int ulTarget, unsigned int startAddr, unsigned int * data, unsigned int numBytes, unsigned int options) override;
     bool FlushDMA() override;
     bool StartStreaming() override;
     bool StopStreaming() override;
@@ -110,28 +112,6 @@ public:
     int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor) override;
     unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode) override;
 };
-class QADQWrapper : public QObject
-{
-    Q_OBJECT
-    bool streamActive = false;
-    Qt::ConnectionType threadSafeConnectionMode = Qt::QueuedConnection;
-    std::shared_ptr<ADQInterface> adq;
-public:
-    QADQWrapper(std::shared_ptr<ADQInterface> adq);
-public slots:
-    void setAdjustableBias(int channel, int code);
-    void setInputRange(int channel, float target, float *result);
-    void setLvlTrigEdge(int edge);
-    void setLvlTrigLevel(int level);
-    void setTrigLevelResetValue(int reset);
-    void SWTrig();
-    void writeUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *retval);
-    void flushDMA();
-    void startStreaming();
-    void stopStreaming();
-    void changeStreamState(bool streamActive);
-signals:
-    void streamStateChanged(bool streamActive);
-};
+
 
 #endif // QADQWRAPPER_H
