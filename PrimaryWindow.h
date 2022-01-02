@@ -9,6 +9,7 @@
 #include "FullCalibrationDialog.h"
 #include "BuffersDialog.h"
 #include "RegisterDialog.h"
+#include "SpectrumDialog.h"
 namespace Ui {
 class PrimaryWindow;
 }
@@ -31,6 +32,7 @@ private:
     std::unique_ptr<FullCalibrationDialog> calibrationDialog;
     std::unique_ptr<BuffersDialog> buffersDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
+    std::unique_ptr<SpectrumDialog> spectrumDialog;
 
 private slots:
     void openConfigSaveDialog();
@@ -39,7 +41,7 @@ private slots:
     void updateScope(QVector<double> &x, QVector<double> y);
     void autoSetTriggerLine();
     void onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state);
-    void testUserRegisters();
+    void openSpectrumAnalyzer();
 };
 
 #endif // PRIMARYWINDOW_H

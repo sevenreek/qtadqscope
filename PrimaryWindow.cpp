@@ -40,9 +40,11 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     this->calibrationDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this));
     this->buffersDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog(this));
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog(this));
+    this->spectrumDialog = std::unique_ptr<SpectrumDialog>(new SpectrumDialog(this));
     this->calibrationDialog->initialize(this->context);
     this->buffersDialog->initialize(this->context);
     this->registerDialog->initialize(this->context);
+    this->spectrumDialog->initialize(this->context);
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
     connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
@@ -50,7 +52,7 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
-    connect(this->ui->actionTest_UL_registers, &QAction::triggered, this, &PrimaryWindow::testUserRegisters);
+    connect(this->ui->actionSpectrumAnalyzer, &QAction::triggered, this, &PrimaryWindow::openSpectrumAnalyzer);
 }
 
 PrimaryWindow::~PrimaryWindow()
@@ -120,7 +122,7 @@ void PrimaryWindow::replot()
 
 void PrimaryWindow::updateScope(QVector<double> &x, QVector<double> y)
 {
-    this->ui->plotArea->graph(0)->setData(x,y);
+    this->ui->plotArea->graph(0)->setData(x,y, true);
     //this->mainWindow.ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
 }
@@ -155,18 +157,8 @@ void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         this->ui->centralwidget->setStyleSheet("#centralwidget {border: 0px solid red;}");
     }
 }
-const unsigned int REGISTER_TEST_REGCOUNT = 1<<13;
-void PrimaryWindow::testUserRegisters()
+void PrimaryWindow::openSpectrumAnalyzer()
 {
-    unsigned int ul = 1;
-    unsigned int data[REGISTER_TEST_REGCOUNT];
-    auto start = std::chrono::high_resolution_clock::now();
-    this->context->digitizer->readBlockUserRegister(ul, 4, data, (REGISTER_TEST_REGCOUNT)*4, 1);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    spdlog::debug("Read {} registers. Time elapsed {} us.", REGISTER_TEST_REGCOUNT, duration.count());
-    for(size_t i=0; i < REGISTER_TEST_REGCOUNT; i++)
-    {
-        if(data[i] != i+4) spdlog::debug("Bad register read. Expceted {}, got {}.", i+4, data[i]);
-    }
+    this->spectrumDialog->reloadUI();
+    this->spectrumDialog->show();
 }

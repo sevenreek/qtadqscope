@@ -58,64 +58,35 @@ include_directories(include/qcustomplot)
 
 set(PROJECT_SOURCES
         main.cpp
-        include/qcustomplot/qcustomplot.cpp
-        include/qcustomplot/qcustomplot.h
+        include/qcustomplot/qcustomplot.cpp include/qcustomplot/qcustomplot.h
         Semaphore.h
         RecordProcessor.h
-        ScopeUpdater.cpp
-        ScopeUpdater.h
-        ApplicationContext.cpp
-        ApplicationContext.h
-        BinaryFileWriter.cpp
-        BinaryFileWriter.h
-        BuffersDialog.cpp
-        BuffersDialog.h
-        BuffersDialog.ui
-        RegisterDialog.cpp
-        RegisterDialog.h
-        RegisterDialog.ui
-        SignalParameterComputer.cpp
-        SignalParameterComputer.h
-        MockADQAPI.cpp
-        MockADQAPI.h
-        CalibrationTable.h
-        CalibrationTable.cpp
+        ScopeUpdater.cpp ScopeUpdater.h
+        ApplicationContext.cpp ApplicationContext.h
+        BinaryFileWriter.cpp BinaryFileWriter.h
+        BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
+        RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
+        SignalParameterComputer.cpp SignalParameterComputer.h
+        MockADQAPI.cpp MockADQAPI.h
+        CalibrationTable.h CalibrationTable.cpp
         MinifiedRecordHeader.h
-        ADQInterfaceWrappers.cpp
-        ADQInterfaceWrappers.h
-        Digitizer.cpp
-        Digitizer.h
-        DigitizerConstants.h
-        DigitizerConfiguration.cpp
-        DigitizerConfiguration.h
-        util.h
-        util.cpp
-        AcquisitionChannelSettingsTab.cpp
-        AcquisitionChannelSettingsTab.h
-        AcquisitionChannelSettingsTab.ui
-        AcquisitionSettings.cpp
-        AcquisitionSettings.h
-        AcquisitionSettings.ui
-        PrimaryWindow.cpp
-        PrimaryWindow.h
-        PrimaryWindow.ui
-        PrimaryControls.cpp
-        PrimaryControls.h
-        PrimaryControls.ui
-        RecordProcessorsPanel.cpp
-        RecordProcessorsPanel.h
-        RecordProcessorsPanel.ui
-        GUIApplication.cpp
-        GUIApplication.h
+        ADQInterfaceWrappers.cpp ADQInterfaceWrappers.h
+        Digitizer.cpp Digitizer.h
+        DigitizerConstants.h DigitizerConfiguration.cpp DigitizerConfiguration.h
+        util.h util.cpp
+        AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
+        AcquisitionSettings.cpp AcquisitionSettings.h AcquisitionSettings.ui
+        PrimaryWindow.cpp PrimaryWindow.h PrimaryWindow.ui
+        PrimaryControls.cpp PrimaryControls.h PrimaryControls.ui
+        RecordProcessorsPanel.cpp RecordProcessorsPanel.h RecordProcessorsPanel.ui
+        GUIApplication.cpp GUIApplication.h
         DigitizerGUIComponent.h
-        FullCalibrationDialog.cpp
-        FullCalibrationDialog.h
-        FullCalibrationDialog.ui
+        FullCalibrationDialog.cpp FullCalibrationDialog.h FullCalibrationDialog.ui
         GUILogger.h
         MockADQAPIGen3Constants.h
-        BufferProcessorThread.h
-        BufferProcessorThread.cpp
+        BufferProcessorThread.h BufferProcessorThread.cpp
         ADQAPIIncluder.h
+        SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

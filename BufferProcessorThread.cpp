@@ -98,6 +98,7 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
     lastRAMFillLevel = ramFill;
     if(ramFill != lastRAMFillLevel)
     {
+        spdlog::debug("DRAM fill > {:.2f}%.", this->getRamFillLevel()*100.0f);
         //emit this->ramFillChanged(this->getRamFillLevel());
     }
     if(this->recordLength != 0 && record->header->RecordLength != this->recordLength)

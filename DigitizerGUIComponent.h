@@ -16,14 +16,8 @@ public:
         this->digitizer = context->digitizer;
         this->config = context->config;
     }
-    virtual void reloadUI()
-    {
-
-    }
-    virtual void enableVolatileSettings(bool enabled)
-    {
-
-    }
+    virtual void reloadUI() = 0;
+    virtual void enableVolatileSettings(bool enabled) = 0;
 };
 
 

@@ -75,7 +75,7 @@
     <addaction name="actionDMA_Buffers"/>
     <addaction name="actionUser_logic"/>
     <addaction name="separator"/>
-    <addaction name="actionTest_UL_registers"/>
+    <addaction name="actionSpectrumAnalyzer"/>
    </widget>
    <addaction name="menuConfiguration"/>
   </widget>
@@ -105,9 +105,9 @@
     <string>User logic</string>
    </property>
   </action>
-  <action name="actionTest_UL_registers">
+  <action name="actionSpectrumAnalyzer">
    <property name="text">
-    <string>Test UL registers</string>
+    <string>Spectrum analyzer</string>
    </property>
   </action>
  </widget>

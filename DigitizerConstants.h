@@ -17,6 +17,8 @@ const int PARALLEL_SAMPLES_STEP = 4;
 const std::string CHANNEL_ACTIVE_EMOJI = "▶️";
 const std::string TRIGGER_ACTIVE_EMOJI = "⚡";
 const std::string LOGGER_PATTERN = "[%T] %v";
+const unsigned int READ_USER_REGISTER_LIKE_RAM = 1;
+const unsigned int READ_USER_REGISTER_LIKE_FIFO = 0;
 enum LOGGING_LEVELS
 {
     DISABLED = 0,
