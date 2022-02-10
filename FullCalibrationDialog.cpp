@@ -212,7 +212,7 @@ bool FullCalibrationDialog::runStage()
     );
     this->currentCalibrationAcquisition = this->acquisitionFromStage(this->setups[this->currentSetupIndex]);
     bool success = true;
-    success &= this->digitizer->runOverridenAcquisition(this->currentCalibrationAcquisition, this->calibrationProcessorsList, this->calibrationTable);
+    success &= this->digitizer->runOverridenAcquisition(&this->currentCalibrationAcquisition, this->calibrationProcessorsList, this->calibrationTable);
     if(!success) {
         spdlog::debug("Calibration-acquisition failed to start.");
         this->ui->hintLabel->setText("Calibration failed.");

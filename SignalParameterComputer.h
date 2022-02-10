@@ -19,7 +19,7 @@ private:
 public:
     explicit SignalParameterComputer(unsigned long long sizeLimit);
     ~SignalParameterComputer();
-    bool startNewAcquisition(Acquisition& config) override;
+    bool startNewAcquisition(Acquisition* config) override;
     STATUS processRecord(ADQRecord* record, size_t bufferSize) override;
     unsigned long long finish() override;
     const char* getName() override;

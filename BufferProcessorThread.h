@@ -5,8 +5,8 @@
 #include <vector>
 #include <list>
 #include <QObject>
-
-
+#include <thread>
+#include <chrono>
 // RAM fill factor is specified on bits 4-6 of an ADQRecordHeader.
 // This gives an idea of how much RAM is filled on the ADQ board.
 extern const float RAM_FILL_LEVELS[];
@@ -29,7 +29,7 @@ public:
     void stop();
     float getRamFillLevel();
     float getAverageThreadStarvation();
-    void configureNewAcquisition(Acquisition &acq);
+    void configureNewAcquisition(Acquisition *acq);
 public slots:
     void startBufferProcessLoop();
 private:

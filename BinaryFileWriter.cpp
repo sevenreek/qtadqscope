@@ -21,13 +21,13 @@ unsigned long long BinaryFileWriter::getProcessedBytes()
 {
     return this->bytesSaved;
 }
-bool BinaryFileWriter::startNewAcquisition(Acquisition& config)
+bool BinaryFileWriter::startNewAcquisition(Acquisition* acq)
 {
-    this->channelMask = config.getChannelMask();
+    this->channelMask = acq->getChannelMask();
     this->bytesSaved = 0;
-    this->sizeLimit = config.getFileSizeLimit();
-    this->isContinuousStream = config.getIsContinuous();
-    this->expectedRecordLength = config.getRecordLength();
+    this->sizeLimit = acq->getFileSizeLimit();
+    this->isContinuousStream = acq->getIsContinuous();
+    this->expectedRecordLength = acq->getRecordLength();
     std::time_t t = std::time(nullptr); // get current time
     auto tm = *std::localtime(&t);
     for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
@@ -35,7 +35,7 @@ bool BinaryFileWriter::startNewAcquisition(Acquisition& config)
         if((1<<ch) & this->channelMask)
         {
             int adqch = ch+1;
-            std::string s_data = fmt::format("{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", config.getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, adqch);
+            std::string s_data = fmt::format("{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_ch{}.dat", acq->getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, adqch);
             s_data = removeIllegalFilenameChars(s_data, ILLEGAL_CHAR_REPLACE);
             const char* cstr = s_data.c_str();
             this->dataStream[ch].open(cstr, std::ios_base::binary | std::ios_base::out);
@@ -43,10 +43,10 @@ bool BinaryFileWriter::startNewAcquisition(Acquisition& config)
     }
     // save config
     std::string s_cfg = fmt::format(
-        "{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", config.getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
+        "{}_{:02d}{:02d}_{:02d}{:02d}{:02d}_cfg.json", acq->getTag(), tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
     );
     s_cfg = removeIllegalFilenameChars(s_cfg, ILLEGAL_CHAR_REPLACE);
-    QJsonObject json = config.toJson();
+    QJsonObject json = acq->toJson();
     QJsonDocument doc;
     doc.setObject(json);
     QFile cfgFile(QString::fromStdString(s_cfg));
@@ -131,16 +131,16 @@ const char *VerboseBinaryWriter::getName()
 }
 
 
-bool VerboseBinaryWriter::startNewAcquisition(Acquisition& config)
+bool VerboseBinaryWriter::startNewAcquisition(Acquisition* acq)
 {
-    this->BinaryFileWriter::startNewAcquisition(config); // call super
+    this->BinaryFileWriter::startNewAcquisition(acq); // call super
     for(int i = 0; i< MAX_NOF_CHANNELS; i++)
     {
         if((1<<i) & this->channelMask)
         {
             spdlog::debug("Writing minifed config(size={}) to stream for ch {}", sizeof(struct MinifiedAcquisitionConfiguration), i);
             spdlog::debug("Header size is {}", sizeof(MinifiedRecordHeader));
-            MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(config, i);
+            MinifiedAcquisitionConfiguration m = minifyAcquisitionConfiguration(*acq, i);
             this->dataStream[i].write(reinterpret_cast<char*>(&m), sizeof(struct MinifiedAcquisitionConfiguration));
         }
     }

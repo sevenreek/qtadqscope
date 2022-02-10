@@ -1,11 +1,7 @@
 #include "SpectrumDialog.h"
 #include "ui_SpectrumDialog.h"
 #include "DigitizerConstants.h"
-const unsigned int RESET_REGISTER = 0x05;
-const unsigned int FIRST_REGISTER = 0x08;
-const unsigned int REGISTER_COUNT = (1<<10);
-const unsigned int UL_TARGET = 1;
-const unsigned int CHANNEL_SOURCE = 1;
+#include "RegisterConstants.h"
 SpectrumDialog::SpectrumDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SpectrumDialog)
@@ -30,7 +26,7 @@ void SpectrumDialog::initialize(ApplicationContext *context)
     y.reserve(REGISTER_COUNT);
     for(size_t i = 0; i < REGISTER_COUNT; i++)
     {
-        x.append( i*(double)USHRT_MAX/REGISTER_COUNT/*-SHRT_MIN*/);
+        x.append( i/**(double)USHRT_MAX/REGISTER_COUNT-SHRT_MIN*/);
         y.append( 0 );
     }
     this->ui->plotArea->addGraph();
@@ -40,11 +36,27 @@ void SpectrumDialog::initialize(ApplicationContext *context)
     this->connect(this->ui->loadButton, &QAbstractButton::pressed, this, &SpectrumDialog::loadSpectrum);
     this->connect(this->ui->saveButton, &QAbstractButton::pressed, this, &SpectrumDialog::saveSpectrum);
     this->connect(this->ui->resetButton, &QAbstractButton::pressed, this, &SpectrumDialog::resetSpectrum);
+    this->connect(this->ui->setBoxcarTrigger, &QAbstractButton::pressed, this, &SpectrumDialog::setTriggerLevel);
+    this->connect(this->ui->debugButton, &QAbstractButton::pressed, this, &SpectrumDialog::debugSpectrum);
+    unsigned int retval;
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
 }
 
 void SpectrumDialog::enableVolatileSettings(bool enabled)
 {
 
+}
+
+void SpectrumDialog::debugSpectrum()
+{
+    unsigned int retval;
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~DEBUG_SPECTRUM_BIT, DEBUG_SPECTRUM_BIT, &retval); // debug pha
+    spdlog::debug("write debug 0x06 {:X}",retval);
+    this->context->digitizer->readUserRegister(UL_TARGET, 0x07, &retval);
+    spdlog::debug("write debug 0x07 {:X}",retval);
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~DEBUG_SPECTRUM_BIT, 0, &retval); // debug pha
+    spdlog::debug("reset debug 0x06 {:X}",retval);
+    std::unique_ptr<uint32_t[]> data(new uint32_t[REGISTER_COUNT]());
 }
 
 void SpectrumDialog::downloadSpectrum()
@@ -54,6 +66,7 @@ void SpectrumDialog::downloadSpectrum()
     this->context->digitizer->readBlockUserRegister(UL_TARGET, FIRST_REGISTER, data.get(), REGISTER_COUNT*sizeof(uint32_t), READ_USER_REGISTER_LIKE_RAM);
     for(size_t i = 0; i < REGISTER_COUNT; i++)
     {
+        //if(i%10==1) spdlog::debug("{} = {}",i, data[i]);
         y[i] = data[i];
     }
     this->ui->plotArea->graph(0)->setData(this->x, this->y, true);
@@ -116,9 +129,25 @@ void SpectrumDialog::resetSpectrum()
         y[i] = 0;
     }
     unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, RESET_REGISTER, 1, 1, &retval);
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, RESET_SPECTRUM_BIT, &retval);
+    spdlog::debug("reset set 0x06 {:X}",retval);
+    int timeToReset = ceil(4.0*REGISTER_COUNT/1000000); // 4 ns clock period
+    QTimer::singleShot(timeToReset, this, [=] {
+        unsigned int retval;
+        this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, 0, &retval);
+    });
+    spdlog::debug("reset reset 0x06 {:X}",retval);
     this->ui->plotArea->graph(0)->setData(this->x, this->y, true);
     this->ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
 }
 
+void SpectrumDialog::setTriggerLevel()
+{
+    int trigger = this->ui->boxcarTrigger->value();
+    unsigned int retval;
+    this->context->digitizer->writeUserRegister(UL_TARGET, TRIGGER_REGISTER, 0, trigger, &retval);
+    if(int(retval)!=trigger) {
+        spdlog::warn("Trigger not set properly. Should be {}. Returned {}.", trigger, int(retval));
+    }
+}

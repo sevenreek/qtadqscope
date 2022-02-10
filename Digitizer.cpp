@@ -1,5 +1,7 @@
 #include "Digitizer.h"
 #include "util.h"
+#include "RegisterConstants.h"
+const unsigned long Digitizer::ACQUISITION_DELAY = 2500;
 Acquisition Digitizer::getAcquisition() const
 {
     return defaultAcquisition;
@@ -39,17 +41,19 @@ void Digitizer::joinThreads()
     this->ADQThread.wait();
 }
 
-bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)
+bool Digitizer::configureAcquisition(
+        Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations
+)
 {
     int result;
     this->recordProcessors = recordProcessors;
     this->adq.StopDataAcquisition();
-    acq.log();
+    acq->log();
     //if(!this->adq.SetClockSource(acq.getClockSource())) {spdlog::error("SetClockSource failed."); return false;};
 
     for(int i = 0; i<2; i++)
     {
-        if(acq.getUserLogicBypassMask() & (1<<i))
+        if(acq->getUserLogicBypassMask() & (1<<i))
         {
             if(!this->adq.BypassUserLogic(i+1, 1)) {spdlog::error("BypassUserLogic failed"); return false;};
         }
@@ -61,19 +65,19 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     float res;
     for(int ch = 0; ch<MAX_NOF_CHANNELS; ch++)
     {
-        if(acq.getChannelMask() & (1<<ch))
+        if(acq->getChannelMask() & (1<<ch))
         {
             int adqch = ch + 1;
             if(!this->adq.SetInputRange(
                 adqch,
-                acq.getDesiredInputRange(ch),
+                acq->getDesiredInputRange(ch),
                 &res)
             ) {spdlog::error("SetInputRange failed."); return false;};
-            acq.setObtainedInputRange(ch, res);
-            acq.setAnalogOffset(ch, calibrations.analogOffset[ch][acq.getInputRange(ch)]);
-            acq.setDigitalOffset(ch, calibrations.digitalOffset[ch][acq.getInputRange(ch)]);
+            acq->setObtainedInputRange(ch, res);
+            acq->setAnalogOffset(ch, calibrations.analogOffset[ch][acq->getInputRange(ch)]);
+            acq->setDigitalOffset(ch, calibrations.digitalOffset[ch][acq->getInputRange(ch)]);
             int unclippedDCShift;
-            int clippedDCShift = acq.getTotalDCShift(ch, unclippedDCShift);
+            int clippedDCShift = acq->getTotalDCShift(ch, unclippedDCShift);
             if(clippedDCShift != unclippedDCShift) spdlog::warn("DC shift was clipped.");
             if(!this->adq.SetAdjustableBias(
                 adqch,
@@ -81,12 +85,12 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
             ) {spdlog::error("SetAdjustableBias failed."); return false;};
             if(!this->adq.SetGainAndOffset(
                 adqch,
-                acq.getDigitalGain(ch),
-                acq.getDigitalOffset(ch)
+                acq->getDigitalGain(ch),
+                acq->getDigitalOffset(ch)
             )) {spdlog::error("SetGainAndOffset failed."); return false;};
         }
     // GEN 3:
-        if(!this->adq.SetChannelSampleSkip(ch+1, acq.getSampleSkip())) {spdlog::error("SetChannelSampleSkip failed."); return false;};
+        if(!this->adq.SetChannelSampleSkip(ch+1, acq->getSampleSkip())) {spdlog::error("SetChannelSampleSkip failed."); return false;};
     }
     // still GEN 3:
     struct ADQDataAcquisitionParameters acqParams;
@@ -95,13 +99,13 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
 
     for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        acqParams.channel[ch].trigger_source = static_cast<ADQEventSource>(acq.getTriggerMode());
-        acqParams.channel[ch].horizontal_offset = -acq.getPretrigger() + acq.getTriggerDelay();
-        acqParams.channel[ch].trigger_edge = static_cast<ADQEdge>(acq.getTriggerEdge());
+        acqParams.channel[ch].trigger_source = static_cast<ADQEventSource>(acq->getTriggerMode());
+        acqParams.channel[ch].horizontal_offset = -acq->getPretrigger() + acq->getTriggerDelay();
+        acqParams.channel[ch].trigger_edge = static_cast<ADQEdge>(acq->getTriggerEdge());
 
-        if(acq.getIsContinuous())
+        if(acq->getIsContinuous())
         {
-            if(acq.getChannelMask() & (1<<ch)) {
+            if(acq->getChannelMask() & (1<<ch)) {
                 acqParams.channel[ch].nof_records = ADQ_INFINITE_NOF_RECORDS;
             }
             else {
@@ -111,13 +115,15 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
         }
         else
         {
-            if(acq.getChannelMask() & (1<<ch)) {
-                acqParams.channel[ch].nof_records = acq.getRecordCount()==Acquisition::INFINITE_RECORDS?ADQ_INFINITE_NOF_RECORDS:acq.getRecordCount();
+            if(acq->getChannelMask() & (1<<ch)) {
+                acqParams.channel[ch].nof_records =
+                        acq->getRecordCount()==Acquisition::INFINITE_RECORDS?
+                            ADQ_INFINITE_NOF_RECORDS:acq->getRecordCount();
             }
             else {
                 acqParams.channel[ch].nof_records = 0; // disables channel
             }
-            acqParams.channel[ch].record_length = acq.getRecordLength();
+            acqParams.channel[ch].record_length = acq->getRecordLength();
         }
 
     }
@@ -130,8 +136,8 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     {spdlog::error("InitializeDataTransferParameters failed."); return false;};
     for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        dtParams.channel[ch].nof_buffers = acq.getTransferBufferCount();
-        dtParams.channel[ch].record_buffer_size = acq.getTransferBufferSize();
+        dtParams.channel[ch].nof_buffers = acq->getTransferBufferCount();
+        dtParams.channel[ch].record_buffer_size = acq->getTransferBufferSize();
     }
     result = this->adq.SetParameters(&dtParams);
     if(result == ADQ_EINVAL) {spdlog::error("Invalid ADQDataTransferParameters paramaters. Could not configure acquisition."); return false;}
@@ -142,8 +148,8 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     {spdlog::error("InitializeDataReadoutParameters failed."); return false;};
     for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        roParams.channel[ch].nof_record_buffers_max = acq.getTransferBufferQueueSize();
-        if(acq.getIsContinuous())
+        roParams.channel[ch].nof_record_buffers_max = acq->getTransferBufferQueueSize();
+        if(acq->getIsContinuous())
         {
             roParams.channel[ch].incomplete_records_enabled = 1; // for continuous streaming there is just one header that never ends
         }
@@ -151,11 +157,11 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     result = this->adq.SetParameters(&roParams);
     if(result == ADQ_EINVAL) {spdlog::error("Invalid ADQDataReadoutParameters paramaters. Could not configure acquisition."); return false;}
     else if(result == ADQ_EIO) {spdlog::error("Could not configure ADQDataReadoutParameters parameters due to an I/O error."); return false;}
-    if(acq.getTriggerMode() == TRIGGER_MODES::LEVEL) {
+    if(acq->getTriggerMode() == TRIGGER_MODES::LEVEL) {
         if(!this->adq.SetupLevelTrigger(
-            acq.getTriggerLevelArray(),
-            acq.getTriggerEdgeArray(),
-            acq.getTriggerResetArray(),
+            acq->getTriggerLevelArray(),
+            acq->getTriggerEdgeArray(),
+            acq->getTriggerResetArray(),
             0,// the example uses 0 for some reason, acq.getChannelMask(),
             1 // indvidual mode == true,
         )){spdlog::error("SetupLevelTrigger failed."); return false;}
@@ -166,7 +172,10 @@ bool Digitizer::configureAcquisition(Acquisition &acq, std::list<IRecordProcesso
     {
         rp->startNewAcquisition(acq);
     }
-
+    this->acquisitionToStart = acq;
+    unsigned int retval;
+    this->writeUserRegister(UL_TARGET, DC_SHIFT_REGISTER, 0, acq->getDcBias(CHANNEL_SOURCE), &retval);
+    spdlog::debug("0x{:X} {}", DC_SHIFT_REGISTER, retval);
     spdlog::info("Configured acquisition successfully.");
     return true;
 }
@@ -185,7 +194,12 @@ void Digitizer::handleAcquisitionFullyStopped()
     spdlog::info("Completing acquisition.");
     this->finishRecordProcessors();
     this->bufferProcessorHandler->reset();
+    if(this->adq.GetStreamOverflow())
+    {
+        spdlog::warn("Overflow occured during acquisition! Some data might be missing.");
+    }
     this->changeDigitizerState(DIGITIZER_STATE::READY);
+
 }
 
 Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
@@ -198,12 +212,26 @@ Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
 {
     //qRegisterMetaType<BufferProcessor::STATE>();
     this->bufferProcessorHandler->moveToThread(&this->ADQThread);
-    connect(this, &Digitizer::acquisitionStarted, bufferProcessorHandler.get(), &BufferProcessor::startBufferProcessLoop, Qt::ConnectionType::QueuedConnection);
+    connect(
+        this,                           &Digitizer::acquisitionStarted,
+        bufferProcessorHandler.get(),   &BufferProcessor::startBufferProcessLoop,
+        Qt::ConnectionType::QueuedConnection
+    );
     connect(bufferProcessorHandler.get(), &BufferProcessor::stateChanged, this, &Digitizer::processorLoopStateChanged);
     connect(bufferProcessorHandler.get(), &BufferProcessor::ramFillChanged, this, &Digitizer::ramFillChanged);
     this->ADQThread.start();
     this->acquisitionTimer.setSingleShot(true);
-    connect(&this->acquisitionTimer, &QTimer::timeout, this, &Digitizer::stopAcquisition, Qt::ConnectionType::QueuedConnection);
+    connect(
+        &this->acquisitionTimer,    &QTimer::timeout,
+        this,                       &Digitizer::stopAcquisition,
+        Qt::ConnectionType::QueuedConnection
+    );
+    this->acquisitionStartDelayTimer.setInterval(Digitizer::ACQUISITION_DELAY);
+    this->acquisitionStartDelayTimer.setSingleShot(true);
+    this->acquisitionStartDelayTimer.connect(
+        &this->acquisitionStartDelayTimer,  &QTimer::timeout,
+        this,                               &Digitizer::onAcquisitionDelayEnd
+    );
 }
 
 Digitizer::~Digitizer()
@@ -224,6 +252,7 @@ float Digitizer::getDeviceRamFillLevel()
 bool Digitizer::stopAcquisition()
 {
     int result;
+    this->acquisitionStartDelayTimer.stop();
     this->acquisitionTimer.stop();
     this->bufferProcessorHandler->stop();
     result = this->adq.StopDataAcquisition();
@@ -247,12 +276,19 @@ bool Digitizer::stopAcquisition()
     {
         this->changeDigitizerState(DIGITIZER_STATE::STOPPING);
     }
+    unsigned int retval;
+    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
+    spdlog::debug("0x{:X} {}", PHA_CONTROL_REGISTER, retval);
     return true;
 }
 
 bool Digitizer::runAcquisition()
 {
-    return this->runOverridenAcquisition(this->defaultAcquisition, this->defaultRecordProcessors, this->defaultCalibrationTable);
+    return this->runOverridenAcquisition(
+        &this->defaultAcquisition,
+        this->defaultRecordProcessors,
+        this->defaultCalibrationTable
+    );
 }
 void Digitizer::processorLoopStateChanged(BufferProcessor::STATE newState)
 {
@@ -265,46 +301,59 @@ void Digitizer::processorLoopStateChanged(BufferProcessor::STATE newState)
         this->handleAcquisitionFullyStopped();
     }
 }
-
-bool Digitizer::runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations)
+void Digitizer::onAcquisitionDelayEnd()
 {
     int result;
-    if(this->currentState != DIGITIZER_STATE::READY) return false;
-    this->changeDigitizerState(DIGITIZER_STATE::STARTING);
-
-    if(!this->configureAcquisition(acq, recordProcessors, calibrations)) goto START_FAILED;
-    this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
     result = this->adq.StartDataAcquisition();
     if(result == ADQ_ENOTREADY)
     {
-        spdlog::error("Acqusition already active. Cannot start.");
-        goto START_FAILED;
+     spdlog::error("Acqusition already active. Cannot start.");
+     goto START_FAILED;
     }
     else if(result == ADQ_EINTERRUPTED)
     {
-        spdlog::error("Could not start acqusisition thread.");
-        goto START_FAILED;
+     spdlog::error("Could not start acqusisition thread.");
+     goto START_FAILED;
     }
     else if(result != ADQ_EOK)
     {
-        spdlog::critical("Could not start acquisition. Reason unknown.");
-        goto START_FAILED;
+     spdlog::critical("Could not start acquisition. Reason unknown.");
+     goto START_FAILED;
     }
-    if(acq.getIsContinuous()) this->adq.SWTrig();
+    if(this->acquisitionToStart->getIsContinuous()) this->adq.SWTrig();
     emit this->acquisitionStarted();
-    if(acq.getDuration())
+    if(this->acquisitionToStart->getDuration())
     {
-        this->acquisitionTimer.setInterval(acq.getDuration());
-        this->acquisitionTimer.start();
+     this->acquisitionTimer.setInterval(this->acquisitionToStart->getDuration());
+     this->acquisitionTimer.start();
     }
+    unsigned int retval;
+    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, ACTIVE_SPECTRUM_BIT, &retval);
+    spdlog::debug("0x{:X} {}", PHA_CONTROL_REGISTER, retval);
+    this->readUserRegister(UL_TARGET, 0x07, &retval);
+    spdlog::debug("0x{:X} {:X}", 0x07, retval);
     spdlog::info("Acquisition started!");
-    return true;
-
+    this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
+    return;
 START_FAILED:
     this->stopAcquisition();
     spdlog::error("Stream failed to start!");
     this->acquisitionTimer.stop();
-    return false;
+
+}
+
+bool Digitizer::runOverridenAcquisition(
+    Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations
+)
+{
+    if(this->currentState != DIGITIZER_STATE::READY) return false;
+    this->changeDigitizerState(DIGITIZER_STATE::STARTING);
+
+    if(!this->configureAcquisition(acq, recordProcessors, calibrations)) return false;
+    this->changeDigitizerState(DIGITIZER_STATE::STABILIZING);
+    spdlog::debug("Stabilizing... Acquisition will start in {} ms.", Digitizer::ACQUISITION_DELAY);
+    this->acquisitionStartDelayTimer.start();
+    return true;
 }
 
 bool Digitizer::setAcquisition(const Acquisition acq)
@@ -337,6 +386,10 @@ bool Digitizer::readBlockUserRegister(unsigned int ul, unsigned int start, unsig
     return this->adq.ReadBlockUserRegister(ul, start, data, numBytes, options);
 }
 
+bool Digitizer::readUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval)
+{
+    return this->adq.ReadUserRegister(ul, regnum, returval);
+}
 Digitizer::DIGITIZER_STATE Digitizer::getDigitizerState()
 {
     return this->currentState;

@@ -17,7 +17,7 @@ public:
     static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
-    bool startNewAcquisition(Acquisition& config) override;
+    bool startNewAcquisition(Acquisition* acq) override;
     STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
     unsigned long long finish() override;
     const char* getName() override;
@@ -31,7 +31,7 @@ public:
     STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
     ~VerboseBinaryWriter();
     const char* getName() override;
-    bool startNewAcquisition(Acquisition& config) override;
+    bool startNewAcquisition(Acquisition* acq) override;
 };
 
 

@@ -6,10 +6,6 @@
 #include <memory>
 #include "DigitizerGUIComponent.h"
 
-extern const unsigned int RESET_REGISTER;
-extern const unsigned int FIRST_REGISTER;
-extern const unsigned int REGISTER_COUNT;
-extern const unsigned int UL_TARGET;
 namespace Ui {
 class SpectrumDialog;
 }
@@ -35,6 +31,8 @@ private slots:
     void loadSpectrum();
     void saveSpectrum();
     void resetSpectrum();
+    void setTriggerLevel();
+    void debugSpectrum();
 };
 
 #endif // SPECTRUMDIALOG_H

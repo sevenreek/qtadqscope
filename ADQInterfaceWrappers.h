@@ -30,6 +30,7 @@ public:
     virtual bool SetTransferBuffers(unsigned long count, unsigned long size);
     virtual bool SWTrig();
     virtual bool WriteUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *retval);
+    virtual bool ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval);
     virtual bool ReadBlockUserRegister(int ulTarget, unsigned int startAddr, unsigned int * data, unsigned int numBytes, unsigned int options);
     virtual bool FlushDMA();
     virtual bool StartStreaming();
@@ -91,6 +92,7 @@ public:
     bool SetTransferBuffers(unsigned long count, unsigned long size) override;
     bool SWTrig() override;
     bool WriteUserRegister(unsigned int target, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *retval) override;
+    bool ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval) override;
     bool ReadBlockUserRegister(int ulTarget, unsigned int startAddr, unsigned int * data, unsigned int numBytes, unsigned int options) override;
     bool FlushDMA() override;
     bool StartStreaming() override;

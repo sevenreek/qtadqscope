@@ -30,15 +30,15 @@ IRecordProcessor::STATUS ScopeUpdater::processRecord(ADQRecord* record, size_t b
     emit this->onScopeUpdate(x, y); // scope must update from the GUI thread
     return STATUS::OK;
 }
-bool ScopeUpdater::startNewAcquisition(Acquisition& config)
+bool ScopeUpdater::startNewAcquisition(Acquisition* acq)
 {
-    if(config.getIsContinuous()) // continuous
+    if(acq->getIsContinuous()) // continuous
     {
-        this->reallocate(config.getTransferBufferSize()/sizeof(short));
+        this->reallocate(acq->getTransferBufferSize()/sizeof(short));
     }
     else
     {
-        this->reallocate(config.getRecordLength());
+        this->reallocate(acq->getRecordLength());
     }
     return true;
 }

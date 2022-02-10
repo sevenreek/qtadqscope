@@ -7,9 +7,18 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     context(context)
 {
     ui->setupUi(this);
+    std::string windowTitle = "ADQScope";
 #ifdef MOCK_ADQAPI
-    this->setWindowTitle("TEST ENVIRONMENT - MockQADQScope - TEST ENVIRONMENT");
+    windowTitle += " - MOCKADQAPI";
+    spdlog::warn("Using debug/mock version of the ADQAPI.");
 #endif
+#ifdef DEBUG_DMA_DELAY
+#if DEBUG_DMA_DELAY > 0
+    windowTitle += " - DEBUG SLOW DMA ENABLED";
+    spdlog::warn("DMA transfers are purposefully slowed down in this version for debugging purposes! If this is not intentional rebuild the application with DEBUG_DMA_DELAY=0");
+#endif
+#endif
+    this->setWindowTitle(QString::fromStdString(windowTitle));
     this->primaryControls = this->ui->primaryControls;
     this->primaryControls->initialize(this->context);
     this->acqSettings = ui->sideSettings;

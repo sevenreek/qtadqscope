@@ -22,7 +22,7 @@ void BufferProcessor::stop()
 }
 void BufferProcessor::changeState(BufferProcessor::STATE newState)
 {
-    spdlog::debug("Changed state to {}", newState);
+    //spdlog::debug("Changed state to {}", newState);
     this->loopState = newState;
     emit this->stateChanged(newState);
 }
@@ -46,6 +46,15 @@ void BufferProcessor::startBufferProcessLoop()
                                        // is passed as a pointer, so the actual channel is returned
         ADQDataReadoutStatus status;
         ADQRecord * record;
+
+#ifdef DEBUG_DMA_DELAY
+#if DEBUG_DMA_DELAY > 0
+        /////////////////////////////////////// // THIS IS AN ARTIFIICAL DELAY FOR TESTING OVERFLOWS.
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(std::chrono::duration<std::chrono::milliseconds>(DEBUG_DMA_DELAY));
+        /////////////////////////////////////// //  ENSURE THAT IT IS DISABLED IN PRODUCTION!
+#endif
+#endif
         bufferPayloadSize = this->adq.WaitForRecordBuffer(&channel, reinterpret_cast<void**>(&record), 0, &status);
         this->threadStarved += static_cast<float>(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING);
         this->threadStarved /= 2.0f;
@@ -103,7 +112,8 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
     }
     if(this->recordLength != 0 && record->header->RecordLength != this->recordLength)
     {
-        spdlog::warn("Obtained record with bad length. this={} header={} buffer={}", this->recordLength, record->header->RecordLength, bufferSize/sizeof(short));
+        spdlog::warn("Obtained record(#{}) with bad length. this={} header={} buffer={}. status={:#B}", record->header->RecordNumber, this->recordLength, record->header->RecordLength, bufferSize/sizeof(short), record->header->RecordStatus);
+        spdlog::warn("Overflow: {}", this->adq.GetStreamOverflow());
         return true;
         //record->header->RecordLength = this->recordLength;
     }
@@ -155,11 +165,11 @@ bool BufferProcessor::handleWaitForRecordErrors(long long returnValue)
     return true;
 }
 
-void BufferProcessor::configureNewAcquisition(Acquisition &acq)
+void BufferProcessor::configureNewAcquisition(Acquisition *acq)
 {
-    if(acq.getIsContinuous()) this->recordLength = 0;
-    else this->recordLength = acq.getRecordLength();
-    this->isContinuous = acq.getIsContinuous();
+    if(acq->getIsContinuous()) this->recordLength = 0;
+    else this->recordLength = acq->getRecordLength();
+    this->isContinuous = acq->getIsContinuous();
 }
 
 float BufferProcessor::getAverageThreadStarvation()

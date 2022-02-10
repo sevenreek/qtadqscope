@@ -59,7 +59,7 @@ public:
     int SetTrigLevelResetValue(int val);
     int WriteUserRegister(int ul_target, unsigned int regnum, unsigned int mask , unsigned int data, unsigned int *retval);
     int ReadBlockUserRegister(int ulTarget, uint32_t startAddr, uint32_t *data, uint32_t numBytes, uint32_t options);
-
+    int ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval);
 
     unsigned int GetTransferBufferStatus(unsigned int * buffersFilled);
     int GetStreamOverflow();

@@ -16,6 +16,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 option(MOCK_ADQAPI "Use a mock ADQ library" ON)
 option(LINUX_BUILD "Build on Linux" OFF)
+option(DEBUG_DMA_DELAY "Add delay to DMA transfers for overflow investigation" OFF)
 
 if(USE_ASAN)
     set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
@@ -26,10 +27,12 @@ endif()
 if(LINUX_BUILD)
     add_compile_definitions(LINUX)
     message(STATUS "Linux build")
-    #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    #set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
+if(DEBUG_DMA_DELAY)
+    add_compile_definitions(DEBUG_DMA_DELAY=${DEBUG_DMA_DELAY})
+    message(WARNING "Using delayed DMA transfers. This is only for forcing overflows!")
+endif()
 # QtCreator supports the following variables for Android, which are identical to qmake Android variables.
 # Check https://doc.qt.io/qt/deployment-android.html for more information.
 # They need to be set before the find_package( ...) calls below.
@@ -87,6 +90,7 @@ set(PROJECT_SOURCES
         BufferProcessorThread.h BufferProcessorThread.cpp
         ADQAPIIncluder.h
         SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
+        RegisterConstants.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -103,6 +103,7 @@ void PrimaryControls::primaryButtonClicked()
     switch(this->digitizer->getDigitizerState())
     {
         case Digitizer::DIGITIZER_STATE::ACTIVE:
+        case Digitizer::DIGITIZER_STATE::STABILIZING:
             this->ui->streamStartStopButton->setEnabled(false);
             this->digitizer->stopAcquisition();
         break;
@@ -148,6 +149,10 @@ void PrimaryControls::digitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         case Digitizer::DIGITIZER_STATE::STARTING:
             this->ui->streamStartStopButton->setEnabled(false);
             this->ui->streamStatusLabel->setText("STARTING");
+        break;
+        case Digitizer::DIGITIZER_STATE::STABILIZING:
+            this->ui->streamStartStopButton->setEnabled(true);
+            this->ui->streamStatusLabel->setText("STABILIZING");
         break;
     }
 }

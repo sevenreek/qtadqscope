@@ -11,7 +11,7 @@ SignalParameterComputer::~SignalParameterComputer()
 {
 
 }
-bool SignalParameterComputer::startNewAcquisition(Acquisition &config)
+bool SignalParameterComputer::startNewAcquisition(Acquisition *acq)
 {
     this->finished = false;
     this->samplesSaved = 0;

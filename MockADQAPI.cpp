@@ -149,7 +149,7 @@ unsigned int ADQInterface::GetTransferBufferStatus(unsigned int * buffersFilled)
 }
 int ADQInterface::GetStreamOverflow()
 {
-    return 1;
+    return 0;
 }
 unsigned int ADQInterface::SetGainAndOffset(unsigned char cahnnel, int Gain, int Offset)
 {
@@ -275,7 +275,10 @@ int ADQInterface::ReadBlockUserRegister(int ulTarget, uint32_t startAddr, uint32
     }
     return 1;
 }
-
+int ADQInterface::ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval)
+{
+    return 0;
+}
 int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask, unsigned int* samplesAdded, unsigned int * headersAdded, unsigned int * headerStatus)
 {
 

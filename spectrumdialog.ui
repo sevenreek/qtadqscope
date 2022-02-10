@@ -53,7 +53,31 @@
      <item>
       <widget class="QPushButton" name="resetButton">
        <property name="text">
-        <string>Reset FPGA</string>
+        <string>Reset spectrum</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="boxcarTrigger">
+       <property name="minimum">
+        <number>-32767</number>
+       </property>
+       <property name="maximum">
+        <number>32767</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="setBoxcarTrigger">
+       <property name="text">
+        <string>Set boxcar trigger</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="debugButton">
+       <property name="text">
+        <string>Debug</string>
        </property>
       </widget>
      </item>

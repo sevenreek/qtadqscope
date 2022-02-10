@@ -17,6 +17,7 @@ public:
     enum DIGITIZER_STATE {
         READY,
         STARTING,
+        STABILIZING,
         STOPPING,
         ACTIVE
     };
@@ -29,7 +30,7 @@ public:
         EXTERNAL2,
         EXTERNAL3
     };
-
+    static const unsigned long ACQUISITION_DELAY;
 
     Q_ENUM(DIGITIZER_TRIGGER_MODE)
     Q_ENUM(DIGITIZER_STATE)
@@ -61,18 +62,22 @@ private:
     std::list<IRecordProcessor*> &recordProcessors;
     ADQInterfaceWrapper &adq;
     Acquisition defaultAcquisition;
+    Acquisition * acquisitionToStart = nullptr;
     DIGITIZER_STATE currentState = DIGITIZER_STATE::READY;
     DIGITIZER_TRIGGER_MODE currentTriggerMode = DIGITIZER_TRIGGER_MODE::CONTINUOUS;
     void changeDigitizerState(DIGITIZER_STATE newState);
     std::unique_ptr<BufferProcessor> bufferProcessorHandler;
     QThread ADQThread;
     QTimer acquisitionTimer;
+    QTimer acquisitionStartDelayTimer;
     CalibrationTable defaultCalibrationTable;
     bool isStreamFullyStopped();
     void joinThreads();
-    bool configureAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
+    bool configureAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
     void finishRecordProcessors();
     void handleAcquisitionFullyStopped();
+private slots:
+    void onAcquisitionDelayEnd();
 public slots:
     bool stopAcquisition();
     bool runAcquisition();
@@ -82,13 +87,15 @@ public:
     ~Digitizer();
     float getAverageThreadStarvation();
     float getDeviceRamFillLevel();
-    bool runOverridenAcquisition(Acquisition &acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibration);
+    bool runOverridenAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibration);
     bool setAcquisition(const Acquisition acq);
     void appendRecordProcessor(IRecordProcessor *rp);
     void removeRecordProcessor(IRecordProcessor *rp);
 
     bool writeUserRegister(unsigned int ul, unsigned int regnum, unsigned int mask, unsigned int data, unsigned int *returval);
     bool readBlockUserRegister(unsigned int ul, unsigned int start, unsigned int* data, unsigned int numBytes, unsigned int options);
+    bool readUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval);
+
 
     DIGITIZER_STATE getDigitizerState();
     DIGITIZER_TRIGGER_MODE getTriggerMode();

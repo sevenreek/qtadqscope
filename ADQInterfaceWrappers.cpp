@@ -103,6 +103,11 @@ bool MutexADQWrapper::ReadBlockUserRegister(int ulTarget, unsigned int startAddr
     return ADQInterfaceWrapper::ReadBlockUserRegister(ulTarget, startAddr, data, numBytes, options);
 }
 
+bool MutexADQWrapper::ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::ReadUserRegister(ul, regnum, returval);
+}
 bool MutexADQWrapper::FlushDMA()
 {
     std::lock_guard<std::mutex> lck(this->mutex);
@@ -297,7 +302,10 @@ bool ADQInterfaceWrapper::ReadBlockUserRegister(int ulTarget, unsigned int start
 {
     return this->adq->ReadBlockUserRegister(ulTarget, startAddr, data, numBytes, options);
 }
-
+bool ADQInterfaceWrapper::ReadUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval)
+{
+    return this->adq->ReadUserRegister(ul, regnum, returval);
+}
 bool ADQInterfaceWrapper::FlushDMA()
 {
     return this->adq->FlushDMA();
