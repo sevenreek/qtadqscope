@@ -91,6 +91,7 @@ set(PROJECT_SOURCES
         ADQAPIIncluder.h
         SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
         RegisterConstants.h
+        SpectrumPlotter.h SpectrumPlotter.cpp
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

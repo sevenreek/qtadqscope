@@ -17,11 +17,13 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
         this->x[s] = (s);
     }
     this->y.resize(sampleCount);
-    spdlog::debug("ScopeUpdater samlpes set to {}", sampleCount);
+    spdlog::debug("Sample count for {} is now {}", this->getName(), this->sampleCount);
+
 }
 IRecordProcessor::STATUS ScopeUpdater::processRecord(ADQRecord* record, size_t bufferSize)
 {
-    //spdlog::debug("Updating scope with {}. Vector size {}:{}", sampleCount, this->x.size(),this->y.size());
+    if(this->activeChannel != record->header->Channel)
+        return STATUS::OK;
     unsigned long maxSamples = std::min(bufferSize/sizeof(short), static_cast<size_t>(this->sampleCount));
     for(unsigned long s = 0; s < maxSamples; s++)
     {
@@ -54,6 +56,10 @@ const char* ScopeUpdater::getName()
 unsigned long long ScopeUpdater::getProcessedBytes()
 {
     return 0;
+}
+void ScopeUpdater::changeChannel(int ch)
+{
+    this->activeChannel = ch;
 }
 
 

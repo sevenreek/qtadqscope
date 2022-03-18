@@ -7,7 +7,7 @@ public:
     enum STATUS {
       OK=0,
       LIMIT_REACHED=1,
-      ERROR=2
+      ERRORED=2
     };
     virtual bool startNewAcquisition(Acquisition* acq) = 0;
     virtual STATUS processRecord(ADQRecord* record, size_t bufferSize) = 0;

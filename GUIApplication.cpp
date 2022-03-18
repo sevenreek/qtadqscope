@@ -81,8 +81,8 @@ bool GUIApplication::start(ApplicationConfiguration cfg, Acquisition acq)
         )
     );
     this->primaryWindow = std::unique_ptr<PrimaryWindow>(new PrimaryWindow(this->context.get()));
-    this->primaryWindow->reloadUI();
     this->primaryWindow->show();
+    this->primaryWindow->reloadUI();
     return true;
 }
 CLIApplication::CLIApplication()

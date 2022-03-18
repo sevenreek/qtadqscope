@@ -21,7 +21,7 @@ void AcquisitionSettings::reloadUI()
 {
     this->ui->recordProcessorsPanel->reloadUI();
     this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<0))?true:false);
-    this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<1))?true:false);
+    this->ui->bypassUL2->setChecked((this->digitizer->getUserLogicBypass()&(1<<1))?true:false);
     this->ui->acquisitionTag->setText(QString::fromStdString(this->digitizer->getAcquisitionTag()));
     this->ui->delay->setValue(this->digitizer->getTriggerDelay());
 
@@ -227,9 +227,25 @@ void AcquisitionSettings::handleTabChanged(int tab)
         this->handleSetChannelTriggerActive(tab, true);
     }
     this->tabs.at(tab)->reloadUI();
+    emit this->onChannelTabChanged(tab);
 }
 
 void AcquisitionSettings::handleSetChannelActive(int channel, bool active)
+{
+    if(this->config->getAllowMultichannel())
+    {
+        if(active) this->digitizer->setChannelMask(this->digitizer->getChannelMask() | (1<<channel));
+        else this->digitizer->setChannelMask(this->digitizer->getChannelMask() & ~(1<<channel));
+    }
+    else
+    {
+        this->digitizer->setChannelMask((1<<channel));
+    }
+    this->handleTabNameChange(channel, true);
+    this->lastActiveChannel = channel;
+}
+
+void AcquisitionSettings::handleSetScopeActive(int channel, bool active)
 {
     if(this->config->getAllowMultichannel())
     {

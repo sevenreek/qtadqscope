@@ -62,6 +62,7 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
     connect(this->ui->actionSpectrumAnalyzer, &QAction::triggered, this, &PrimaryWindow::openSpectrumAnalyzer);
+    connect(this->acqSettings, &AcquisitionSettings::onChannelTabChanged, this->primaryControls, &PrimaryControls::changePlotChannel);
 }
 
 PrimaryWindow::~PrimaryWindow()

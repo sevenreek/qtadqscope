@@ -20,6 +20,7 @@ public:
     void reloadUI();
     void initialize(ApplicationContext * context);
     static std::string calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip);
+    void enableVolatileSettings(bool enabled) override;
 private:
     int lastActiveChannel = 0;
     Ui::AcquisitionSettings *ui;
@@ -27,12 +28,13 @@ private:
 public slots:
     void handleTabChanged(int tab);
     void handleSetChannelActive(int channel, bool active);
+    void handleSetScopeActive(int channel, bool active);
     void handleSetChannelTriggerActive(int channel, bool active);
     void handleTabNameChange(int channel, bool recreateAll=false);
 
     // DigitizerGUIComponent interface
-public:
-    void enableVolatileSettings(bool enabled) override;
+signals:
+    void onChannelTabChanged(int tab);
 };
 
 #endif // ACQUISITIONSETTINGS_H

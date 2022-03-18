@@ -104,15 +104,20 @@ BufferProcessor::STATE BufferProcessor::getLoopState() const
 bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
 {
     int ramFill = (record->header->RecordStatus & 0b01110000) >> 4;
+    int lostData = (record->header->RecordStatus & 0b00001111) >> 0;
     lastRAMFillLevel = ramFill;
     if(ramFill != lastRAMFillLevel)
     {
         spdlog::debug("DRAM fill > {:.2f}%.", this->getRamFillLevel()*100.0f);
         //emit this->ramFillChanged(this->getRamFillLevel());
     }
-    if(this->recordLength != 0 && record->header->RecordLength != this->recordLength)
+    if(lostData)
     {
-        spdlog::warn("Obtained record(#{}) with bad length. this={} header={} buffer={}. status={:#B}", record->header->RecordNumber, this->recordLength, record->header->RecordLength, bufferSize/sizeof(short), record->header->RecordStatus);
+        spdlog::warn(
+            "Obtained record(#{}) with missing data - status={:#B}",
+            record->header->RecordNumber,
+            record->header->RecordStatus
+        );
         spdlog::warn("Overflow: {}", this->adq.GetStreamOverflow());
         return true;
         //record->header->RecordLength = this->recordLength;

@@ -20,6 +20,8 @@ public:
     void dumpAppConfig();
 public slots:
     void resetFillIndicators();
+    void changePlotChannel(int ch);
+    void allowChangePlotChannel(bool allow);
 private:
     std::shared_ptr<QGUILogSink_mt> logSink;
     Ui::PrimaryControls *ui;
@@ -29,7 +31,7 @@ private slots:
     void primaryButtonClicked();
     void digitizerStateChanged(Digitizer::DIGITIZER_STATE state);
     void periodicUIUpdate();
-
+    void onPlotChannelChanged(int ch);
 signals:
     void resetPlot();
 

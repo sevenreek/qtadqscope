@@ -105,12 +105,13 @@ IRecordProcessor::STATUS VerboseBinaryWriter::processRecord(ADQRecord *record, s
     else
     {
         MinifiedRecordHeader mh = minifyRecordHeader(*record->header);
-
+        /*
         if(mh.recordLength != this->expectedRecordLength)
         {
             spdlog::debug("Bad record detected in binaryfilewriter after minification, skipping; expected {} got {}",this->expectedRecordLength, mh.recordLength);
             return STATUS::OK;
         }
+        */
         this->dataStream[channel].write(reinterpret_cast<char*>(&mh), sizeof(MinifiedRecordHeader));
         this->bytesSaved += sizeof(MinifiedRecordHeader);
 

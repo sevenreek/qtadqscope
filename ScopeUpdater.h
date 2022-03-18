@@ -7,9 +7,10 @@
 class ScopeUpdater : public QObject, public IRecordProcessor
 {
     Q_OBJECT
-private:
+protected:
     QVector<double> x, y;
     unsigned long long sampleCount;
+    int activeChannel;
 public:
     bool startNewAcquisition(Acquisition* config) override;
     ScopeUpdater(unsigned long long sampleCount);
@@ -20,6 +21,8 @@ public:
     unsigned long long getProcessedBytes() override;
 signals:
     void onScopeUpdate(QVector<double> &x, QVector<double> y);
+public slots:
+    void changeChannel(int ch);
 };
 
 #endif // SCOPEUPDATER_H

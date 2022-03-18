@@ -58,28 +58,161 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="boxcarTrigger">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QSpinBox" name="boxcarTrigger">
+         <property name="minimum">
+          <number>-32767</number>
+         </property>
+         <property name="maximum">
+          <number>32767</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="setBoxcarTrigger">
+         <property name="text">
+          <string>Set boxcar trigger</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="useZCDTrigger">
+       <property name="text">
+        <string>Use ZCD trigger</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="enableSpectrumDMA">
+       <property name="text">
+        <string>Transfer spectra over DMA</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Plot channel</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="channelPlotSource">
+       <item>
+        <property name="text">
+         <string>Disabled</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CH1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CH2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CH3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CH4</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Spectrum bin count</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spectrumBinCount">
        <property name="minimum">
-        <number>-32767</number>
+        <number>16</number>
        </property>
        <property name="maximum">
-        <number>32767</number>
+        <number>4096</number>
+       </property>
+       <property name="singleStep">
+        <number>4</number>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="setBoxcarTrigger">
-       <property name="text">
-        <string>Set boxcar trigger</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QSpinBox" name="windowDuration">
+         <property name="suffix">
+          <string> ms</string>
+         </property>
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>65535</number>
+         </property>
+         <property name="singleStep">
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="setWindowDuration">
+         <property name="text">
+          <string>Set window</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="debugButton">
-       <property name="text">
-        <string>Debug</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Total count:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="totalCount">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Rate:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="pulseRate">
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
       <spacer name="verticalSpacer">

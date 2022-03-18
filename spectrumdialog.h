@@ -5,6 +5,8 @@
 #include "spdlog/spdlog.h"
 #include <memory>
 #include "DigitizerGUIComponent.h"
+#include "SpectrumPlotter.h"
+#include "RegisterConstants.h"
 
 namespace Ui {
 class SpectrumDialog;
@@ -24,8 +26,13 @@ public:
 private:
     QVector<double> x;
     QVector<double> y;
+    std::unique_ptr<SpectrumPlotter> plotter;
+    bool isPlotterActive = false;
     Ui::SpectrumDialog *ui;
     ApplicationContext * context;
+    int windowDuration = 0;
+    unsigned int spectrumBinCount = SPECTRUM_BIN_COUNT;
+    void loadConfigFromDevice();
 private slots:
     void downloadSpectrum();
     void loadSpectrum();
@@ -33,6 +40,14 @@ private slots:
     void resetSpectrum();
     void setTriggerLevel();
     void debugSpectrum();
+    void changeSpectrumDMAEnabled(int checked);
+    void changeUseZCDTrigger(int checked);
+    void changePlotChannel(int selection);
+    void changeSpectrumBinCount(int count);
+    void setSpectrumWindow();
+public slots:
+    void updateScope(QVector<double> &x, QVector<double> y);
+    void updateSpectrumCalculatedParams(unsigned long long totalCount);
 };
 
 #endif // SPECTRUMDIALOG_H
