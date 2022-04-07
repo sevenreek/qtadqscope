@@ -46,8 +46,6 @@ public:
     FILE_SAVE_MODES getFileSaveMode() const;
     void setFileSaveMode(const FILE_SAVE_MODES &value);
 
-    bool getAllowMultichannel() const;
-    void setAllowMultichannel(bool value);
 
     bool getOffsetTriggerFromZero() const;
     void setOffsetTriggerFromZero(bool value);
@@ -63,7 +61,6 @@ private:
     unsigned int deviceNumber = 1;
     unsigned int periodicUpdatePeriod = 10;
     unsigned long dmaCheckMinimumTimeout = 500;
-    bool allowMultichannel = false;
     bool offsetTriggerFromZero = true;
     bool updateScopeEnabled = true;
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;

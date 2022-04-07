@@ -5,7 +5,7 @@
 #include <cinttypes>
 #include <string>
 
-const unsigned long CURRENT_VERSION = 1;
+const unsigned long CURRENT_VERSION = 2;
 
 #ifdef __GNUC__
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
@@ -19,13 +19,18 @@ struct MinifiedRecordHeader {
     uint32_t recordLength;
     uint32_t recordNumber;
     uint64_t timestamp;
+    uint16_t generalPurpose[2];
 };
 
 MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h);
 MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
 {
     MinifiedRecordHeader mrh;
-    mrh.recordLength = h.RecordLength; mrh.recordNumber = h.RecordNumber; mrh.timestamp = h.Timestamp;
+    mrh.recordLength = h.RecordLength;
+    mrh.recordNumber = h.RecordNumber;
+    mrh.timestamp = h.Timestamp;
+    mrh.generalPurpose[0] = h.GeneralPurpose0;
+    mrh.generalPurpose[1] = h.GeneralPurpose1;
     return mrh;
 }
 const unsigned int MAX_TAG_LENGTH = 128;

@@ -92,7 +92,22 @@ int Acquisition::getTriggerLevel() const
 void Acquisition::setTriggerLevel(int value)
 {
     triggerLevel = value;
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerLevelArray[ch] = value;
+}
+
+unsigned char Acquisition::verifyChannelMaskForSingularApproach(unsigned char channelMask)
+{
+    if(!isOnlyOneBitSet(channelMask))
+    {
+        unsigned char newMask = channelMask;
+        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++) {
+            if(channelMask & (1<<ch)) {
+                newMask = (1<<ch);
+                break;
+            }
+        }
+        return newMask;
+    }
+    return channelMask;
 }
 
 Acquisition Acquisition::fromJson(const QJsonObject &json)
@@ -118,6 +133,7 @@ Acquisition Acquisition::fromJson(const QJsonObject &json)
     returnValue.recordLength            = json["record_length"].toInt(256);
     returnValue.channelMask             = json["channel_mask"].toInt(0b0001);
     returnValue.sampleSkip              = json["sample_skip"].toInt(1);
+    returnValue.spectroscopeEnabled     = json["spectroscope_enabled"].toBool(true);
     for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
         returnValue.inputRange.at(ch) = static_cast<INPUT_RANGES>(
@@ -146,6 +162,42 @@ Acquisition Acquisition::fromJson(const QJsonObject &json)
                 json["obtained_range"].toArray().at(ch).toDouble(5000)
                 :5000;
     }
+    returnValue.triggerApproach = static_cast<TRIGGER_APPROACHES>(json["trigger_approach"].toInt(0));
+    if(returnValue.triggerApproach == TRIGGER_APPROACHES::SINGLE)
+    {
+        unsigned char properTriggerMask = Acquisition::verifyChannelMaskForSingularApproach(returnValue.triggerMask);
+        unsigned char properChannelMask = Acquisition::verifyChannelMaskForSingularApproach(returnValue.channelMask);
+
+        if(properChannelMask != returnValue.channelMask)
+        {
+            spdlog::warn(
+                "Loaded config has singular trigger approach ({}) but channel mask {:b}. Correcting mask to first set channel ({:b})",
+                returnValue.triggerApproach, returnValue.channelMask, properChannelMask
+            );
+            returnValue.channelMask = properChannelMask;
+        }
+        if(properTriggerMask != returnValue.triggerMask)
+        {
+            spdlog::warn(
+                "Loaded config has singular trigger approach ({}) but trigger mask {:b}. Correcting mask to first set channel ({:b})",
+                returnValue.triggerApproach, returnValue.triggerMask, properTriggerMask
+            );
+            returnValue.triggerMask = properTriggerMask;
+        }
+    }
+    else if (returnValue.triggerApproach >= TRIGGER_APPROACHES::CH1)
+    {
+        int shouldBeChannel = returnValue.triggerApproach - TRIGGER_APPROACHES::CH1;
+        if(returnValue.triggerMask != (1 << shouldBeChannel))
+        {
+            unsigned char newMask = (1 << shouldBeChannel);
+            spdlog::warn(
+                "Loaded config has one-channel trigger approach ({}) but trigger mask {:b}. Correcting mask to use only channel corresponding to approach ({:b})",
+                returnValue.triggerApproach, returnValue.triggerMask, newMask
+            );
+            returnValue.triggerMask = newMask;
+        }
+    }
     return returnValue;
 }
 
@@ -161,6 +213,7 @@ QJsonObject Acquisition::toJson()
     returnValue.insert("file_size",         QJsonValue(double(this->fileSizeLimit)));
     returnValue.insert("ul_bypass",         QJsonValue(int(this->userLogicBypassMask)));
     returnValue.insert("clock_source",      QJsonValue(int(this->clockSource)));
+    returnValue.insert("trigger_approach",  QJsonValue(int(this->triggerApproach)));
     returnValue.insert("trigger_mode",      QJsonValue(int(this->triggerMode)));
     returnValue.insert("trigger_edge",      QJsonValue(int(this->triggerEdge)));
     returnValue.insert("trigger_mask",      QJsonValue(int(this->triggerMask)));
@@ -178,6 +231,7 @@ QJsonObject Acquisition::toJson()
     returnValue.insert("digital_offset",    QJsonArray({this->digitalOffset.at(0), this->digitalOffset.at(1), this->digitalOffset.at(2), this->digitalOffset.at(3)}));
     returnValue.insert("analog_offset",     QJsonArray({this->analogOffset.at(0), this->analogOffset.at(1), this->analogOffset.at(2), this->analogOffset.at(3)}));
     returnValue.insert("obtained_range",    QJsonArray({this->obtainedInputRange.at(0), this->obtainedInputRange.at(1), this->obtainedInputRange.at(2), this->obtainedInputRange.at(3)}));
+    returnValue.insert("spectroscope_enabled", QJsonValue(this->spectroscopeEnabled));
     return returnValue;
 }
 
@@ -189,24 +243,26 @@ int Acquisition::getTriggerReset() const
 void Acquisition::setTriggerReset(int value)
 {
     triggerReset = value;
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerResetArray[ch] = value;
 }
 
-int * Acquisition::getTriggerLevelArray()
+TRIGGER_APPROACHES Acquisition::getTriggerApproach() const
 {
-    return triggerLevelArray;
+    return triggerApproach;
 }
 
-
-int * Acquisition::getTriggerResetArray()
+void Acquisition::setTriggerApproach(TRIGGER_APPROACHES newTriggerApproach)
 {
-    return triggerResetArray;
+    triggerApproach = newTriggerApproach;
 }
 
-
-int * Acquisition::getTriggerEdgeArray()
+bool Acquisition::getSpectroscopeEnabled() const
 {
-    return triggerEdgeArray;
+    return spectroscopeEnabled;
+}
+
+void Acquisition::setSpectroscopeEnabled(bool newSpectroscopeEnabled)
+{
+    spectroscopeEnabled = newSpectroscopeEnabled;
 }
 
 void Acquisition::log()
@@ -339,7 +395,6 @@ TRIGGER_EDGES Acquisition::getTriggerEdge() const
 void Acquisition::setTriggerEdge(const TRIGGER_EDGES &value)
 {
     triggerEdge = value;
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++) triggerEdgeArray[ch] = value;
 }
 
 unsigned char Acquisition::getTriggerMask() const
@@ -410,5 +465,19 @@ unsigned int Acquisition::getSampleSkip() const
 void Acquisition::setSampleSkip(unsigned int value)
 {
     sampleSkip = value;
+}
+unsigned int Acquisition::getPrimaryTriggerChannel() const
+{
+    int returnChannel = 0;
+    unsigned char mask = this->getTriggerMask();
+    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        if(mask & (1<<ch))
+        {
+            returnChannel = ch;
+            break;
+        }
+    }
+    return returnChannel;
 }
 

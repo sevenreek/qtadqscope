@@ -16,7 +16,6 @@ ApplicationConfiguration ApplicationConfiguration::fromJson(QJsonObject json)
     returnValue.uiLoggingLevel   = static_cast<LOGGING_LEVELS>(json["log_ui"]  .toInt(int(LOGGING_LEVELS::DEBUG)));
     returnValue.fileLoggingLevel = static_cast<LOGGING_LEVELS>(json["log_file"].toInt(int(LOGGING_LEVELS::DEBUG)));
 
-    returnValue.allowMultichannel = json["allow_multichannel"].toBool(false);
     returnValue.offsetTriggerFromZero = json["offset_from_zero"].toBool(true);
     returnValue.updateScopeEnabled = json["update_scope"].toBool(true);
 
@@ -33,7 +32,6 @@ QJsonObject ApplicationConfiguration::toJson()
     returnValue.insert("log_ui"  , this->uiLoggingLevel);
     returnValue.insert("log_file", this->fileLoggingLevel);
     returnValue.insert("file_saver", this->fileSaveMode);
-    returnValue.insert("allow_multichannel", this->allowMultichannel);
     returnValue.insert("offset_from_zero", this->offsetTriggerFromZero);
     returnValue.insert("update_scope", this->updateScopeEnabled);
     return returnValue;
@@ -49,15 +47,6 @@ void ApplicationConfiguration::setFileSaveMode(const FILE_SAVE_MODES &value)
     fileSaveMode = value;
 }
 
-bool ApplicationConfiguration::getAllowMultichannel() const
-{
-    return allowMultichannel;
-}
-
-void ApplicationConfiguration::setAllowMultichannel(bool value)
-{
-    allowMultichannel = value;
-}
 
 bool ApplicationConfiguration::getOffsetTriggerFromZero() const
 {

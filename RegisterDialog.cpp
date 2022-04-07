@@ -18,6 +18,19 @@ void RegisterDialog::initialize(ApplicationContext *context)
 {
     this->digitizer = context->digitizer;
     this->connect(this, &QDialog::accepted, this, &RegisterDialog::apply);
+    this->connect(this->ui->testReadSpeed, &QAbstractButton::pressed, this, [=]{
+        unsigned int data[1000];
+        auto start_time = std::chrono::high_resolution_clock::now();
+        for(int i = 0; i<10; i++)
+        {
+            this->digitizer->readBlockUserRegister(1, 10, data, 1000, READ_USER_REGISTER_LIKE_RAM);
+        }
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto time = end_time - start_time;
+        std::chrono::duration<double> timeSec = time;
+        double timeSecDouble = timeSec.count();
+        spdlog::info("Measured read speed is {}KB/s", 10*sizeof(unsigned int)/timeSecDouble);
+    });
 }
 
 void RegisterDialog::reloadUI()

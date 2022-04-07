@@ -15,9 +15,10 @@ public:
     explicit AcquisitionChannelSettingsTab(QWidget *parent = nullptr);
     ~AcquisitionChannelSettingsTab();
     void reloadUI() override;
-    void setChannelActive(bool act, bool exclusive=false);
-    void setTriggerActive(bool act, bool exclusive=false);
-    void setExclusive(bool exc);
+    void setChannelActive(bool act);
+    void setTriggerActive(bool act);
+    void setTriggerChangeAllowed(bool allowed);
+    void setActiveChangeAllowed(bool allowed);
     void setObtainedRange(double val);
     void initialize(ApplicationContext * context, int index);
     void enableVolatileSettings(bool enabled) override;

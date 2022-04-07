@@ -38,9 +38,9 @@ void AcquisitionSettings::reloadUI()
         this->ui->limitRecords->setChecked(false);
         this->ui->recordCount->setEnabled(false);
     }
-    if(isOnlyOneBitSet(this->digitizer->getChannelMask()))
+    this->ui->triggeringApproach->setCurrentIndex(this->digitizer->getTriggerApproach());
+    if(isOnlyOneBitSet(this->digitizer->getChannelMask())) // switch tab to the only active channel
     {
-        this->ui->enableMultichannel->setChecked(this->config->getAllowMultichannel());
         int index = 0;
         for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
         {
@@ -50,11 +50,6 @@ void AcquisitionSettings::reloadUI()
             }
         }
         this->ui->channelTabs->setCurrentIndex(index);
-    }
-    else
-    {
-        this->config->setAllowMultichannel(true);
-        this->ui->enableMultichannel->setChecked(true);
     }
     for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
     {
@@ -72,39 +67,39 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
         tabs.at(ch)->initialize(context, ch);
         this->ui->channelTabs->addTab(tabs.at(ch).get(), QString::fromStdString(fmt::format("CH{}",ch+1)));
     }
-    this->ui->bypassUL1->connect(
+    this->connect(
         this->ui->bypassUL1, &QCheckBox::stateChanged,
         this, [=](int state){
             if(state) this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() | 0b01);
             else this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() & ~0b01);
         }
     );
-    this->ui->bypassUL2->connect(
+    this->connect(
         this->ui->bypassUL2, &QCheckBox::stateChanged,
         this, [=](int state){
             if(state) this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() | 0b10);
             else this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() & ~0b10);
         }
     );
-    this->ui->delay->connect(
+    this->connect(
         this->ui->delay, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val) {
             this->digitizer->setTriggerDelay(val);
         }
     );
-    this->ui->pretrigger->connect(
+    this->connect(
         this->ui->pretrigger, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val) {
             this->digitizer->setPretrigger(val);
         }
     );
-    this->ui->recordLength->connect(
+    this->connect(
         this->ui->recordLength, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val) {
             this->digitizer->setRecordLength(val);
         }
     );
-    this->ui->recordCount->connect(
+    this->connect(
         this->ui->recordCount, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val){
             if(this->ui->limitRecords->isChecked())
@@ -117,7 +112,7 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             }
         }
     );
-    this->ui->sampleSkip->connect(
+    this->connect(
         this->ui->sampleSkip, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
         this, [=](int val){
             if(val == 3)
@@ -129,7 +124,7 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             this->ui->frequency->setText(QString::fromStdString(this->calculateFrequency(MAX_SAMPLING_RATE, val)));
         }
     );
-    this->ui->limitRecords->connect(
+    this->connect(
         this->ui->limitRecords, &QCheckBox::stateChanged,
         this, [=](int state){
             if(state)
@@ -144,33 +139,19 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             }
         }
     );
-    this->ui->triggerMode->connect(
+    this->connect(
         this->ui->triggerMode,
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-            [=](int index){ this->digitizer->setTriggerMode(static_cast<Digitizer::DIGITIZER_TRIGGER_MODE>(index));}
+        this,
+        [=](int index){ this->digitizer->setTriggerMode(static_cast<Digitizer::DIGITIZER_TRIGGER_MODE>(index));}
     );
-    this->ui->enableMultichannel->connect(
-        this->ui->enableMultichannel, &QCheckBox::stateChanged,
-        [=](int state) {
-            this->config->setAllowMultichannel(state?true:false);
-            if(!state)
-            {
-                this->tabs.at(this->ui->channelTabs->currentIndex())->setTriggerActive(true, true);
-                this->tabs.at(this->ui->channelTabs->currentIndex())->setChannelActive(true, true);
-                this->handleSetChannelActive(this->ui->channelTabs->currentIndex(), true);
-                this->handleSetChannelTriggerActive(this->ui->channelTabs->currentIndex(), true);
-                this->tabs.at(this->ui->channelTabs->currentIndex())->setExclusive(true);
-            }
-            else if(state)
-            {
-                for(size_t ch=0; ch < this->tabs.size(); ch++)
-                {
-                    this->tabs.at(ch)->setExclusive(false);
-                }
-            }
-        }
+    this->connect(
+        this->ui->triggeringApproach,
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+        this,
+        &AcquisitionSettings::handleApproachChanged
     );
-    this->ui->channelTabs->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this, &AcquisitionSettings::handleTabChanged);
+    this->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this, &AcquisitionSettings::handleTabChanged);
     for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
     {
         this->tabs.at(ch)->connect(
@@ -182,7 +163,7 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             this, [this, ch](bool act){this->handleSetChannelTriggerActive(ch, act);}
         );
     }
-    this->digitizer->connect(
+    this->connect(
         this->digitizer,
         &Digitizer::inputRangeChanged,
         this,
@@ -190,7 +171,7 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
             this->tabs.at(ch)->setObtainedRange(this->digitizer->getObtainedRange(ch));
         }
     );
-    this->ui->acquisitionTag->connect(
+    this->connect(
         this->ui->acquisitionTag,
         &QLineEdit::textChanged,
         this,
@@ -217,12 +198,12 @@ std::string AcquisitionSettings::calculateFrequency(unsigned long long samplingR
 void AcquisitionSettings::handleTabChanged(int tab)
 {
     if(clip(tab, 0, int(this->tabs.size())-1) != tab) return;
-    if(!this->config->getAllowMultichannel())
+    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
-        this->tabs.at(this->lastActiveChannel)->setChannelActive(false, false);
-        this->tabs.at(this->lastActiveChannel)->setTriggerActive(false, false);
-        this->tabs.at(tab)->setChannelActive(true, true);
-        this->tabs.at(tab)->setTriggerActive(true, true);
+        this->tabs.at(this->lastActiveChannel)->setChannelActive(false);
+        this->tabs.at(this->lastActiveChannel)->setTriggerActive(false);
+        this->tabs.at(tab)->setChannelActive(true);
+        this->tabs.at(tab)->setTriggerActive(true);
         this->handleSetChannelActive(tab, true);
         this->handleSetChannelTriggerActive(tab, true);
     }
@@ -232,29 +213,14 @@ void AcquisitionSettings::handleTabChanged(int tab)
 
 void AcquisitionSettings::handleSetChannelActive(int channel, bool active)
 {
-    if(this->config->getAllowMultichannel())
-    {
-        if(active) this->digitizer->setChannelMask(this->digitizer->getChannelMask() | (1<<channel));
-        else this->digitizer->setChannelMask(this->digitizer->getChannelMask() & ~(1<<channel));
-    }
-    else
+    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
         this->digitizer->setChannelMask((1<<channel));
     }
-    this->handleTabNameChange(channel, true);
-    this->lastActiveChannel = channel;
-}
-
-void AcquisitionSettings::handleSetScopeActive(int channel, bool active)
-{
-    if(this->config->getAllowMultichannel())
+    else
     {
         if(active) this->digitizer->setChannelMask(this->digitizer->getChannelMask() | (1<<channel));
         else this->digitizer->setChannelMask(this->digitizer->getChannelMask() & ~(1<<channel));
-    }
-    else
-    {
-        this->digitizer->setChannelMask((1<<channel));
     }
     this->handleTabNameChange(channel, true);
     this->lastActiveChannel = channel;
@@ -262,14 +228,14 @@ void AcquisitionSettings::handleSetScopeActive(int channel, bool active)
 
 void AcquisitionSettings::handleSetChannelTriggerActive(int channel, bool active)
 {
-    if(this->config->getAllowMultichannel())
+    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
-        if(active) this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() | (1<<channel));
-        else this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() & ~(1<<channel));
+        this->digitizer->setTriggerMask((1<<channel));
     }
     else
     {
-        this->digitizer->setTriggerMask((1<<channel));
+        if(active) this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() | (1<<channel));
+        else this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() & ~(1<<channel));
     }
 
     this->handleTabNameChange(channel, true);
@@ -310,7 +276,7 @@ void AcquisitionSettings::enableVolatileSettings(bool enabled)
     this->ui->acquisitionTag->setEnabled(enabled);
     this->ui->frequency->setEnabled(enabled);
     this->ui->delay->setEnabled(enabled);
-    this->ui->enableMultichannel->setEnabled(enabled);
+    this->ui->triggeringApproach->setEnabled(enabled);
     this->ui->limitRecords->setEnabled(enabled);
     this->ui->pretrigger->setEnabled(enabled);
     this->ui->recordCount->setEnabled(enabled);
@@ -322,4 +288,44 @@ void AcquisitionSettings::enableVolatileSettings(bool enabled)
         this->tabs.at(ch)->enableVolatileSettings(enabled);
     }
     this->ui->recordProcessorsPanel->enableVolatileSettings(enabled);
+}
+
+void AcquisitionSettings::handleApproachChanged(int approachi)
+{
+    this->digitizer->setTriggerApproach(static_cast<TRIGGER_APPROACHES>(approachi));
+    TRIGGER_APPROACHES approach = this->digitizer->getTriggerApproach();
+    if(approach == TRIGGER_APPROACHES::SINGLE)
+    {
+        int openChannel = this->ui->channelTabs->currentIndex();
+        this->tabs.at(openChannel)->setChannelActive(true);
+        this->tabs.at(openChannel)->setTriggerActive(true);
+        this->handleSetChannelTriggerActive(openChannel, true);
+        this->handleSetChannelActive(openChannel, true);
+        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        {
+            this->tabs.at(ch)->setActiveChangeAllowed(false);
+            this->tabs.at(ch)->setTriggerChangeAllowed(false);
+        }
+    }
+    else if (approach == TRIGGER_APPROACHES::INDIVIDUAL)
+    {
+        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        {
+            this->tabs.at(ch)->setActiveChangeAllowed(true);
+            this->tabs.at(ch)->setTriggerChangeAllowed(true);
+        }
+    }
+    else
+    {
+        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        {
+            this->tabs.at(ch)->setActiveChangeAllowed(true);
+            this->tabs.at(ch)->setTriggerChangeAllowed(false);
+            this->tabs.at(ch)->setTriggerActive(false);
+            this->handleSetChannelTriggerActive(ch, false);
+        }
+        int setChannel = static_cast<int>(approach) - TRIGGER_APPROACHES::CH1;
+        this->handleSetChannelTriggerActive(setChannel, true);
+        this->tabs.at(setChannel)->setTriggerActive(true);
+    }
 }

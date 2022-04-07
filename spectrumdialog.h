@@ -31,7 +31,7 @@ private:
     Ui::SpectrumDialog *ui;
     ApplicationContext * context;
     int windowDuration = 0;
-    unsigned int spectrumBinCount = SPECTRUM_BIN_COUNT;
+    unsigned int spectrumBinCount = MAX_SPECTRUM_BIN_COUNT;
     void loadConfigFromDevice();
 private slots:
     void downloadSpectrum();
@@ -45,6 +45,7 @@ private slots:
     void changePlotChannel(int selection);
     void changeSpectrumBinCount(int count);
     void setSpectrumWindow();
+    void setSpectroscopeEnabled(int checked);
 public slots:
     void updateScope(QVector<double> &x, QVector<double> y);
     void updateSpectrumCalculatedParams(unsigned long long totalCount);

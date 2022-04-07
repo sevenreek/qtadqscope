@@ -17,7 +17,9 @@ SpectrumDialog::~SpectrumDialog()
 void SpectrumDialog::reloadUI()
 {
     this->loadConfigFromDevice();
-    this->ui->spectrumBinCount->setValue(this->spectrumBinCount);
+    this->ui->binCount->setValue(this->spectrumBinCount);
+    this->ui->binCountLabel->setText(QString::number(this->spectrumBinCount));
+    this->ui->spectroscopeEnable->setChecked(this->context->digitizer->getSpectroscopeEnabled());
 }
 
 void SpectrumDialog::initialize(ApplicationContext *context)
@@ -42,9 +44,10 @@ void SpectrumDialog::initialize(ApplicationContext *context)
     this->connect(this->ui->useZCDTrigger, &QCheckBox::stateChanged, this, &SpectrumDialog::changeUseZCDTrigger);
     this->connect(this->ui->channelPlotSource, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SpectrumDialog::changePlotChannel);
     this->connect(this->plotter.get(), &SpectrumPlotter::onScopeUpdate, this, &SpectrumDialog::updateScope, Qt::ConnectionType::BlockingQueuedConnection);
-    this->connect(this->ui->spectrumBinCount, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SpectrumDialog::changeSpectrumBinCount);
+    this->connect(this->ui->binCount, &QAbstractSlider::valueChanged, this, &SpectrumDialog::changeSpectrumBinCount);
     this->connect(this->plotter.get(), &SpectrumPlotter::updateSpectrumCalculatedParams, this, &SpectrumDialog::updateSpectrumCalculatedParams, Qt::ConnectionType::BlockingQueuedConnection);
     this->connect(this->ui->setWindowDuration, &QAbstractButton::released, this, &SpectrumDialog::setSpectrumWindow);
+    this->connect(this->ui->spectroscopeEnable, &QCheckBox::stateChanged, this, &SpectrumDialog::setSpectroscopeEnabled);
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
 }
@@ -82,7 +85,7 @@ void SpectrumDialog::downloadSpectrum()
     std::unique_ptr<uint32_t[]> data(new uint32_t[this->spectrumBinCount]());
 
     this->context->digitizer->readBlockUserRegister(UL_TARGET, FIRST_REGISTER, data.get(), this->spectrumBinCount*sizeof(uint32_t), READ_USER_REGISTER_LIKE_RAM);
-    for(size_t i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
     {
         //if(i%10==1) spdlog::debug("{} = {}",i, data[i]);
         this->y[i] = data[i];
@@ -108,7 +111,7 @@ void SpectrumDialog::loadSpectrum()
         return;
     }
     file.open(QFile::OpenModeFlag::ReadOnly);
-    for(int i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
     {
         QByteArray line = file.readLine();
         QList<QByteArray> vals = line.split(',');
@@ -133,7 +136,7 @@ void SpectrumDialog::saveSpectrum()
     if(!fileName.length()) return;
     QFile file(fileName);
     file.open(QFile::OpenModeFlag::WriteOnly);
-    for(size_t i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
     {
         file.write( fmt::format("{:f},{:f}\n", this->x.at(i), this->y.at(i)).c_str() );
     }
@@ -142,7 +145,7 @@ void SpectrumDialog::saveSpectrum()
 
 void SpectrumDialog::resetSpectrum()
 {
-    for(size_t i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
     {
         y[i] = 0;
     }
@@ -166,8 +169,11 @@ void SpectrumDialog::loadConfigFromDevice()
     this->context->digitizer->readUserRegister(UL_TARGET, TRIGGER_REGISTER, &retval);
     this->ui->boxcarTrigger->setValue(static_cast<int32_t>(retval));
 
-    this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_REGISTER, &retval);
-    this->ui->windowDuration->setValue(static_cast<uint32_t>(retval));
+    this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
+    unsigned int windowLength = retval & WINDOWLENGTH_MASK;
+    unsigned int binCount = retval & BINCOUNT_MASK;
+    this->ui->windowDuration->setValue(static_cast<uint32_t>(windowLength));
+    this->ui->binCount->setValue(binCount);
 }
 
 void SpectrumDialog::setTriggerLevel()
@@ -198,22 +204,35 @@ void SpectrumDialog::updateScope(QVector<double> &x, QVector<double> y)
     this->ui->plotArea->replot();
 }
 
-void SpectrumDialog::changeSpectrumBinCount(int count)
+void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
 {
-    this->spectrumBinCount = count;
-    this->plotter->reallocate(count);
+    unsigned int reductionShift = this->ui->binCount->maximum() - sliderPos;
+    int binCount = MAX_SPECTRUM_BIN_COUNT >> reductionShift;
+    this->spectrumBinCount = binCount;
+    this->plotter->reallocate(binCount);
+    unsigned int shiftedReductionShift = reductionShift << BINCOUNT_SHIFT;
+    this->ui->binCountLabel->setText(QString::number(binCount));
+    unsigned int retval;
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~BINCOUNT_MASK, shiftedReductionShift, &retval);
+
 }
 
 void SpectrumDialog::setSpectrumWindow()
 {
     unsigned int toSet = static_cast<uint32_t>(this->ui->windowDuration->value());
     unsigned int returnValue;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_REGISTER, 0, toSet, &returnValue);
-    if(toSet != returnValue)
-    {
-        spdlog::error("Failed to set spectrum window length.");
-    }
+    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~WINDOWLENGTH_MASK, toSet, &returnValue);
     this->windowDuration = toSet;
+}
+
+void SpectrumDialog::setSpectroscopeEnabled(int checked)
+{
+    if(checked) {
+        this->context->digitizer->setSpectroscopeEnabled(true);
+    }
+    else {
+        this->context->digitizer->setSpectroscopeEnabled(false);
+    }
 }
 
 void SpectrumDialog::updateSpectrumCalculatedParams(unsigned long long totalCount)

@@ -9,11 +9,19 @@
 #include "BufferProcessorThread.h"
 #include <QTimer>
 #include "CalibrationTable.h"
+
 class Digitizer : public QObject
 {
     Q_OBJECT
 
 public:
+
+    struct TriggerConfiguration {
+        int levelArray[MAX_NOF_CHANNELS];
+        int resetArray[MAX_NOF_CHANNELS];
+        int edgeArray[MAX_NOF_CHANNELS];
+        int sourceArray[MAX_NOF_CHANNELS];
+    };
     enum DIGITIZER_STATE {
         READY,
         STARTING,
@@ -73,6 +81,7 @@ private:
     CalibrationTable defaultCalibrationTable;
     bool isStreamFullyStopped();
     void joinThreads();
+    TriggerConfiguration createTriggerConfig(Acquisition *acq);
     bool configureAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
     void finishRecordProcessors();
     void handleAcquisitionFullyStopped();
@@ -108,6 +117,7 @@ public:
     unsigned char getUserLogicBypass();
     CLOCK_SOURCES getClockSource();
     TRIGGER_EDGES getTriggerEdge();
+    TRIGGER_APPROACHES getTriggerApproach();
     unsigned char getTriggerMask();
     int getTriggerLevel();
     int getTriggerReset();
@@ -124,11 +134,13 @@ public:
     int getAnalogOffset(int ch, int ir);
     double getObtainedRange(int ch);
     std::string getAcquisitionTag();
+    bool getSpectroscopeEnabled();
 
     unsigned long getSamplesPerRecordComplete();
 
     unsigned long long getLastBuffersFill();
     unsigned long long getQueueFill();
+
 
     CalibrationTable getDefaultCalibrationTable() const;
 
@@ -142,6 +154,7 @@ public:
     void setUserLogicBypass(unsigned char ulBypass);
     void setClockSource(CLOCK_SOURCES clockSource);
     void setTriggerEdge(TRIGGER_EDGES edge);
+    void setTriggerApproach(TRIGGER_APPROACHES approach);
     void setTriggerMask(unsigned char mask);
     void setTriggerLevel(int lvl);
     void setTriggerReset(int rst);
@@ -160,6 +173,7 @@ public:
     Acquisition getAcquisition() const;
 
     void setDefaultCalibrationTable(const CalibrationTable &value);
+    void setSpectroscopeEnabled(bool enabled);
 
 signals:
     void ramFillChanged(float ramFill);

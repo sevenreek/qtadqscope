@@ -41,6 +41,29 @@ void Digitizer::joinThreads()
     this->ADQThread.wait();
 }
 
+Digitizer::TriggerConfiguration Digitizer::createTriggerConfig(Acquisition *acq)
+{
+    TriggerConfiguration tcfg;
+    for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        tcfg.levelArray[ch] = acq->getTriggerLevel();
+        tcfg.resetArray[ch] = acq->getTriggerReset();
+
+        if(this->getTriggerMask()&(1<<ch))
+        {
+            tcfg.edgeArray[ch] = static_cast<ADQEdge>(acq->getTriggerEdge());
+            tcfg.sourceArray[ch] = static_cast<ADQEventSource>(acq->getTriggerMode());
+        }
+        else
+        {
+            tcfg.edgeArray[ch] = ADQEdge::ADQ_EDGE_RISING;
+            tcfg.sourceArray[ch] = ADQEventSource::ADQ_EVENT_SOURCE_SOFTWARE;
+        }
+    }
+
+
+    return tcfg;
+}
 bool Digitizer::configureAcquisition(
         Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations
 )
@@ -97,11 +120,12 @@ bool Digitizer::configureAcquisition(
     if(this->adq.InitializeParameters(ADQParameterId::ADQ_PARAMETER_ID_DATA_ACQUISITION, &acqParams) != sizeof(acqParams)) // this is an error check
     {spdlog::error("InitializeAcquisitionParameters failed."); return false;};
 
+    TriggerConfiguration triggerConfig = this->createTriggerConfig(acq);
     for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
-        acqParams.channel[ch].trigger_source = static_cast<ADQEventSource>(acq->getTriggerMode());
+        acqParams.channel[ch].trigger_source = static_cast<ADQEventSource>(triggerConfig.sourceArray[ch]);
         acqParams.channel[ch].horizontal_offset = -acq->getPretrigger() + acq->getTriggerDelay();
-        acqParams.channel[ch].trigger_edge = static_cast<ADQEdge>(acq->getTriggerEdge());
+        acqParams.channel[ch].trigger_edge = static_cast<ADQEdge>(triggerConfig.edgeArray[ch]);
 
         if(acq->getIsContinuous())
         {
@@ -158,13 +182,15 @@ bool Digitizer::configureAcquisition(
     if(result == ADQ_EINVAL) {spdlog::error("Invalid ADQDataReadoutParameters paramaters. Could not configure acquisition."); return false;}
     else if(result == ADQ_EIO) {spdlog::error("Could not configure ADQDataReadoutParameters parameters due to an I/O error."); return false;}
     if(acq->getTriggerMode() == TRIGGER_MODES::LEVEL) {
+
         if(!this->adq.SetupLevelTrigger(
-            acq->getTriggerLevelArray(),
-            acq->getTriggerEdgeArray(),
-            acq->getTriggerResetArray(),
-            0,// the example uses 0 for some reason, acq.getChannelMask(),
+            triggerConfig.levelArray,
+            triggerConfig.edgeArray,
+            triggerConfig.resetArray,
+            0,//0,// the example uses 0 for some reason, acq.getChannelMask(),
             1 // indvidual mode == true,
         )){spdlog::error("SetupLevelTrigger failed."); return false;}
+
     }
 
     this->bufferProcessorHandler->configureNewAcquisition(acq);
@@ -746,4 +772,22 @@ void Digitizer::setAcquisitionTag(std::string tag)
 {
     this->defaultAcquisition.setTag(tag);
     emit this->acquisitionTagChanged(tag);
+}
+
+void Digitizer::setTriggerApproach(TRIGGER_APPROACHES approach)
+{
+    this->defaultAcquisition.setTriggerApproach(approach);
+}
+
+TRIGGER_APPROACHES Digitizer::getTriggerApproach()
+{
+    return this->defaultAcquisition.getTriggerApproach();
+}
+void Digitizer::setSpectroscopeEnabled(bool enabled)
+{
+    this->defaultAcquisition.setSpectroscopeEnabled(true);
+}
+bool Digitizer::getSpectroscopeEnabled()
+{
+    return this->defaultAcquisition.getSpectroscopeEnabled();
 }

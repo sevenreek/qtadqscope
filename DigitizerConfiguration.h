@@ -27,10 +27,6 @@ private:
     int triggerLevel = 0;
     int triggerReset = 0;
 
-    int triggerLevelArray[MAX_NOF_CHANNELS];
-    int triggerResetArray[MAX_NOF_CHANNELS];
-    int triggerEdgeArray[MAX_NOF_CHANNELS];
-
     unsigned short pretrigger = 0;
     unsigned short triggerDelay = 0;
 
@@ -40,6 +36,7 @@ private:
 
     unsigned char channelMask = 0b0001;
     unsigned int sampleSkip = 1;
+    TRIGGER_APPROACHES triggerApproach = TRIGGER_APPROACHES::SINGLE;
 
     std::array<INPUT_RANGES, MAX_NOF_CHANNELS> inputRange = {{INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000, INPUT_RANGES::MV_5000}};
     std::array<int, MAX_NOF_CHANNELS> dcBias = {{0,0,0,0}};
@@ -47,6 +44,8 @@ private:
     std::array<int, MAX_NOF_CHANNELS> digitalOffset = {{0,0,0,0}};
     std::array<int, MAX_NOF_CHANNELS> analogOffset = {{0,0,0,0}};
     std::array<float, MAX_NOF_CHANNELS> obtainedInputRange = {{5000,5000,5000,5000}};
+
+    bool spectroscopeEnabled = true;
 public:
     void log();
     std::string getTag() const;
@@ -70,6 +69,7 @@ public:
     TRIGGER_EDGES getTriggerEdge() const;
     void setTriggerEdge(const TRIGGER_EDGES &value);
     unsigned char getTriggerMask() const;
+    unsigned int getPrimaryTriggerChannel() const;
     void setTriggerMask(unsigned char value);
     unsigned short getPretrigger() const;
     void setPretrigger(unsigned short value);
@@ -105,9 +105,11 @@ public:
     QJsonObject toJson();
     int getTriggerReset() const;
     void setTriggerReset(int value);
-    int * getTriggerLevelArray();
-    int * getTriggerResetArray();
-    int * getTriggerEdgeArray ();
+    TRIGGER_APPROACHES getTriggerApproach() const;
+    void setTriggerApproach(TRIGGER_APPROACHES newTriggerApproach);
+    static unsigned char verifyChannelMaskForSingularApproach(unsigned char channelMask);
+    bool getSpectroscopeEnabled() const;
+    void setSpectroscopeEnabled(bool newSpectroscopeEnabled);
 };
 
 

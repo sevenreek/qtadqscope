@@ -66,6 +66,16 @@ enum INPUT_RANGES
     MV_5000 = 5,
     MV_10000 = 6
 };
+enum TRIGGER_APPROACHES
+{
+    SINGLE = 0,
+    INDIVIDUAL = 1,
+    CH1 = 2,
+    CH2 = 3,
+    CH3 = 4,
+    CH4 = 5
+};
+
 const int INPUT_RANGE_COUNT = (7);
 const float INPUT_RANGE_VALUES[INPUT_RANGE_COUNT] = {100, 250, 500, 1000, 2000, 5000, 10000};
 const std::string LOG_COLORS[7] = {

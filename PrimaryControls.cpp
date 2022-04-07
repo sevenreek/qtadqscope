@@ -182,7 +182,7 @@ void PrimaryControls::enableVolatileSettings(bool enabled)
 
 void PrimaryControls::changePlotChannel(int ch)
 {
-    if(!this->context->config->getAllowMultichannel())
+    if(this->context->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
         this->ui->plotChannel->setCurrentIndex(ch);
 }
 void PrimaryControls::onPlotChannelChanged(int ch)

@@ -28,9 +28,9 @@ private:
 public slots:
     void handleTabChanged(int tab);
     void handleSetChannelActive(int channel, bool active);
-    void handleSetScopeActive(int channel, bool active);
     void handleSetChannelTriggerActive(int channel, bool active);
     void handleTabNameChange(int channel, bool recreateAll=false);
+    void handleApproachChanged(int approach);
 
     // DigitizerGUIComponent interface
 signals:
