@@ -303,8 +303,8 @@ bool Digitizer::stopAcquisition()
         this->changeDigitizerState(DIGITIZER_STATE::STOPPING);
     }
     unsigned int retval;
-    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
-    spdlog::debug("0x{:X} {}", PHA_CONTROL_REGISTER, retval);
+    if(this->defaultAcquisition.getSpectroscopeEnabled())
+        this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
     return true;
 }
 
@@ -354,10 +354,9 @@ void Digitizer::onAcquisitionDelayEnd()
      this->acquisitionTimer.start();
     }
     unsigned int retval;
-    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, ACTIVE_SPECTRUM_BIT, &retval);
-    spdlog::debug("0x{:X} {}", PHA_CONTROL_REGISTER, retval);
-    this->readUserRegister(UL_TARGET, 0x07, &retval);
-    spdlog::debug("0x{:X} {:X}", 0x07, retval);
+
+    if(this->defaultAcquisition.getSpectroscopeEnabled())
+        this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, ACTIVE_SPECTRUM_BIT, &retval);
     spdlog::info("Acquisition started!");
     this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
     return;

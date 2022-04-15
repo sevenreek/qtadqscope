@@ -17,15 +17,13 @@ void ScopeUpdater::reallocate(unsigned long long sampleCount)
         this->x[s] = (s);
     }
     this->y.resize(sampleCount);
-    spdlog::debug("Sample count for {} is now {}", this->getName(), this->sampleCount);
-
 }
 IRecordProcessor::STATUS ScopeUpdater::processRecord(ADQRecord* record, size_t bufferSize)
 {
     if(this->activeChannel != record->header->Channel)
         return STATUS::OK;
-    unsigned long maxSamples = std::min(bufferSize/sizeof(short), static_cast<size_t>(this->sampleCount));
-    for(unsigned long s = 0; s < maxSamples; s++)
+    size_t maxSamples = std::min(bufferSize/sizeof(short), static_cast<size_t>(this->sampleCount));
+    for(size_t s = 0; s < maxSamples; s++)
     {
         this->y[s] = static_cast<double>(reinterpret_cast<short*>(record->data)[s]);
     }
