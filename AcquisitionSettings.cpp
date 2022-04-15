@@ -301,7 +301,7 @@ void AcquisitionSettings::handleApproachChanged(int approachi)
         this->tabs.at(openChannel)->setTriggerActive(true);
         this->handleSetChannelTriggerActive(openChannel, true);
         this->handleSetChannelActive(openChannel, true);
-        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        for(int ch=0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(false);
             this->tabs.at(ch)->setTriggerChangeAllowed(false);
@@ -309,7 +309,7 @@ void AcquisitionSettings::handleApproachChanged(int approachi)
     }
     else if (approach == TRIGGER_APPROACHES::INDIVIDUAL)
     {
-        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        for(int ch=0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(true);
             this->tabs.at(ch)->setTriggerChangeAllowed(true);
@@ -317,7 +317,7 @@ void AcquisitionSettings::handleApproachChanged(int approachi)
     }
     else
     {
-        for(size_t ch=0; ch < this->tabs.size(); ch++)
+        for(int ch=0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(true);
             this->tabs.at(ch)->setTriggerChangeAllowed(false);
