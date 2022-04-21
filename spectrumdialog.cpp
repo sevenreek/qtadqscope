@@ -17,7 +17,9 @@ SpectrumDialog::~SpectrumDialog()
 void SpectrumDialog::reloadUI()
 {
     this->loadConfigFromDevice();
-    this->ui->binCount->setValue(this->spectrumBinCount);
+    unsigned int reductionShift = std::round(std::log2(MAX_SPECTRUM_BIN_COUNT/this->spectrumBinCount));
+    unsigned int sliderPos = this->ui->binCount->maximum() - reductionShift;
+    this->ui->binCount->setValue(sliderPos);
     this->ui->binCountLabel->setText(QString::number(this->spectrumBinCount));
     this->ui->spectroscopeEnable->setChecked(this->context->digitizer->getSpectroscopeEnabled());
 }
@@ -25,13 +27,7 @@ void SpectrumDialog::reloadUI()
 void SpectrumDialog::initialize(ApplicationContext *context)
 {
     this->context = context;
-    x.reserve(this->spectrumBinCount);
-    y.reserve(this->spectrumBinCount);
-    for(size_t i = 0; i < this->spectrumBinCount; i++)
-    {
-        x.append( i/**(double)USHRT_MAX/REGISTER_COUNT-SHRT_MIN*/);
-        y.append( 0 );
-    }
+    this->reallocatePlotSize(this->spectrumBinCount);
     this->ui->plotArea->addGraph();
     this->ui->plotArea->setInteraction(QCP::iRangeDrag, true);
     this->ui->plotArea->setInteraction(QCP::iRangeZoom, true);
@@ -151,13 +147,11 @@ void SpectrumDialog::resetSpectrum()
     }
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, RESET_SPECTRUM_BIT, &retval);
-    spdlog::debug("reset set 0x06 {:X}",retval);
     int timeToReset = ceil(4.0*this->spectrumBinCount/1000000); // 4 ns clock period
     QTimer::singleShot(timeToReset, this, [=] {
         unsigned int retval;
         this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, 0, &retval);
     });
-    spdlog::debug("reset reset 0x06 {:X}",retval);
     this->ui->plotArea->graph(0)->setData(this->x, this->y, true);
     this->ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
@@ -171,9 +165,7 @@ void SpectrumDialog::loadConfigFromDevice()
 
     this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
     unsigned int windowLength = retval & WINDOWLENGTH_MASK;
-    unsigned int binCount = retval & BINCOUNT_MASK;
     this->ui->windowDuration->setValue(static_cast<uint32_t>(windowLength));
-    this->ui->binCount->setValue(binCount);
 }
 
 void SpectrumDialog::setTriggerLevel()
@@ -203,6 +195,18 @@ void SpectrumDialog::updateScope(QVector<double> &x, QVector<double> y)
     this->ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
 }
+void SpectrumDialog::reallocatePlotSize(int binCount)
+{
+    this->x.clear();
+    this->y.clear();
+    this->x.reserve(this->spectrumBinCount);
+    this->y.reserve(this->spectrumBinCount);
+    for(size_t i = 0; i < this->spectrumBinCount; i++)
+    {
+        this->x.append( i/**(double)USHRT_MAX/REGISTER_COUNT-SHRT_MIN*/);
+        this->y.append( 0 );
+    }
+}
 
 void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
 {
@@ -210,10 +214,15 @@ void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
     int binCount = MAX_SPECTRUM_BIN_COUNT >> reductionShift;
     this->spectrumBinCount = binCount;
     this->plotter->reallocate(binCount);
-    unsigned int shiftedReductionShift = reductionShift << BINCOUNT_SHIFT;
+    spdlog::debug("Changing bin count from slider pos {} to {}", sliderPos, binCount);
+    unsigned int shiftedReductionShift = (reductionShift << BINCOUNT_SHIFT);
     this->ui->binCountLabel->setText(QString::number(binCount));
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~BINCOUNT_MASK, shiftedReductionShift, &retval);
+    spdlog::debug("WINLENGTH/BINCOUNT write = {:x}", retval);
+    this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
+    spdlog::debug("WINLENGTH/BINCOUNT read = {:x}", retval);
+    this->reallocatePlotSize(this->spectrumBinCount);
 
 }
 

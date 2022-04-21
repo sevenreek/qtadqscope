@@ -33,6 +33,7 @@ private:
     int windowDuration = 0;
     unsigned int spectrumBinCount = MAX_SPECTRUM_BIN_COUNT;
     void loadConfigFromDevice();
+    void reallocatePlotSize(int binCount);
 private slots:
     void downloadSpectrum();
     void loadSpectrum();
