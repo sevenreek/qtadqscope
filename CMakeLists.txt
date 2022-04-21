@@ -33,19 +33,6 @@ if(DEBUG_DMA_DELAY)
     add_compile_definitions(DEBUG_DMA_DELAY=${DEBUG_DMA_DELAY})
     message(WARNING "Using delayed DMA transfers. This is only for forcing overflows!")
 endif()
-# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
-# Check https://doc.qt.io/qt/deployment-android.html for more information.
-# They need to be set before the find_package( ...) calls below.
-
-#if(ANDROID)
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
-#        set(ANDROID_EXTRA_LIBS
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
-#    endif()
-#endif()
-
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 
 if(${QT_VERSION_MAJOR} GREATER 4)
@@ -55,41 +42,41 @@ else()
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 endif()
 
-add_subdirectory(include/spdlog-1.8.2)
-include_directories(include/qcustomplot)
+add_subdirectory(lib/qcustomplot)
+add_subdirectory(lib/spdlog-1.8.2)
 
 
 set(PROJECT_SOURCES
         main.cpp
-        include/qcustomplot/qcustomplot.cpp include/qcustomplot/qcustomplot.h
+        BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
+        RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
+        FullCalibrationDialog.cpp FullCalibrationDialog.h FullCalibrationDialog.ui
+        SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
+        AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
+        AcquisitionSettings.cpp AcquisitionSettings.h AcquisitionSettings.ui
+        PrimaryWindow.cpp PrimaryWindow.h PrimaryWindow.ui
+        PrimaryControls.cpp PrimaryControls.h PrimaryControls.ui
+        RecordProcessorsPanel.cpp RecordProcessorsPanel.h RecordProcessorsPanel.ui
         Semaphore.h
         RecordProcessor.h
         ScopeUpdater.cpp ScopeUpdater.h
         ApplicationContext.cpp ApplicationContext.h
         BinaryFileWriter.cpp BinaryFileWriter.h
-        BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
-        RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
         SignalParameterComputer.cpp SignalParameterComputer.h
         MockADQAPI.cpp MockADQAPI.h
         CalibrationTable.h CalibrationTable.cpp
         MinifiedRecordHeader.h
         ADQInterfaceWrappers.cpp ADQInterfaceWrappers.h
         Digitizer.cpp Digitizer.h
-        DigitizerConstants.h DigitizerConfiguration.cpp DigitizerConfiguration.h
+        DigitizerConstants.h
+        Acquisition.cpp Acquisition.h
         util.h util.cpp
-        AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
-        AcquisitionSettings.cpp AcquisitionSettings.h AcquisitionSettings.ui
-        PrimaryWindow.cpp PrimaryWindow.h PrimaryWindow.ui
-        PrimaryControls.cpp PrimaryControls.h PrimaryControls.ui
-        RecordProcessorsPanel.cpp RecordProcessorsPanel.h RecordProcessorsPanel.ui
         GUIApplication.cpp GUIApplication.h
         DigitizerGUIComponent.h
-        FullCalibrationDialog.cpp FullCalibrationDialog.h FullCalibrationDialog.ui
         GUILogger.h
         MockADQAPIGen3Constants.h
         BufferProcessorThread.h BufferProcessorThread.cpp
         ADQAPIIncluder.h
-        SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
         RegisterConstants.h
         SpectrumPlotter.h SpectrumPlotter.cpp
         )
@@ -104,36 +91,20 @@ else()
     )
 endif()
 
+
+set(PROJECT_LIBRARIES
+    Qt${QT_VERSION_MAJOR}::Widgets
+    qcustomplot
+    spdlog
+)
+if(${QT_VERSION_MAJOR} GREATER 4)
+    list(APPEND PROJECT_LIBRARIES Qt5::PrintSupport)
+endif()
 if(MOCK_ADQAPI)
     message(WARNING "Using MockADQ API")
     add_compile_definitions(MOCK_ADQAPI)
-    if(${QT_VERSION_MAJOR} GREATER 4)
-        set(PROJECT_LIBRARIES
-            Qt${QT_VERSION_MAJOR}::Widgets
-            Qt5::PrintSupport
-            spdlog
-        )
-    else()
-        set(PROJECT_LIBRARIES
-            Qt${QT_VERSION_MAJOR}::Widgets
-            spdlog
-        )
-    endif()
 else()
     message(STATUS "Using real libADQ API")
-    if(${QT_VERSION_MAJOR} GREATER 4)
-        set(PROJECT_LIBRARIES
-            Qt${QT_VERSION_MAJOR}::Widgets
-            Qt5::PrintSupport
-            spdlog
-            adq
-        )
-    else()
-        set(PROJECT_LIBRARIES
-            Qt${QT_VERSION_MAJOR}::Widgets
-            spdlog
-            adq
-        )
-    endif()
+    list(APPEND PROJECT_LIBRARIES adq)
 endif()
-target_link_libraries(qtadqscope PRIVATE ${PROJECT_LIBRARIES})
+target_link_libraries(qtadqscope PUBLIC ${PROJECT_LIBRARIES})

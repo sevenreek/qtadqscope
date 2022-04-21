@@ -1,6 +1,6 @@
 #ifndef MINIFIEDRECORDHEADER_H
 #define MINIFIEDRECORDHEADER_H
-#include "DigitizerConfiguration.h"
+#include "Acquisition.h"
 #include "ADQAPIIncluder.h"
 #include <cinttypes>
 #include <string>

@@ -195,7 +195,7 @@ int ADQInterface::ReturnRecordBuffer(int channel, void *buffer)
 
 int ADQInterface::GetParameters(ADQParameterId id, void * const parameters)
 {
-    throw std::exception("Gen3 streaming not yet implemented in MockADQAPI");
+    throw std::runtime_error("Gen3 streaming not yet implemented in MockADQAPI");
 }
 
 int ADQInterface::SetParameters(void * const parameters)
@@ -381,7 +381,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
 
 void ADQInterface::loadBuffersFromFile(int channel, const char *file)
 {
-    throw std::exception("lodaBuffersFromFile is not implemented");
+    throw std::runtime_error("lodaBuffersFromFile is not implemented");
 }
 
 

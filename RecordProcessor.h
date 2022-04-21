@@ -1,6 +1,6 @@
 #ifndef RECORDPROCESSOR_H
 #define RECORDPROCESSOR_H
-#include "DigitizerConfiguration.h"
+#include "Acquisition.h"
 #include "ADQAPIIncluder.h"
 class IRecordProcessor {
 public:
