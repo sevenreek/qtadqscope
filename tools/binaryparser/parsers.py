@@ -19,16 +19,17 @@ class DataParser(ABC):
         pass
 
 
-class RecordParserV2(DataParser):
-    def __init__(self, record_listeners:list[RecordSink]):
+class RecordParser(DataParser):
+    def __init__(self, version:int, record_listeners:list[RecordSink]):
         super().__init__(record_listeners)
+        self.version = version
 
     def on_record(self, header, samples):
         for l in self.listeners:
             l.on_record(header, samples)
 
     def parse(self, f, *, record_limit=0):
-        configstruct, headerstruct = get_structures(2)
+        configstruct, headerstruct = get_structures(self.version)
         bconf = f.read(ct.sizeof(configstruct))
         conf = configstruct.from_buffer_copy(bconf)
         print(f"{conf.version=}, {conf.fileTag=}, {conf.recordLength=}, {conf.inputRangeFloat=}")

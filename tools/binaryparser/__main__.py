@@ -1,9 +1,9 @@
 import argparse
 from matplotlib import pyplot as plt
 
-from binaryparser.parsers import RecordParserV2
+from binaryparser.parsers import RecordParser
 from binaryparser.record_sinks import ASCIISink, PlotSink, PrintSink, TimeOrderVerifier
-
+import ctypes as ct
 
 # The binary strucutre of files created with the Verbose Buffered Binary file output mode are as follows:
 # The file begins with a struct MinifiedChannelConfiguration written in binary
@@ -37,14 +37,17 @@ if __name__ == '__main__':
         recordsinks.append(TimeOrderVerifier())
     if args.output_ascii:
         recordsinks.append(ASCIISink(args.output_ascii))
-    if args.plot:
-        recordsinks.append(PlotSink())
     if not args.silent:
         recordsinks.append(PrintSink(['generalPurpose0', 'generalPurpose1']))
+    if args.plot:
+        recordsinks.append(PlotSink())
     
 
-    parser = RecordParserV2(recordsinks)
     with open(args.filepath, "rb") as f:
+        version = f.read(ct.sizeof(ct.c_uint64))
+        version = ct.c_uint64.from_buffer_copy(version).value
+        f.seek(0)
+        parser = RecordParser(version, recordsinks)
         parser.parse(f, record_limit=args.limit_records)
 
 

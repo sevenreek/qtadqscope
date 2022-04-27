@@ -31,7 +31,7 @@ class PrintSink(RecordSink):
 
     def on_record(self, header:ct.Structure, samples:np.ndarray):
         print(f"#{header.recordNumber, header.timestamp * self.tres}")
-        attributes = (f"{name}: {header.__getattribute__(name)}" for name in self.print_fields)
+        attributes = (f"{name}: {header.__getattribute__(name)}" for name in self.print_fields if name in vars(header))
         print("\t", ', '.join(attributes))
 
 
