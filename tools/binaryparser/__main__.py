@@ -2,7 +2,7 @@ import argparse
 from matplotlib import pyplot as plt
 
 from binaryparser.parsers import RecordParser
-from binaryparser.record_sinks import ASCIISink, PlotSink, PrintSink, TimeOrderVerifier
+from binaryparser.record_sinks import ASCIISink, AveragingSpectrumSink, PlotSink, PrintSink, TimeOrderVerifier
 import ctypes as ct
 
 # The binary strucutre of files created with the Verbose Buffered Binary file output mode are as follows:
@@ -28,6 +28,7 @@ if __name__ == '__main__':
     args.add_argument('-v', '--verify', action='store_true', help='run the script in verify mode; checks record headers for mistakes')
     args.add_argument('-o', '--output_ascii', default=None, help='path to destination ascii file')
     args.add_argument('-l', '--limit_records', default=0, help='number of records to extract, 0 for all')
+    args.add_argument('-i', '--spectrum', choices=['avg'], help='calculate spectrum using one of the available methods')
     args.add_argument('-p', '--plot', action='store_true', help='plot using matplotlib')
     args.add_argument('-s', '--silent', action='store_true', help='silent mode')
     args = args.parse_args()
@@ -41,6 +42,9 @@ if __name__ == '__main__':
         recordsinks.append(PrintSink(['generalPurpose0', 'generalPurpose1']))
     if args.plot:
         recordsinks.append(PlotSink())
+    
+    if args.spectrum == "avg":
+        recordsinks.append(AveragingSpectrumSink(512))
     
 
     with open(args.filepath, "rb") as f:

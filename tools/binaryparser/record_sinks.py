@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Any, Iterable, Optional
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -9,6 +9,12 @@ import ctypes as ct
 class RecordSink(ABC):
     @abstractmethod
     def on_record(self, header:ct.Structure, samples:np.ndarray):
+        pass
+
+    def on_finish(self):
+        pass
+
+    def on_config(self, config:ct.Structure):
         pass
 
 class TimeOrderVerifier(RecordSink):
@@ -50,3 +56,20 @@ class ASCIISink(RecordSink):
 
     def on_record(self, header:ct.Structure, samples:np.ndarray):
         np.savetext(self.output_file, samples.astype(int), fmt="%d")
+
+
+class AveragingSpectrumSink(RecordSink):
+    def __init__(self, bins:Optional[int]=None):
+        self.averages = []
+        self.bins = bins
+
+    def on_record(self, header: ct.Structure, samples: np.ndarray):
+        cast_samples = samples.astype(int)
+        self.averages.append(np.average(samples - self.offset))
+
+    def on_config(self, config: ct.Structure):
+        self.offset = config.analogOffset + config.digitalOffset + config.dcBias
+
+    def on_finish(self):
+        plt.hist(self.averages, self.bins)
+        plt.show()

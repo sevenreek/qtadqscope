@@ -28,11 +28,20 @@ class RecordParser(DataParser):
         for l in self.listeners:
             l.on_record(header, samples)
 
+    def on_finish(self):
+        for l in self.listeners:
+            l.on_finish()
+    
+    def on_config(self, cfg:ct.Structure):
+        for l in self.listeners:
+            l.on_config(cfg)
+
     def parse(self, f, *, record_limit=0):
         configstruct, headerstruct = get_structures(self.version)
         bconf = f.read(ct.sizeof(configstruct))
         conf = configstruct.from_buffer_copy(bconf)
         print(f"{conf.version=}, {conf.fileTag=}, {conf.recordLength=}, {conf.inputRangeFloat=}")
+        self.on_config(conf)
         eof = False
         record_length = conf.recordLength
         record_count = 0
@@ -51,5 +60,6 @@ class RecordParser(DataParser):
                 break
             samples = np.frombuffer(bsamples, dtype=np.int16, count=-1)
             self.on_record(head, samples)            
-
+        self.on_finish()
         print("The file contained {} records".format(record_count))
+        
