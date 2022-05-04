@@ -2,7 +2,7 @@
 #define DIGITIZER_H
 #include <string>
 #include <QObject>
-#include "DigitizerConfiguration.h"
+#include "Acquisition.h"
 #include "ADQInterfaceWrappers.h"
 #include "RecordProcessor.h"
 #include <QThread>
