@@ -49,15 +49,10 @@ Digitizer::TriggerConfiguration Digitizer::createTriggerConfig(Acquisition *acq)
         tcfg.levelArray[ch] = acq->getTriggerLevel();
         tcfg.resetArray[ch] = acq->getTriggerReset();
 
-        if(this->getTriggerMask()&(1<<ch))
+       // if(this->getTriggerMask()&(1<<ch))
         {
             tcfg.edgeArray[ch] = static_cast<ADQEdge>(acq->getTriggerEdge());
             tcfg.sourceArray[ch] = static_cast<ADQEventSource>(acq->getTriggerMode());
-        }
-        else
-        {
-            tcfg.edgeArray[ch] = ADQEdge::ADQ_EDGE_RISING;
-            tcfg.sourceArray[ch] = ADQEventSource::ADQ_EVENT_SOURCE_SOFTWARE;
         }
     }
 
@@ -190,6 +185,8 @@ bool Digitizer::configureAcquisition(
             0,//0,// the example uses 0 for some reason, acq.getChannelMask(),
             1 // indvidual mode == true,
         )){spdlog::error("SetupLevelTrigger failed."); return false;}
+        if(!this->adq.SetLvlTrigChannel(acq->getTriggerMask()))
+           {spdlog::error("SetLvlTrigChannel failed."); return false;}
 
     }
 
@@ -303,8 +300,7 @@ bool Digitizer::stopAcquisition()
         this->changeDigitizerState(DIGITIZER_STATE::STOPPING);
     }
     unsigned int retval;
-    if(this->defaultAcquisition.getSpectroscopeEnabled())
-        this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
+    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
     return true;
 }
 
@@ -355,8 +351,7 @@ void Digitizer::onAcquisitionDelayEnd()
     }
     unsigned int retval;
 
-    if(this->defaultAcquisition.getSpectroscopeEnabled())
-        this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, ACTIVE_SPECTRUM_BIT, &retval);
+    this->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, this->acquisitionToStart->getSpectroscopeEnabled()?ACTIVE_SPECTRUM_BIT:0, &retval);
     spdlog::info("Acquisition started!");
     this->changeDigitizerState(DIGITIZER_STATE::ACTIVE);
     return;
@@ -784,7 +779,7 @@ TRIGGER_APPROACHES Digitizer::getTriggerApproach()
 }
 void Digitizer::setSpectroscopeEnabled(bool enabled)
 {
-    this->defaultAcquisition.setSpectroscopeEnabled(true);
+    this->defaultAcquisition.setSpectroscopeEnabled(enabled);
 }
 bool Digitizer::getSpectroscopeEnabled()
 {

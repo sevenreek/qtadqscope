@@ -214,14 +214,11 @@ void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
     int binCount = MAX_SPECTRUM_BIN_COUNT >> reductionShift;
     this->spectrumBinCount = binCount;
     this->plotter->reallocate(binCount);
-    spdlog::debug("Changing bin count from slider pos {} to {}", sliderPos, binCount);
     unsigned int shiftedReductionShift = (reductionShift << BINCOUNT_SHIFT);
     this->ui->binCountLabel->setText(QString::number(binCount));
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~BINCOUNT_MASK, shiftedReductionShift, &retval);
-    spdlog::debug("WINLENGTH/BINCOUNT write = {:x}", retval);
     this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
-    spdlog::debug("WINLENGTH/BINCOUNT read = {:x}", retval);
     this->reallocatePlotSize(this->spectrumBinCount);
 
 }
@@ -236,12 +233,7 @@ void SpectrumDialog::setSpectrumWindow()
 
 void SpectrumDialog::setSpectroscopeEnabled(int checked)
 {
-    if(checked) {
-        this->context->digitizer->setSpectroscopeEnabled(true);
-    }
-    else {
-        this->context->digitizer->setSpectroscopeEnabled(false);
-    }
+    this->context->digitizer->setSpectroscopeEnabled(bool(checked));
 }
 
 void SpectrumDialog::updateSpectrumCalculatedParams(unsigned long long totalCount)
