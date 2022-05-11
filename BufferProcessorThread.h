@@ -40,6 +40,7 @@ private:
     int lastRAMFillLevel = 0;
     BufferProcessor::STATE loopState = BufferProcessor::STATE::INACTIVE;
     unsigned long long recordsStored = 0;
+    unsigned long long lastRecordNumber = 0;
     // record completion listeners
     std::list<IRecordProcessor*> &recordProcessors;
     ADQInterfaceWrapper & adq;

@@ -168,10 +168,7 @@ bool Digitizer::configureAcquisition(
     for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
         roParams.channel[ch].nof_record_buffers_max = acq->getTransferBufferQueueSize();
-        if(acq->getIsContinuous())
-        {
-            roParams.channel[ch].incomplete_records_enabled = 1; // for continuous streaming there is just one header that never ends
-        }
+        roParams.channel[ch].incomplete_records_enabled = acq->getIsContinuous(); // for continuous streaming there is just one header that never ends
     }
     result = this->adq.SetParameters(&roParams);
     if(result == ADQ_EINVAL) {spdlog::error("Invalid ADQDataReadoutParameters paramaters. Could not configure acquisition."); return false;}
@@ -185,9 +182,6 @@ bool Digitizer::configureAcquisition(
             0,//0,// the example uses 0 for some reason, acq.getChannelMask(),
             1 // indvidual mode == true,
         )){spdlog::error("SetupLevelTrigger failed."); return false;}
-        if(!this->adq.SetLvlTrigChannel(acq->getTriggerMask()))
-           {spdlog::error("SetLvlTrigChannel failed."); return false;}
-
     }
 
     this->bufferProcessorHandler->configureNewAcquisition(acq);

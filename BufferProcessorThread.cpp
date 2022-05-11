@@ -44,8 +44,8 @@ void BufferProcessor::startBufferProcessLoop()
         long long bufferPayloadSize;
         int channel = ADQ_ANY_CHANNEL; // must pass the channel to get its buffers, use ADQ_ANY_CHANNEL to capture all channels;
                                        // is passed as a pointer, so the actual channel is returned
-        ADQDataReadoutStatus status;
-        ADQRecord * record;
+        ADQDataReadoutStatus status = {0};
+        ADQRecord * record = nullptr;
 
 #ifdef DEBUG_DMA_DELAY
 #if DEBUG_DMA_DELAY > 0
@@ -55,7 +55,7 @@ void BufferProcessor::startBufferProcessLoop()
         /////////////////////////////////////// //  ENSURE THAT IT IS DISABLED IN PRODUCTION!
 #endif
 #endif
-        bufferPayloadSize = this->adq.WaitForRecordBuffer(&channel, reinterpret_cast<void**>(&record), 0, &status);
+        bufferPayloadSize = this->adq.WaitForRecordBuffer(&channel, reinterpret_cast<void**>(&record), 500, &status);
         this->threadStarved += static_cast<float>(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING);
         this->threadStarved /= 2.0f;
         if(bufferPayloadSize < 0)
@@ -105,12 +105,12 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
 {
     int ramFill = (record->header->RecordStatus & 0b01110000) >> 4;
     int lostData = (record->header->RecordStatus & 0b00001111) >> 0;
-    lastRAMFillLevel = ramFill;
     if(ramFill != lastRAMFillLevel)
     {
         spdlog::debug("DRAM fill > {:.2f}%.", this->getRamFillLevel()*100.0f);
         //emit this->ramFillChanged(this->getRamFillLevel());
     }
+    lastRAMFillLevel = ramFill;
     if(lostData)
     {
         spdlog::warn(
@@ -118,6 +118,10 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
             record->header->RecordNumber,
             record->header->RecordStatus
         );
+        if(lostData & 0b1) // lost whole records before this one
+        {
+            spdlog::warn("Lost {} full records", record->header->RecordNumber-this->lastRecordNumber);
+        }
         spdlog::warn("Overflow: {}", this->adq.GetStreamOverflow());
         return true;
         //record->header->RecordLength = this->recordLength;
@@ -126,6 +130,7 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
     {
         if(rp->processRecord(record, bufferSize)) return false;
     }
+    this->lastRecordNumber = record->header->RecordNumber;
     return true;
 }
 void BufferProcessor::enterErrorCondition()
