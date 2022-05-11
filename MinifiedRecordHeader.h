@@ -5,7 +5,7 @@
 #include <cinttypes>
 #include <string>
 
-const unsigned long CURRENT_VERSION = 2;
+const unsigned long CURRENT_VERSION = 3;
 
 #ifdef __GNUC__
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
@@ -58,6 +58,7 @@ struct  MinifiedAcquisitionConfiguration {
     uint32_t recordCount;
     uint32_t pretrigger;
     uint32_t triggerDelay;
+    uint64_t duration;
 
 };
 MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel);
@@ -83,6 +84,7 @@ MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisitio
     returnValue.recordCount = c.getRecordCount();
     returnValue.pretrigger = (unsigned short)c.getPretrigger();
     returnValue.triggerDelay = (unsigned short)c.getTriggerDelay();
+    returnValue.duration = c.getDuration();
     strncpy(returnValue.fileTag, c.getTag().c_str(), MAX_TAG_LENGTH-1);
     returnValue.fileTag[MAX_TAG_LENGTH-1] = '\0';
     return returnValue;

@@ -23,8 +23,14 @@ class RecordSink(ABC):
 class TrigPortDebugger(RecordSink):
     def __init__(self, trig_channel:int):
         self.trig_channel = trig_channel
+        self.first_timestamp = None
+        self.count = 0
 
     def on_record(self, headers: list[ct.Structure], samples: list[np.ndarray]):
+        if self.first_timestamp is None:
+            self.first_timestamp = headers[0].timestamp * 125
+        self.last_timestamp = headers[0].timestamp * 125
+        self.count += 1
         if not headers[self.trig_channel].generalPurpose0:
             print("Detected low TRIG in records:")
             print([f"#{header.recordNumber}" for header in headers])
@@ -35,8 +41,11 @@ class TrigPortDebugger(RecordSink):
                 plt.subplot(self.channel_count, 1, i+1)
                 plt.plot(samples)
             plt.show()
-
-
+    
+    def on_finish(self):
+        elapsed = self.last_timestamp - self.first_timestamp
+        elapsed_s = elapsed / 10**12
+        print(f"Elapsed {elapsed} ps. Gathered {self.count} records. Record rate {self.count/elapsed_s} 1/s.")
 
 class PrintSink(RecordSink):
     def __init__(self, timestamp_resolution=125):
