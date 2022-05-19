@@ -6,6 +6,10 @@
 #include "GUILogger.h"
 namespace Ui {
 class PrimaryControls;
+/**
+ * @brief PrimaryControls is the UI component housing the start/stop button, 
+ * DMA fill levels and additional plot controls. It is located below the scope.
+ */
 }
 
 class PrimaryControls : public QWidget, public DigitizerGUIComponent

@@ -1,5 +1,11 @@
 #ifndef MOCKADQAPIGEN3CONSTANTS_H
 #define MOCKADQAPIGEN3CONSTANTS_H
+/**
+ * @file MockADQAPIGen3Constants.h
+ * @brief This file contains all constants and #defines normally
+ * found in ADQAPI.h. To avoid forcing developers to install the 
+ * ADQAPI library to use the app, the MockADQAPI defines these constants.
+ */
 #include <cstdint>
 
 #define ADQ_EOK (0) /* OK */

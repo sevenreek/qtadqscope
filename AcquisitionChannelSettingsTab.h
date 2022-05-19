@@ -9,6 +9,12 @@ class AcquisitionChannelSettingsTab;
 
 class AcquisitionChannelSettingsTab : public QWidget, public DigitizerGUIComponent
 {
+    /**
+     * @brief 
+     * AcqusitionChannelSettingsTab controls the UI component related to acqusition settings.
+     * The component is located to the right of the scope and handles everything from triggering to 
+     * the Analog Front End.
+     */
     Q_OBJECT
 
 public:

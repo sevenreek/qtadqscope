@@ -13,7 +13,7 @@
 /// pure abstract functions. Every single API function is declared as such.
 /// To avoid that this class redefines only those functions that are covered
 /// during tests. If you happen to need another function, you will have to
-/// declared it in this file and define it in MockADQAPI.cpp.
+/// declare it in this file and define it in MockADQAPI.cpp.
 ///
 /// ADQ Control Unit functions are also redeclared below.
 ///

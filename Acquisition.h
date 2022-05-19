@@ -6,6 +6,10 @@
 #include <QJsonObject>
 #include "spdlog/spdlog.h"
 class Acquisition {
+    /**
+     * @brief 
+     * The Acquisition class contains configuration values related to a single acquisition.
+     */
 public:
     const static unsigned long INFINITE_RECORDS = -1;
     const static unsigned long NO_DURATION = 0;
