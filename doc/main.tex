@@ -24,9 +24,11 @@
 
 	\subsection{Document structure}
 	This document describes the functionality of a firmware package developed for the ADQ14 digitizer.
-	The solution implements a real time Pulse Height Analyzer for exponential pulses, intended
-	for use in Hard X-Ray Monitors. The Pulse Height Analyzer firmware is built on top of the SPDevices ADQ14 DevKit.
-	Initial chapters of this paper go over the digitizer board itself, highlighting its features and limitations.
+	The solution implements a real time Pulse Height Analyzer for exponential pulses, 
+	intended for use in Hard X-Ray Monitors. 
+	The Pulse Height Analyzer firmware is built on top of the SPDevices ADQ14 DevKit.
+	Initial chapters of this paper go over the digitizer board itself, 
+	highlighting its features and limitations.
 	The custom firmware solution is built on top of a development kit provided by SPDevices with ADQ14.
 	\newpage
 \section{ADQ14}
@@ -34,8 +36,9 @@
 
 \section{SPDevices DevKit}
 	The custom spectroscopy firmware is built on top of a development kit provided with the digitizer board.
-	The base system is referred to as the DevKit by the manufacturer. A full documentation of the DevKit can
-	be downloaded from the \href{https://www.spdevices.com/documents/user-guides/24-adq14-development-kit}{manufacturer's website}.
+	The base system is referred to as the DevKit by the manufacturer. 
+	A full documentation of the DevKit can be downloaded from the 
+	\href{https://www.spdevices.com/documents/user-guides/24-adq14-development-kit}{manufacturer's website}.
 	An offline copy is included with the firmware source code in the \verb|documentation| folder.
 	\subsection{The concept of User Logic}
 		\begin{wrapfigure}[14]{r}{0.28\textwidth}
@@ -52,7 +55,8 @@
 		User Logic 2 allows for modifications being placed right before the individual consecutive
 		samples are packed into records, assigned metadata and queued in the DRAM for transmission to the
 		host computer. The DevKit structure, with the placement of the User Logic modules highlighted in gold,
-		is shown in \autoref{wrap-fig:devkit_ul}. Both modules are described in greater detail in the next chapters.
+		is shown in \autoref{wrap-fig:devkit_ul}. 
+		Both modules are described in greater detail in the next chapters.
 		\par
 		\newpage
 	\subsection{Samples in the FPGA}
@@ -66,17 +70,23 @@
 		4 new consecutive samples for the FPGA on each clock cycle. The ADCs produce 14-bit samples.
 		The raw signal is however subject to a digitial gain and shift.
 		Two additional fractional bits are appended to the 14-bit samples before calculations.
-		Two configurations are factored in the gain and shift calculations. The board comes preconfigured
-		with a factory calibration that is always applied. A second configuration is made available to
-		the users and can be freely modified from base values to apply custom digital signal shift or change the gain.
+		Two configurations are factored in the gain and shift calculations. 
+		The board comes preconfigured with a factory calibration that is always applied. 
+		A second configuration is made available to
+		the users and can be freely modified from base values 
+		to apply custom digital signal shift or change the gain.
 	\subsection{Data flow in User Logic 1}
-		After the digital gain and shift, the 16-bit samples are packed into a data bus and made available at
-		the User Logic 1 module. This component is located before the level trigger. By default the raw sample data
-		is passed on to the triggering module unchanged. If the device trigger mode is set to the level trigger,
-		digital filters can be implemented in User Logic 1 to modify the trigger behaviour. In initial testing
-		a configurable moving average smoothing filter was placed in this module to reduce the influence of noise.
+		After the digital gain and shift, the 16-bit samples are packed into a data bus 
+		and made available at the User Logic 1 module. 
+		This component is located before the level trigger. 
+		By default the raw sample data is passed on to the triggering module unchanged. 
+		If the device trigger mode is set to the level trigger,
+		digital filters can be implemented in User Logic 1 to modify the trigger behaviour. 
+		In initial testing a configurable moving average smoothing filter was placed in this module 
+		to reduce the influence of noise.
 		At one point a boxcar and a trapezoidal filters were successfully implemented for pulse detection.
-		These filtering modules were created in an abstract manner and can be combined to modify the level trigger
+		These filtering modules were created in an abstract manner 
+		and can be combined to modify the level trigger
 		behaviour to a desired shape and signal-to-noise ratio.
 		\par
 		The samples that are passed to the level trigger module can differ from those that are sent further
@@ -84,21 +94,26 @@
 		while still storing unmodified samples at the host PC. The current version of the firmware does not
 		perform any filtering in this part of the firmware. All spectroscopy logic has been moved to User Logic 2,
 		however the filter modules remain usable and can be reintroduced if the need appears.
-	\subsection{Data flow in User Logic 2}
-		User Logic 2 deals with data that has passed through User Logic 1, decimation and shifting to accomodate
-		for pretrigger (horizontal shift). User Logic 2 is responsible for tagging the start and end of a single
-		acquisition window (record). Further DevKit modules can then then pack and queue the records for transmission.
-		User Logic 2 also inserts header data containing the metadata. The record length is fixed by default and set
+	\subsection{Data flow in User Logic 2}\label{ssec:data_flow_in_user_logic_2}
+		User Logic 2 deals with data that has passed through User Logic 1, 
+		decimation and shifting to accomodate for pretrigger (horizontal shift). 
+		User Logic 2 is responsible for tagging the start and end of a single acquisition window (record). 
+		Further DevKit modules can then then pack and queue the records for transmission.
+		User Logic 2 also inserts header data containing the metadata. 
+		The record length is fixed by default and set in the control application on the host PC.
 		\par
 		All spectroscopy logic in the current firmware revision is contained within User Logic 2. 
-		\autoref{appendix:user_logic} contains a detailed description of the input and output signals 
+		\autoref{appendix:user_logic_data_bus} contains a detailed description of the input and output signals 
 		available in the User Logic modules, mostly useful for firmware developers.
 	\subsection{Data paths in the FPGA}
-		Records built of the 16-bit samples, together with the metadata are initially stored in the digitizer's
-		internal DRAM. This memory forms a FIFO queue, that is periodically transferred over to the host PC. The 
-		ADQ14's RAM has a capacity of 2 GB. With two bytes per sample up to a billion samples can be queued
-		for data transfer before overflow leads to data loss. With up to a billion samples being generated
-		every second for every active channel, this memory must be efficiently transferred.
+		Records built of the 16-bit samples, 
+		together with the metadata are initially stored in the digitizer's internal DRAM. 
+		This memory forms a FIFO queue, that is periodically transferred over to the host PC. 
+		The ADQ14's RAM has a capacity of 2 GB. 
+		With two bytes per sample up to a billion samples can be queued
+		for data transfer before overflow leads to data loss. 
+		With up to a billion samples being generated every second for every active channel, 
+		this memory must be efficiently transferred.
 		Two data paths exist within the firmware for exchanging data with the host PC.
 		\subsubsection{DMA}
 		After being packed in records and queued in the digitizer's DRAM, the acquired samples are sent
@@ -110,29 +125,98 @@
 		Any data can be inserted in place of the samples for each channel to leverage the fast data path. 
 		The custom Pulse Height Analyzer relies on this fact to periodically transfer computed spectras.
 		\subsubsection{User Registers}
-		A substantially slower two-way data path is available through the user registers (top data bus on \autoref{fig:devkit_dataflow}). Both User Logic modules
-		implement a small individually addressable memory block, that can be written to or read from by both 
-		the host PC and the FPGA. The memory structure contains 32-bit integers. $2^{14}$ addressable words
-		are available in User Logic 1, and $2^{19}$ in User Logic 2. First 4 positions in both modules are reserved 
-		for internal use by the DevKit and cannot be modified in the custom firmware. The custom PHA firmware
+		A substantially slower two-way data path is available through the user registers 
+		(top data bus on \autoref{fig:devkit_dataflow}). 
+		Both User Logic modules implement a small individually addressable memory block, 
+		that can be written to or read from by both the host PC and the FPGA. 
+		The memory structure contains 32-bit integers. $2^{14}$ addressable words
+		are available in User Logic 1, and $2^{19}$ in User Logic 2. 
+		First 4 positions in both modules are reserved  for internal use by the DevKit 
+		and cannot be modified in the custom firmware. The custom PHA firmware
 		relies on User Registers primarily for transferring configuration settings to the FPGA.
-		The current version of the firmware also enables spectra transfer through this data path for testing purposes.
+		The current version of the firmware also enables spectra transfer 
+		through this data path for testing purposes.
 	\subsection{Bypassing User Logic}
-
-
+		Both User Logic modules can be bypassed using the application available on the host PC. 
+		When User Logic 1 is bypasssed, the incoming raw signal is fed directly to the board 
+		trigger. Any filters placed there to improve the triggering performance will not work.
+		When User Logic 2 is bypassed no signal data is transferred.
+		Any logic placed there, like the spectroscope, will not output valid data.
+		\begin{figure}[!h]
+			\centering
+			\includegraphics[width=0.8\textwidth]{img/user_logic_1_bypass.png}
+			\caption{Bypass in User Logic 1}\label{fig:user_logic_1_bypass}
+		\end{figure}
+\newpage
 \section{Custom Firmware}
-\subsection{Core Firmware Functionality}
-The firmware spectroscopy solution consists of four primary subsystems:
-\begin{itemize}
-	\item Pulse Detection Module
-	\item Pulse Shaping Module
-	\item Pulse Sampler
-	\item Spectrum Storage and Transfer
-\end{itemize}
-\subsection{Pulse Detection Module}
-\subsection{Pulse Shaping Module}
-\subsection{Pulse Sampler}
-\subsection{Spectrum Storage and Transfer}
+	The hardware spectroscopy solution consists of four primary subsystems:
+
+	\begin{itemize}
+		\item \hyperref[ssec:pulse_detection_module]{Pulse Detection and Timing Module}
+		\item \hyperref[ssec:pulse_shaping_module]{Pulse Shaping Module}
+		\item \hyperref[ssec:pulse_sampler]{Pulse Sampler}
+		\item \hyperref[ssec:spectrum_storage_and_transfer]{Spectrum Storage and Transfer}
+	\end{itemize}
+
+	\begin{figure}[!h]
+		\centering
+		\includegraphics[width=0.9\textwidth]{img/user_logic_2_filters.png}
+		\caption{Spectroscope module structure}\label{fig:user_logic_2_filters}
+	\end{figure}
+
+	The entire logic is located within the \hyperref[ssec:data_flow_in_user_logic_2]{User Logic 2} module. 
+	\autoref{fig:user_logic_2_filters} presents the internal structure of the spectroscopy module and how 
+	the different subcomponents operate. The incoming pulse record is passed to two submodules.
+	A detection module combined with a timing one finds the horizontal position of the peak of a pulse.
+	A tunable shaping filter modified the incoming pulses to reduce noise in the pulse height measurement.
+	A sampler uses the timing information to measure an average peak height from the shaped pulse.
+	Different signal filters require a different amount of clock cycles to process a single sample, 
+	so they introduce a different delay to the signal. The timing filter must be synchronized to the shaping filter.
+	This is achieved in a synchronization pipeline that delays the faster timing filter 
+	by an appropriate number of clock cycles.
+	\newpage
+	\subsection{Pulse Detection and Timing Module}\label{ssec:pulse_detection_module}
+		Pulse detection is done with the use of a zero crossing detector 
+		applied to a digital bandpass filter in the form of a averaging derivative.	
+		
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.60\textwidth]{img/boxcar_sim.png}
+			\caption{Boxcar filter on a simulated unipolar exponential pulse}\label{fig:boxcar_sim}
+		\end{figure}
+		The incoming pulses are convolved with a boxcar filter. The result of such operation on 
+		an exponential pulse, as well as an example boxcar transfer function are shown in \autoref{fig:boxcar_sim}.
+		A unipolar pulse is transformed into a bipolar signal. The produced signal is a smoothed derivative, 
+		so the point at the x-axis is crossed indicates the peak of a pulse.
+		The averaging action present in the boxcar filter causes some delay, so for proper timing
+		it must be accounted for in the timing module, that controls the sampling start.
+		\newpage
+		\begin{figure}[!h]
+			\centering
+			\includegraphics[width=0.60\textwidth]{img/boxcar_real.png}
+			\caption{Boxcar filter on a real unipolar exponential pulse obtained from a radioactive source}\label{fig:boxcar_real}
+		\end{figure}
+		The boxcar filter is a versatile solution due to its relative simplicity. 
+		\autoref{fig:boxcar_real} shows a boxcar filter being applied to a real exponential pulse
+		obtained during tests with a radioactive $^{137}Cs$ sample. 
+		The zero crossing point after the primary signal peak is preserved, 
+		however the real signal is substantially less monotonic than simulated exponential pulses.
+		To avoid false triggers, the Pulse Detection module applies thresholding.
+		A threshold level is set using the software package 
+		and transferred to the FPGA without a need for reprogramming. 
+		When this value is crossed on the boxcar-filtered signal, 
+		the detection module begins scanning for a zero crossing. 
+		The timing data is sent to the \hyperref[ssec:pulse_sampler]{Pulse Sampler}
+		and the module awaits another threshold crossing as shown in \autoref{fig:pulse_detection_thresholding}.
+		\begin{figure}[!hb]
+			\centering
+			\includegraphics[width=\textwidth]{img/pulse_detection_internal.png}
+			\caption{Pulse detection thresholding}\label{fig:pulse_detection_thresholding}
+		\end{figure}
+	\subsection{Pulse Shaping Module}\label{ssec:pulse_shaping_module}
+
+	\subsection{Pulse Sampler}\label{ssec:pulse_sampler}
+	\subsection{Spectrum Storage and Transfer}\label{ssec:spectrum_storage_and_transfer}
 \section{Second section}
 
 \fullboxbegin
@@ -179,9 +263,11 @@ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibu
 \frameboxend
 
 \appendix
-\section{User Logic Data Bus}\label{appendix:user_logic}
-\subsection{User Logic 1}\label{appendix:user_logic_1}
+\section{User Logic Data Bus}\label{appendix:user_logic_data_bus}
+\subsection{User Logic 1}\label{appendix:user_logic_1_data_bus}
 \lipsum[1]
-\subsection{User Logic 2}\label{appendix:user_logic_2}
+\subsection{User Logic 2}\label{appendix:user_logic_2_data_bus}
+\lipsum[1]
+\subsection{User Logic 2 Registers}\label{appendix:user_logic_2_registers}
 \lipsum[1]
 \end{document}
