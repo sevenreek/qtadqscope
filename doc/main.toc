@@ -11,14 +11,14 @@
 \contentsline {subsubsection}{\numberline {3.5.1}DMA}{6}{subsubsection.3.5.1}%
 \contentsline {subsubsection}{\numberline {3.5.2}User Registers}{6}{subsubsection.3.5.2}%
 \contentsline {subsection}{\numberline {3.6}Bypassing User Logic}{7}{subsection.3.6}%
-\contentsline {section}{\numberline {4}Custom Firmware}{7}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Core Firmware Functionality}{7}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Pulse Detection Module}{7}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Pulse Shaping Module}{7}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Pulse Sampler}{7}{subsection.4.4}%
-\contentsline {subsection}{\numberline {4.5}Spectrum Storage and Transfer}{7}{subsection.4.5}%
-\contentsline {section}{\numberline {5}Second section}{7}{section.5}%
-\contentsline {subsection}{\numberline {5.1}First subsection}{8}{subsection.5.1}%
-\contentsline {section}{\numberline {A}User Logic Data Bus}{10}{appendix.A}%
-\contentsline {subsection}{\numberline {A.1}User Logic 1}{10}{subsection.A.1}%
-\contentsline {subsection}{\numberline {A.2}User Logic 2}{10}{subsection.A.2}%
+\contentsline {section}{\numberline {4}Custom Firmware}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Pulse Detection and Timing Module}{9}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Pulse Shaping Module}{11}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Pulse Sampler}{11}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Spectrum Storage and Transfer}{11}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Second section}{11}{section.5}%
+\contentsline {subsection}{\numberline {5.1}First subsection}{11}{subsection.5.1}%
+\contentsline {section}{\numberline {A}User Logic Data Bus}{13}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}User Logic 1}{13}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}User Logic 2}{14}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}User Logic 2 Registers}{14}{subsection.A.3}%

@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.15.0 (MiKTeX 22.3) (format=lualatex 2022.5.18)  18 MAY 2022 23:08
+This is LuaHBTeX, Version 1.15.0 (MiKTeX 22.3) (format=lualatex 2022.5.18)  20 MAY 2022 18:36
  restricted system commands enabled.
  file:line:error style messages enabled.
 **d:/Development/ADQ14/qtadqscope/doc/main
@@ -1327,10 +1327,10 @@ Package luatex.def Info: cover.png  used on input line 18.
 <img/devkit_ul.png, id=145, 299.61937pt x 737.00343pt>
 File: img/devkit_ul.png Graphic file (type png)
 <use img/devkit_ul.png>
-Package luatex.def Info: img/devkit_ul.png  used on input line 42.
+Package luatex.def Info: img/devkit_ul.png  used on input line 45.
 (luatex.def)             Requested size: 120.92421pt x 297.45015pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 43--43
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
 [][]\TU/Candara(0)/b/n/12 FIG-URE 1[][]: [][]|\TU/Candara(2)/m/n/12 DE-VKIT
  []
 
@@ -1338,60 +1338,94 @@ Underfull \hbox (badness 10000) in paragraph at lines 43--43
 <img/devkit_dataflow.png, id=155, 686.565pt x 380.17032pt>
 File: img/devkit_dataflow.png Graphic file (type png)
 <use img/devkit_dataflow.png>
-Package luatex.def Info: img/devkit_dataflow.png  used on input line 61.
+Package luatex.def Info: img/devkit_dataflow.png  used on input line 65.
 (luatex.def)             Requested size: 401.46928pt x 222.30302pt.
- [5<./img/devkit_dataflow.png>] [6] [7]
-Underfull \hbox (badness 1442) in paragraph at lines 148--149
+ [5<./img/devkit_dataflow.png>] [6]
+<img/user_logic_1_bypass.png, id=172, 672.26157pt x 423.83344pt>
+File: img/user_logic_1_bypass.png Graphic file (type png)
+<use img/user_logic_1_bypass.png>
+Package luatex.def Info: img/user_logic_1_bypass.png  used on input line 147.
+(luatex.def)             Requested size: 386.95897pt x 243.961pt.
+ [7<./img/user_logic_1_bypass.png>]
+<img/user_logic_2_filters.png, id=183, 428.583pt x 209.802pt>
+File: img/user_logic_2_filters.png Graphic file (type png)
+<use img/user_logic_2_filters.png>
+Package luatex.def Info: img/user_logic_2_filters.png  used on input line 163.
+(luatex.def)             Requested size: 435.32422pt x 213.11163pt.
+ [8<./img/user_logic_2_filters.png>]
+<img/boxcar_sim.png, id=193, 480.5955pt x 417.7206pt>
+File: img/boxcar_sim.png Graphic file (type png)
+<use img/boxcar_sim.png>
+Package luatex.def Info: img/boxcar_sim.png  used on input line 184.
+(luatex.def)             Requested size: 290.22107pt x 252.24689pt.
+ [9<./img/boxcar_sim.png>]
+<img/boxcar_real.png, id=202, 492.1587pt x 433.62pt>
+File: img/boxcar_real.png Graphic file (type png)
+<use img/boxcar_real.png>
+Package luatex.def Info: img/boxcar_real.png  used on input line 196.
+(luatex.def)             Requested size: 290.22107pt x 255.70125pt.
+<img/pulse_detection_internal.png, id=206, 963.6pt x 364.635pt>
+File: img/pulse_detection_internal.png Graphic file (type png)
+<use img/pulse_detection_internal.png>
+Package luatex.def Info: img/pulse_detection_internal.png  used on input line 2
+13.
+(luatex.def)             Requested size: 483.69687pt x 183.03477pt.
+
+[10<./img/boxcar_real.png><./img/pulse_detection_internal.png>]
+Underfull \hbox (badness 1442) in paragraph at lines 232--233
 \TU/Candara(2)/m/n/12 libero, non-ummy eget, con-sectetuer id,
  []
 
-
-Underfull \hbox (badness 3668) in paragraph at lines 152--152
+[11]
+Underfull \hbox (badness 3668) in paragraph at lines 236--236
 \TU/Candara(2)/m/n/12 dictum gravida mauris. Nam arcu libero,
  []
 
 
-Underfull \hbox (badness 2111) in paragraph at lines 152--152
+Underfull \hbox (badness 2111) in paragraph at lines 236--236
 \TU/Candara(2)/m/n/12 nonummy eget, consectetuer id, vulputate
  []
 
 
-Overfull \hbox (0.9211pt too wide) in paragraph at lines 152--152
+Overfull \hbox (0.9211pt too wide) in paragraph at lines 236--236
 \TU/Candara(2)/m/n/12 Pellentesque habitant morbi tristique senectus
  []
 
 
-Underfull \hbox (badness 1009) in paragraph at lines 152--152
+Underfull \hbox (badness 1009) in paragraph at lines 236--236
 \TU/Candara(2)/m/n/12 Mauris ut leo. Cras viverra metus rhoncus
  []
 
-[8]
-Underfull \hbox (badness 3668) in paragraph at lines 160--174
+
+Underfull \hbox (badness 3668) in paragraph at lines 244--258
 \TU/Candara(2)/m/n/12 dictum gravida mauris. Nam arcu libero,
  []
 
-[9] [10] (./main.aux)
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[12] [13] [14] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 74B47407CA939706EBE1BE9B178F1DE3;3467.
+(rerunfilecheck)             Checksum: 5D4330F346CF812073567C2618BDD09B;3507.
 )
 
 Here is how much of LuaTeX's memory you used:
- 32615 strings out of 477742
+ 32696 strings out of 477742
  100000,1373583 words of node,token memory allocated
  536 words of node memory still in use:
    6 hlist, 2 vlist, 2 rule, 2 glue, 4 kern, 1 glyph, 8 attribute, 59 glue_spec,
  8 attribute_list, 2 write, 1 pdf_action nodes
-   avail lists: 2:648,3:297,4:97,5:224,6:85,7:6943,8:51,9:419,10:27,11:392
- 52240 multiletter control sequences out of 65536+600000
- 60 fonts using 15643487 bytes
+   avail lists: 2:648,3:269,4:90,5:223,6:85,7:7462,8:51,9:419,10:27,11:400
+ 52282 multiletter control sequences out of 65536+600000
+ 60 fonts using 15643887 bytes
  105i,12n,115p,446b,555s stack positions out of 10000i,1000n,20000p,200000b,80000s
 <//?/d:/programy/miktex/fonts/opentype/public/lm-math/latinmodern-math.otf><//?/
 d:/programy/miktex/fonts/opentype/public/lm-math/latinmodern-math.otf><//?/d:/pr
 ogramy/miktex/fonts/opentype/public/lm/lmmono12-regular.otf><C:/Windows/Fonts/ca
 ndarab.ttf><C:/Windows/Fonts/candara.ttf>
-Output written on main.pdf (10 pages, 491245 bytes).
+Output written on main.pdf (14 pages, 1406047 bytes).
 
-PDF statistics: 228 PDF objects out of 1000 (max. 8388607)
- 41 named destinations out of 1000 (max. 131072)
+PDF statistics: 274 PDF objects out of 1000 (max. 8388607)
+ 50 named destinations out of 1000 (max. 131072)
  208 words of extra memory for PDF output out of 10000 (max. 100000000)
 
