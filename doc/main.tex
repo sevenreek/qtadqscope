@@ -118,8 +118,11 @@
 		relies on User Registers primarily for transferring configuration settings to the FPGA.
 		The current version of the firmware also enables spectra transfer through this data path for testing purposes.
 	\subsection{Bypassing User Logic}
-
-
+		The custom logic implemented in the User Logic modules can be bypassed without reprogramming the 
+		FPGA. When User Logic 1 is bypassed any custom trigger algorithms will not take effect. 
+		The board will operate as if no changes were introduced to the firmware design. 
+		No data is passed to User Logic modules if they are bypassed, so spectroscopy in 
+		User Logic 2 will not work if the bypass mask is set.
 \section{Custom Firmware}
 \subsection{Core Firmware Functionality}
 The firmware spectroscopy solution consists of four primary subsystems:
