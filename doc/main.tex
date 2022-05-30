@@ -1,6 +1,6 @@
 %!TEX TS-program = lualatex
 
-\documentclass[12pt]{article}
+\documentclass[a4paper,12pt,table]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 
@@ -30,21 +30,25 @@
 	Initial chapters of this paper go over the digitizer board itself, 
 	highlighting its features and limitations.
 	The custom firmware solution is built on top of a development kit provided by SPDevices with ADQ14.
-	\newpage
-\section{ADQ14}
-	\subsection{}
-
+	\subsection{ADQ14}
+	For information on the digitizer board itself refer to the 
+	\href{https://www.spdevices.com/products/hardware/14-bit-digitizers/adq14}{manufacturers' website}.
+	Specifically the 
+	\href{https://www.spdevices.com/documents/datasheets/19-adq14-datasheet/file}{datasheet} 
+	and the \href{https://www.spdevices.com/documents/user-guides/55-adq14-manual/file}{user manual}.
+	
+\newpage
 \section{SPDevices DevKit}
+	\begin{wrapfigure}[22]{r}{0.28\textwidth}
+		\includegraphics[width=0.25\textwidth]{img/devkit_ul.png}
+		\caption{DevKit overview}\label{wrap-fig:devkit_ul}
+	\end{wrapfigure}
 	The custom spectroscopy firmware is built on top of a development kit provided with the digitizer board.
 	The base system is referred to as the DevKit by the manufacturer. 
 	A full documentation of the DevKit can be downloaded from the 
 	\href{https://www.spdevices.com/documents/user-guides/24-adq14-development-kit}{manufacturer's website}.
 	An offline copy is included with the firmware source code in the \verb|documentation| folder.
 	\subsection{The concept of User Logic}
-		\begin{wrapfigure}[14]{r}{0.28\textwidth}
-			\includegraphics[width=0.25\textwidth]{img/devkit_ul.png}
-			\caption{DevKit overview}\label{wrap-fig:devkit_ul}
-		\end{wrapfigure}
 		The modules provided with the DevKit control the Analog Digital Converter, triggering,
 		packeting, the DRAM data queue and the PCIe interface. The subsystems responsible for these
 		parts of the pipeline are provided in the form of encrypted IP cores and cannot be modified.
@@ -60,11 +64,6 @@
 		\par
 		\newpage
 	\subsection{Samples in the FPGA}
-		\begin{figure}[!h]
-			\centering
-			\includegraphics[width=0.83\textwidth]{img/devkit_dataflow.png}
-			\caption{Primary data flow in the FPGA}\label{fig:devkit_dataflow}
-		\end{figure}
 		The digitizer's ADC is capable of sampling the signal at a rate up to 1 GS/s or 1 GHz.
 		The FPGA is clocked at 250 MHz, resulting in a parallel design where each channel produces
 		4 new consecutive samples for the FPGA on each clock cycle. The ADCs produce 14-bit samples.
@@ -101,11 +100,13 @@
 		Further DevKit modules can then then pack and queue the records for transmission.
 		User Logic 2 also inserts header data containing the metadata. 
 		The record length is fixed by default and set in the control application on the host PC.
-		\par
-		All spectroscopy logic in the current firmware revision is contained within User Logic 2. 
-		\autoref{appendix:user_logic_data_bus} contains a detailed description of the input and output signals 
-		available in the User Logic modules, mostly useful for firmware developers.
 	\subsection{Data paths in the FPGA}
+		\begin{figure}[!h]
+			\centering
+			\includegraphics[width=\textwidth]{img/devkit_dataflow.png}
+			\caption{Primary data flow in the FPGA}\label{fig:devkit_dataflow}
+		\end{figure}
+		\autoref{fig:devkit_dataflow} shows the primary data flow in the FPGA.
 		Records built of the 16-bit samples, 
 		together with the metadata are initially stored in the digitizer's internal DRAM. 
 		This memory forms a FIFO queue, that is periodically transferred over to the host PC. 
@@ -214,60 +215,131 @@
 			\caption{Pulse detection thresholding}\label{fig:pulse_detection_thresholding}
 		\end{figure}
 	\subsection{Pulse Shaping Module}\label{ssec:pulse_shaping_module}
-
+		A trapezoidal filter is currently used to shape incoming pulses. 
+		This type of filter offers a signal to noise ratio second only to a cusp filter.
+		Generally it is not computationally expensive, however it introduces a large gain, 
+		that must be attenuated at intermediate points 
+		to remove the possibility of an integer overflow occuring in calculations.
+		\autoref{fig:trapezoid_scheme} shows a block schematic of a trapezoid filter. 
+		Three points which introduce a substantial amount of gain are highlighted.
+		The gain is dependent on the parameters of the filters.
+		\begin{figure}[!hb]
+			\centering
+			\includegraphics[width=\textwidth]{img/trapezoid_schematic.png}
+			\caption{Trapezoid filter block scheme}\label{fig:trapezoid_scheme}
+		\end{figure}
+		Removing this gain requires division.
+		Dividers can be implemented in firmware, however they result in complex circuitry,
+		that in turn introduces substantial delay to the signals (20-30 clock cycles). 
+		This increases the complexity of other components as they now have to include
+		longer shit registers for synchornization.
+		Where possible dividers were replaced with arithmetic shifters. 
 	\subsection{Pulse Sampler}\label{ssec:pulse_sampler}
+		Pulses shaped with the trapezoid filter form a flattop, 
+		that linearly corresponds to the original pulse height.
+		Due to noise in the system, sampling just the signal peaks
+		would lead to subpar spectrum resolution. 
+		The trapezoidal filter performs some averaging in accumulation stages,
+		however the flattop region is never ideally horizontal.
+		Multiple samples are taken at the flattop to improve the 
+		result of pulse height measurement.
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=\textwidth]{img/trapezoid_operation.png}
+			\caption{Trapezoid filter block scheme}\label{fig:trapezoid_operation}
+		\end{figure}
+		As shown in \autoref{fig:trapezoid_operation}, the pulse sampler operates in states.
+		This acts as a basic form of pile-up rejection. 
+		A timing trigger from the \hyperref[ssec:pulse_detection_module]{Pulse Detection Module}
+		causes the sampler to come into active state. 
+		After watching the rising edge, upon reaching the flattop region, 
+		an accumulator starts adding up samples.
+		The duration of a flattop region is constant and defined by the trapezoid filter parameters,
+		so the necessary division can be performed efficiently, 
+		with a reliance on bit shifting or lookup tables.
+		\newpage
 	\subsection{Spectrum Storage and Transfer}\label{ssec:spectrum_storage_and_transfer}
-\section{Second section}
+		The measured pulse heights are binned into up to $2^{14}$ spectrum bins. 
+		Without reprogramming the device the number of bins can be changed 
+		into any power of $2$ lower than the maximum value.
+		The measured pulse height is initially stored as a 16-bit unsigned integer. 
+		The count of pulses in each bin is stored in an individually addressable
+		dual port block RAM consiting of 32-bit words. 
+		To translate the pulse height into a spectrum bin, and thus the RAM address, 
+		$N$ most significant bits are taken from the pulse height, where $N$
+		corresponds to the logarithm of the number of bins. 
+		This is a very efficient design that does not require 
+		divisors nor an array of comparataros, that would otherwise be necessary for binning.
 
-\fullboxbegin
-\lipsum[1]
-\fullboxend
+\newpage
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=0.75\textwidth]{img/local_global_spectra.png}
+			\caption{Local and global spectrum memory}\label{fig:local_global_spectra}
+		\end{figure}
+		As shown in \autoref{fig:local_global_spectra}, a total of 3 block RAMs are present in the design. 
+		One, so called global BRAM, is entirely controlled through software.
+		Appropriate bins are incremented as long as a flag in the FPGA registers is not unset.
+		This acts primarily as a debuggin tool or in cases where a spectrum of an entire acquisition is necessary.
+		Spectra are transferred from this BRAM with the use of user registers,
+		so data should be read only when the board is not in an active acquisition.
+		\par
+		The other two BRAMs build windowed spectra. 
+		The duration of the windows is configurable through the software package.
+		In an example case of a 100 ms window, local BRAM A will be written to for 100 ms, 
+		after which time the counting will immedietaly be taken over by local BRAM B. 
+		During the next 100 ms window, local BRAM A will transfer its contents over the DMA channel 
+		and reset all bin counts back to 0. This happens in approximately 25000 clock cycles,
+		which translates to around 100 $\mu s$ of down time. 
+		With the other local BRAM immedietaly taking over the counting, 
+		this down time does not cause missed events, 
+		as the active spectrum memory alternates with every window duration.
+\newpage
+\section{Using Custom Firmware}
+	\subsection{QADQScope}
+		The digitizer board, as well as the spectroscope firmware 
+		are currently controlled from the same software application called QADQScope.
+		The application allows users to start acquisitions with any 
+		configuration available to the board. 
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=\textwidth]{img/qtadqscope_main.png}
+			\caption{Main window of QADQScope}\label{fig:qtadqscope_main}
+		\end{figure}
+		\autoref{fig:qtadqscope_main} shows the main window of QADQScope.
+		This view is equipped with a plot window capable of displaying incoming
+		records as they arrive to the host PC.
+		Alternatively data can be saved to a hard drive. 
+		While it is possible to simultanously save data and display it in real time,
+		the plotting is significantly slower and will cause a bottleneck 
+		in terms of processing speed.
+		The primary view lets users change triggering configuration, 
+		including record length and horizontal shift.
+		To activate the custom firmware User Logic 2 must not be bypassed.
+		\newpage
+	\subsection{Spectrum Dialog}
+		The primary Pulse Height Analyzer are available through a secondary dialog window 
+		shown in \autoref{fig:qtadqscope_spectrum}.
+		\begin{figure}[!ht]
+			\centering
+			\includegraphics[width=\textwidth]{img/qtadqscope_spectrum.png}
+			\caption{Spectrum dialog of QADQScope}\label{fig:qtadqscope_spectrum}
+		\end{figure}
+		To enable the spectroscope functionality the appropriate checkbox must be set.
+		This enables the global spectrum counter. 
+		The data from this memory is downloaded at user request 
+		when the \verb|Download from FPGA button| is pressed.
+		The \verb|Save| and \verb|Load| buttons allow for spectra to be written to or loaded from .csv files.
+		To reset the counters in the global memory press the \verb|Reset spectrum| button.
+		The boxcar trigger can be set to any value and functions as described in \autoref{ssec:pulse_detection_module}.
+		The \verb|Transfer spectra over DMA| checkbox enables local memory
+		with a window specified next to the \verb|Set window| button.
+		The transferred windowed spectra can be displayed in real time on the plot available in this dialog window.
+		Changing the bin count is achieved via the slider. 
+		After every change to the bin count it is necessary to reset the global spectrum.
+		Otherwise the counts will not be reset automatically
+		and the new data will be superposed with the previously existing one.
+\newpage
 
-\lipsum[1]
 
-\subsection{First subsection}
-\lipsum[1]
-
-\leftboxbegin
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna. Donec vehicula augue eu neque.
-\leftboxend
-
-\lipsum[1-2]
-
-\rightboxbegin
-\begin{itemize}
-	\item Lorem ipsum
-	\item Lorem ipsum
-\end{itemize}
-\rightboxend
-\lipsum[1]
-\begin{table}[!h]
-	\centering
-	\caption{Sample table.}
-	\begin{tabular}{cccc}
-		\toprule
-		Value 1 & Value 2 & Value 3 & Value 4 \\
-		\midrule
-		odd     & odd     & odd     & 1.00    \\
-		even    & even    & even    & 1.00    \\
-		odd     & odd     & odd     & 1.00    \\
-		even    & even    & even    & 1.00    \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\lipsum[1]
-
-\frameboxbegin{Sample frame}
-\lipsum[1]
-\frameboxend
-
-\appendix
-\section{User Logic Data Bus}\label{appendix:user_logic_data_bus}
-\subsection{User Logic 1}\label{appendix:user_logic_1_data_bus}
-\lipsum[1]
-\subsection{User Logic 2}\label{appendix:user_logic_2_data_bus}
-\lipsum[1]
-\subsection{User Logic 2 Registers}\label{appendix:user_logic_2_registers}
-\lipsum[1]
 \end{document}
