@@ -1,6 +1,7 @@
 #include "PrimaryControls.h"
 #include "ui_PrimaryControls.h"
 #include "DigitizerConstants.h"
+#include <algorithm>
 PrimaryControls::PrimaryControls(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PrimaryControls)
@@ -33,7 +34,7 @@ void PrimaryControls::reloadUI()
 }
 void PrimaryControls::resetFillIndicators()
 {
-    this->ui->DMAFillStatusLabel->setText("---");
+    this->ui->dmaUsage->setValue(0);
     this->ui->FileFillStatus->setValue(0);
     this->ui->RAMFillStatus->setValue(0);
 }
@@ -168,8 +169,8 @@ void PrimaryControls::periodicUIUpdate()
 {
     if(this->context->fileSaver)
         this->ui->FileFillStatus->setValue(100*double(this->context->fileSaver->getProcessedBytes())/this->digitizer->getFileSizeLimit());
-    float starvation = this->digitizer->getAverageThreadStarvation();
-    this->ui->DMAFillStatusLabel->setText(starvation>0.5f?QString::fromStdString(fmt::format(" ⚠ STARVED ({:.2f})",starvation)):" ✔️ OK");
+    long long starvation = this->digitizer->getMillisFromLastStarve().count();
+    this->ui->dmaUsage->setValue(std::min(100LL-starvation, 100LL));
     this->ui->RAMFillStatus->setValue(100*double(this->digitizer->getDeviceRamFillLevel()));
 }
 

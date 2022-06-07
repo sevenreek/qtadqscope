@@ -5,3 +5,8 @@ include/qcustomplot/examples
 *.dat
 wslbuild
 CMakeFiles
+build
+compile_commands.json
+.vscode/
+*.autosave
+*.user

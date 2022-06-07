@@ -160,13 +160,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QLabel" name="DMAFillStatusLabel">
-     <property name="text">
-      <string>✔️ OK</string>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="2">
     <widget class="QComboBox" name="plotChannel">
      <item>
@@ -189,6 +182,13 @@
        <string>CH4</string>
       </property>
      </item>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QProgressBar" name="dmaUsage">
+     <property name="value">
+      <number>24</number>
+     </property>
     </widget>
    </item>
   </layout>

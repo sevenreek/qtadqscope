@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(qtadqscope LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 

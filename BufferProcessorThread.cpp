@@ -56,8 +56,9 @@ void BufferProcessor::startBufferProcessLoop()
 #endif
 #endif
         bufferPayloadSize = this->adq.WaitForRecordBuffer(&channel, reinterpret_cast<void**>(&record), 500, &status);
-        this->threadStarved += static_cast<float>(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING);
-        this->threadStarved /= 2.0f;
+        if(status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING) {
+            this->lastStarved = std::chrono::high_resolution_clock::now();
+        }
         if(bufferPayloadSize < 0)
         {
             if(!this->handleWaitForRecordErrors(bufferPayloadSize) && this->loopState != BufferProcessor::STATE::STOPPING)
@@ -182,7 +183,8 @@ void BufferProcessor::configureNewAcquisition(Acquisition *acq)
     this->isContinuous = acq->getIsContinuous();
 }
 
-float BufferProcessor::getAverageThreadStarvation()
+std::chrono::milliseconds BufferProcessor::getMillisFromLastStarve()
 {
-    return this->threadStarved;
+    auto returnValue = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - this->lastStarved);
+    return returnValue;
 }

@@ -201,7 +201,10 @@ void Digitizer::finishRecordProcessors()
 {
     for(auto rp : this->recordProcessors)
     {
-        rp->finish();
+        auto processedBytes = rp->finish();
+        double dataRate = (processedBytes/1.0e6) / (this->defaultAcquisition.getDuration()/1.0e3);
+        if(processedBytes)
+            spdlog::info("{} processed {:.4f} GBs. Data rate {:.4f} MB/s.", rp->getName(), processedBytes/1.0e9, dataRate);
     }
 }
 
@@ -256,9 +259,9 @@ Digitizer::~Digitizer()
     this->joinThreads();
 }
 
-float Digitizer::getAverageThreadStarvation()
+std::chrono::milliseconds Digitizer::getMillisFromLastStarve()
 {
-    return this->bufferProcessorHandler->getAverageThreadStarvation();
+    return this->bufferProcessorHandler->getMillisFromLastStarve();
 }
 
 float Digitizer::getDeviceRamFillLevel()
