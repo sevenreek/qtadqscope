@@ -29,6 +29,7 @@ if __name__ == '__main__':
     args.add_argument('-l', '--limit_records', default=0, help='number of records to extract, 0 for all')
     args.add_argument('-p', '--plot', action='store_true', help='plot using matplotlib')
     args.add_argument('-d', '--debug_trig', type=int, default=-1, help='plots and prints out records which have bool(generalPurpose0)==False; set to index of records file containing the GPIO output in headers')
+    args.add_argument('--ap_cutoff', type=float, default=0, help='afterpulse detection window in ms, use with -d')
     args = args.parse_args()
     recordsinks = []
 
@@ -41,7 +42,7 @@ if __name__ == '__main__':
         if 0 > args.debug_trig or args.debug_trig > len(args.channels):
             print(f"debug_trig set to a file not present in channels list. Given {len(args.channels)} record files, but debug_trig was set to {args.debug_trig}")
             exit()
-        recordsinks.append(TrigPortDebugger(args.debug_trig)) 
+        recordsinks.append(TrigPortDebugger(args.debug_trig, args.plot, cutoff_ms=args.ap_cutoff)) 
     
     
     with ExitStack() as stack:

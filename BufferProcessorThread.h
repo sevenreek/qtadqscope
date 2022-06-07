@@ -28,18 +28,19 @@ public:
     void reset();
     void stop();
     float getRamFillLevel();
-    float getAverageThreadStarvation();
+    std::chrono::milliseconds getMillisFromLastStarve();
     void configureNewAcquisition(Acquisition *acq);
 public slots:
     void startBufferProcessLoop();
 private:
     std::mutex stateMutex;
-    float threadStarved = 0.0f;
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastStarved;
     unsigned long recordLength;
     bool isContinuous;
     int lastRAMFillLevel = 0;
     BufferProcessor::STATE loopState = BufferProcessor::STATE::INACTIVE;
     unsigned long long recordsStored = 0;
+    unsigned long long lastRecordNumber = 0;
     // record completion listeners
     std::list<IRecordProcessor*> &recordProcessors;
     ADQInterfaceWrapper & adq;

@@ -4,11 +4,9 @@ import os
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 import ctypes as ct
-
+import pandas as pd
 
 class RecordSink(ABC):
-    def __init__(self, channel_count:int):
-        self.channel_count = channel_count
 
     @abstractmethod
     def on_record(self, headers:list[ct.Structure], samples:list[np.ndarray]):
@@ -21,31 +19,43 @@ class RecordSink(ABC):
         pass
 
 class TrigPortDebugger(RecordSink):
-    def __init__(self, trig_channel:int):
+    def __init__(self, trig_channel:int, plot:bool, cutoff_ms:float=None):
         self.trig_channel = trig_channel
-        self.first_timestamp = None
-        self.count = 0
+        self.timestamp_diff = []
+        self.last_timestamp = None
+        self.last_high_timestamp = None
+        self.plot = plot
+        self.cutoff_ms = cutoff_ms
+    
+    def plot_samples(self, headers:list[ct.Structure], samples:list[np.ndarray]):
+        for i, (header, samples) in enumerate(zip(headers, samples)):
+            plt.subplot(len(headers), 1, i+1)
+            plt.plot(samples)
+        plt.show()
 
     def on_record(self, headers: list[ct.Structure], samples: list[np.ndarray]):
-        if self.first_timestamp is None:
-            self.first_timestamp = headers[0].timestamp * 125
-        self.last_timestamp = headers[0].timestamp * 125
-        self.count += 1
+        if self.last_timestamp:
+            self.timestamp_diff.append((headers[0].timestamp - self.last_timestamp) * 125 / 1e12)
+        self.last_timestamp = headers[0].timestamp
+
         if not headers[self.trig_channel].generalPurpose0:
-            print("Detected low TRIG in records:")
-            print([f"#{header.recordNumber}" for header in headers])
-            print(
-                [header.generalPurpose0 for header in headers]
-            )
-            for i, (header, samples) in enumerate(zip(headers, samples)):
-                plt.subplot(self.channel_count, 1, i+1)
-                plt.plot(samples)
-            plt.show()
+            if self.last_high_timestamp:
+                ms_diff = (headers[self.trig_channel].timestamp - self.last_high_timestamp) * 125 / 1e9
+                if self.cutoff_ms:
+                    if self.cutoff_ms < ms_diff:
+                        print(f"Low TRIG level detected outside afterpulse window, time from last high: {ms_diff:.4f} ms")
+                        if self.plot: self.plot_samples()
+                else:
+                    print(f"Low TRIG level detected, time from last high: {ms_diff:.4f} ms")
+                    if self.plot: self.plot_samples()
+        else:
+            self.last_high_timestamp = headers[self.trig_channel].timestamp;
     
     def on_finish(self):
-        elapsed = self.last_timestamp - self.first_timestamp
-        elapsed_s = elapsed / 10**12
-        print(f"Elapsed {elapsed} ps. Gathered {self.count} records. Record rate {self.count/elapsed_s} 1/s.")
+        tsdiff = np.array(self.timestamp_diff)
+        print(pd.DataFrame(tsdiff).describe())
+
+
 
 class PrintSink(RecordSink):
     def __init__(self, timestamp_resolution=125):

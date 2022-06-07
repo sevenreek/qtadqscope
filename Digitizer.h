@@ -9,6 +9,7 @@
 #include "BufferProcessorThread.h"
 #include <QTimer>
 #include "CalibrationTable.h"
+#include <chrono>
 
 class Digitizer : public QObject
 {
@@ -94,7 +95,7 @@ public slots:
 public:
     Digitizer(ADQInterfaceWrapper &digitizerWrapper);
     ~Digitizer();
-    float getAverageThreadStarvation();
+    std::chrono::milliseconds getMillisFromLastStarve();
     float getDeviceRamFillLevel();
     bool runOverridenAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibration);
     bool setAcquisition(const Acquisition acq);

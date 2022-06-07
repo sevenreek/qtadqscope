@@ -1,0 +1,20 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Document structure}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}ADQ14}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}SPDevices DevKit}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}The concept of User Logic}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Samples in the FPGA}{5}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Data flow in User Logic 1}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Data flow in User Logic 2}{5}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Data paths in the FPGA}{6}{subsection.2.5}%
+\contentsline {subsubsection}{\numberline {2.5.1}DMA}{6}{subsubsection.2.5.1}%
+\contentsline {subsubsection}{\numberline {2.5.2}User Registers}{6}{subsubsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.6}Bypassing User Logic}{7}{subsection.2.6}%
+\contentsline {section}{\numberline {3}Custom Firmware}{8}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Pulse Detection and Timing Module}{9}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Pulse Shaping Module}{11}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Pulse Sampler}{11}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Spectrum Storage and Transfer}{12}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Using Custom Firmware}{14}{section.4}%
+\contentsline {subsection}{\numberline {4.1}QADQScope}{14}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Spectrum Dialog}{15}{subsection.4.2}%
