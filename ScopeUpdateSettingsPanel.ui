@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RecordProcessorsPanel</class>
- <widget class="QWidget" name="RecordProcessorsPanel">
+ <class>ScopeUpdateSettingsPanel</class>
+ <widget class="QWidget" name="ScopeUpdateSettingsPanel">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
-    <height>147</height>
+    <width>353</width>
+    <height>133</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">font-family: Roboto; font-size: 14px;</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <widget class="QGroupBox" name="analysisSettingsContainer">
      <property name="enabled">
@@ -31,59 +28,65 @@
      <property name="font">
       <font>
        <family>Roboto</family>
-       <pointsize>-1</pointsize>
       </font>
      </property>
      <property name="title">
-      <string>Processing</string>
+      <string>Scope settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
+      <item row="3" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Active channel</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
        <widget class="QCheckBox" name="updateScopeCB">
         <property name="font">
          <font>
-          <family>Roboto</family>
-          <pointsize>-1</pointsize>
+          <family>MS Shell Dlg 2</family>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
-         <string>Update scope</string>
+         <string>Enable plotting</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>File save</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QComboBox" name="fileTypeSelector">
+      <item row="3" column="2">
+       <widget class="QComboBox" name="plotChannel">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <item>
          <property name="text">
-          <string>DISABLED</string>
+          <string>CH1</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>BINARY</string>
+          <string>CH2</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>BINARY VERBOSE</string>
+          <string>CH3</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CH4</string>
          </property>
         </item>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QPushButton" name="softwareTrigger">
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="resetPlot">
         <property name="text">
-         <string>RUN SW TRIG</string>
+         <string>Reset plot axes on new acquisition</string>
         </property>
        </widget>
       </item>

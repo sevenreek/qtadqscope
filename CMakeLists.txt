@@ -49,15 +49,17 @@ add_subdirectory(lib/spdlog-1.8.2)
 
 set(PROJECT_SOURCES
         main.cpp
+        ScrollbarScalingQScrollArea.h ScrollbarScalingQScrollArea.cpp
         BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
         RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
         FullCalibrationDialog.cpp FullCalibrationDialog.h FullCalibrationDialog.ui
-        SpectrumDialog.h SpectrumDialog.cpp SpectrumDialog.ui
+        SpectroscopeTab.h SpectroscopeTab.cpp SpectroscopeTab.ui
         AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
-        AcquisitionSettings.cpp AcquisitionSettings.h AcquisitionSettings.ui
+        AcquisitionSettingsSidePanel.cpp AcquisitionSettingsSidePanel.h AcquisitionSettingsSidePanel.ui
         PrimaryWindow.cpp PrimaryWindow.h PrimaryWindow.ui
         PrimaryControls.cpp PrimaryControls.h PrimaryControls.ui
-        RecordProcessorsPanel.cpp RecordProcessorsPanel.h RecordProcessorsPanel.ui
+        FileSaveSettingsPanel.h FileSaveSettingsPanel.cpp FileSaveSettingsPanel.ui
+        ScopeUpdateSettingsPanel.h ScopeUpdateSettingsPanel.cpp ScopeUpdateSettingsPanel.ui
         Semaphore.h
         RecordProcessor.h
         ScopeUpdater.cpp ScopeUpdater.h
@@ -80,6 +82,7 @@ set(PROJECT_SOURCES
         ADQAPIIncluder.h
         RegisterConstants.h
         SpectrumPlotter.h SpectrumPlotter.cpp
+        ScopeTab.h ScopeTab.cpp ScopeTab.ui
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -78,12 +78,6 @@ void PrimaryControls::initialize(ApplicationContext *context)
             else this->digitizer->setDuration(Acquisition::NO_DURATION);
         }
     );
-    this->ui->plotChannel->connect(
-        this->ui->plotChannel,
-        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-        this,
-        &PrimaryControls::onPlotChannelChanged
-    );
     this->periodicUpdateTimer.connect(
         &this->periodicUpdateTimer,
         &QTimer::timeout,
@@ -126,10 +120,6 @@ void PrimaryControls::primaryButtonClicked()
         case Digitizer::DIGITIZER_STATE::STARTING:
 
         break;
-    }
-    if(this->ui->resetPlot->isChecked())
-    {
-        emit this->resetPlot();
     }
 }
 
@@ -179,18 +169,4 @@ void PrimaryControls::enableVolatileSettings(bool enabled)
 {
     this->ui->timedRunCheckbox->setEnabled(enabled);
     this->ui->timedRunValue->setEnabled(enabled);
-}
-
-void PrimaryControls::changePlotChannel(int ch)
-{
-    if(this->context->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
-        this->ui->plotChannel->setCurrentIndex(ch);
-}
-void PrimaryControls::onPlotChannelChanged(int ch)
-{
-    this->context->scopeUpdater->changeChannel(ch);
-}
-void PrimaryControls::allowChangePlotChannel(bool allow)
-{
-    this->ui->plotChannel->setEnabled(allow);
 }

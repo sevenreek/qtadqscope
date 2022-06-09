@@ -7,23 +7,23 @@
 #include "DigitizerGUIComponent.h"
 #include "util.h"
 namespace Ui {
-class AcquisitionSettings;
+class AcquisitionSettingsSidePanel;
 }
 
-class AcquisitionSettings : public QWidget, public DigitizerGUIComponent
+class AcquisitionSettingsSidePanel : public QWidget, public DigitizerGUIComponent
 {
     Q_OBJECT
 
 public:
-    explicit AcquisitionSettings(QWidget *parent = nullptr);
-    ~AcquisitionSettings();
+    explicit AcquisitionSettingsSidePanel(QWidget *parent = nullptr);
+    ~AcquisitionSettingsSidePanel();
     void reloadUI();
     void initialize(ApplicationContext * context);
     static std::string calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip);
     void enableVolatileSettings(bool enabled) override;
 private:
     int lastActiveChannel = 0;
-    Ui::AcquisitionSettings *ui;
+    Ui::AcquisitionSettingsSidePanel *ui;
     std::array<std::unique_ptr<AcquisitionChannelSettingsTab>, MAX_NOF_CHANNELS> tabs;
 public slots:
     void handleTabChanged(int tab);

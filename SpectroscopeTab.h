@@ -9,16 +9,16 @@
 #include "RegisterConstants.h"
 
 namespace Ui {
-class SpectrumDialog;
+class SpectroscopeTab;
 }
 
-class SpectrumDialog : public QDialog, public DigitizerGUIComponent
+class SpectroscopeTab: public QWidget, public DigitizerGUIComponent
 {
     Q_OBJECT
 
 public:
-    explicit SpectrumDialog(QWidget *parent = nullptr);
-    ~SpectrumDialog();
+    explicit SpectroscopeTab(QWidget *parent = nullptr);
+    ~SpectroscopeTab();
     void reloadUI() override;
     void initialize(ApplicationContext * context) override;
     void enableVolatileSettings(bool enabled) override;
@@ -28,7 +28,7 @@ private:
     QVector<double> y;
     std::unique_ptr<SpectrumPlotter> plotter;
     bool isPlotterActive = false;
-    Ui::SpectrumDialog *ui;
+    Ui::SpectroscopeTab *ui;
     ApplicationContext * context;
     int windowDuration = 0;
     unsigned int spectrumBinCount = MAX_SPECTRUM_BIN_COUNT;

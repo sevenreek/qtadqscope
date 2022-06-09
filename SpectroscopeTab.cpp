@@ -1,20 +1,20 @@
-#include "SpectrumDialog.h"
-#include "ui_SpectrumDialog.h"
+#include "SpectroscopeTab.h"
+#include "ui_SpectroscopeTab.h"
 #include "DigitizerConstants.h"
-SpectrumDialog::SpectrumDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::SpectrumDialog)
+SpectroscopeTab::SpectroscopeTab(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::SpectroscopeTab)
 {
     ui->setupUi(this);
     this->plotter = std::unique_ptr<SpectrumPlotter>(new SpectrumPlotter(1024));
 }
 
-SpectrumDialog::~SpectrumDialog()
+SpectroscopeTab::~SpectroscopeTab()
 {
     delete ui;
 }
 
-void SpectrumDialog::reloadUI()
+void SpectroscopeTab::reloadUI()
 {
     this->loadConfigFromDevice();
     unsigned int reductionShift = std::round(std::log2(MAX_SPECTRUM_BIN_COUNT/this->spectrumBinCount));
@@ -24,31 +24,31 @@ void SpectrumDialog::reloadUI()
     this->ui->spectroscopeEnable->setChecked(this->context->digitizer->getSpectroscopeEnabled());
 }
 
-void SpectrumDialog::initialize(ApplicationContext *context)
+void SpectroscopeTab::initialize(ApplicationContext *context)
 {
     this->context = context;
     this->reallocatePlotSize(this->spectrumBinCount);
     this->ui->plotArea->addGraph();
     this->ui->plotArea->setInteraction(QCP::iRangeDrag, true);
     this->ui->plotArea->setInteraction(QCP::iRangeZoom, true);
-    this->connect(this->ui->downloadButton, &QAbstractButton::pressed, this, &SpectrumDialog::downloadSpectrum);
-    this->connect(this->ui->loadButton, &QAbstractButton::pressed, this, &SpectrumDialog::loadSpectrum);
-    this->connect(this->ui->saveButton, &QAbstractButton::pressed, this, &SpectrumDialog::saveSpectrum);
-    this->connect(this->ui->resetButton, &QAbstractButton::pressed, this, &SpectrumDialog::resetSpectrum);
-    this->connect(this->ui->setBoxcarTrigger, &QAbstractButton::pressed, this, &SpectrumDialog::setTriggerLevel);
-    this->connect(this->ui->enableSpectrumDMA, &QCheckBox::stateChanged, this, &SpectrumDialog::changeSpectrumDMAEnabled);
-    this->connect(this->ui->useZCDTrigger, &QCheckBox::stateChanged, this, &SpectrumDialog::changeUseZCDTrigger);
-    this->connect(this->ui->channelPlotSource, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SpectrumDialog::changePlotChannel);
-    this->connect(this->plotter.get(), &SpectrumPlotter::onScopeUpdate, this, &SpectrumDialog::updateScope, Qt::ConnectionType::BlockingQueuedConnection);
-    this->connect(this->ui->binCount, &QAbstractSlider::valueChanged, this, &SpectrumDialog::changeSpectrumBinCount);
-    this->connect(this->plotter.get(), &SpectrumPlotter::updateSpectrumCalculatedParams, this, &SpectrumDialog::updateSpectrumCalculatedParams, Qt::ConnectionType::BlockingQueuedConnection);
-    this->connect(this->ui->setWindowDuration, &QAbstractButton::released, this, &SpectrumDialog::setSpectrumWindow);
-    this->connect(this->ui->spectroscopeEnable, &QCheckBox::stateChanged, this, &SpectrumDialog::setSpectroscopeEnabled);
+    this->connect(this->ui->downloadButton, &QAbstractButton::pressed, this, &SpectroscopeTab::downloadSpectrum);
+    this->connect(this->ui->loadButton, &QAbstractButton::pressed, this, &SpectroscopeTab::loadSpectrum);
+    this->connect(this->ui->saveButton, &QAbstractButton::pressed, this, &SpectroscopeTab::saveSpectrum);
+    this->connect(this->ui->resetButton, &QAbstractButton::pressed, this, &SpectroscopeTab::resetSpectrum);
+    this->connect(this->ui->setBoxcarTrigger, &QAbstractButton::pressed, this, &SpectroscopeTab::setTriggerLevel);
+    this->connect(this->ui->enableSpectrumDMA, &QCheckBox::stateChanged, this, &SpectroscopeTab::changeSpectrumDMAEnabled);
+    this->connect(this->ui->useZCDTrigger, &QCheckBox::stateChanged, this, &SpectroscopeTab::changeUseZCDTrigger);
+    this->connect(this->ui->channelPlotSource, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SpectroscopeTab::changePlotChannel);
+    this->connect(this->plotter.get(), &SpectrumPlotter::onScopeUpdate, this, &SpectroscopeTab::updateScope, Qt::ConnectionType::BlockingQueuedConnection);
+    this->connect(this->ui->binCount, &QAbstractSlider::valueChanged, this, &SpectroscopeTab::changeSpectrumBinCount);
+    this->connect(this->plotter.get(), &SpectrumPlotter::updateSpectrumCalculatedParams, this, &SpectroscopeTab::updateSpectrumCalculatedParams, Qt::ConnectionType::BlockingQueuedConnection);
+    this->connect(this->ui->setWindowDuration, &QAbstractButton::released, this, &SpectroscopeTab::setSpectrumWindow);
+    this->connect(this->ui->spectroscopeEnable, &QCheckBox::stateChanged, this, &SpectroscopeTab::setSpectroscopeEnabled);
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
 }
 
-void SpectrumDialog::changeSpectrumDMAEnabled(int checked)
+void SpectroscopeTab::changeSpectrumDMAEnabled(int checked)
 {
     unsigned int retval;
     unsigned int value;
@@ -61,22 +61,22 @@ void SpectrumDialog::changeSpectrumDMAEnabled(int checked)
 
 }
 
-void SpectrumDialog::enableVolatileSettings(bool enabled)
+void SpectroscopeTab::enableVolatileSettings(bool enabled)
 {
 
 }
-void SpectrumDialog::changeUseZCDTrigger(int checked)
+void SpectroscopeTab::changeUseZCDTrigger(int checked)
 {
     checked = static_cast<bool>(checked);
     unsigned int retval;
     this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~USE_ZCD_BIT, checked?USE_ZCD_BIT:0, &retval);
 
 }
-void SpectrumDialog::debugSpectrum()
+void SpectroscopeTab::debugSpectrum()
 {
 
 }
-void SpectrumDialog::downloadSpectrum()
+void SpectroscopeTab::downloadSpectrum()
 {
     std::unique_ptr<uint32_t[]> data(new uint32_t[this->spectrumBinCount]());
 
@@ -91,7 +91,7 @@ void SpectrumDialog::downloadSpectrum()
     this->ui->plotArea->replot();
 }
 
-void SpectrumDialog::loadSpectrum()
+void SpectroscopeTab::loadSpectrum()
 {
     QString fileName = QFileDialog::getOpenFileName(
         this,
@@ -121,7 +121,7 @@ void SpectrumDialog::loadSpectrum()
     this->ui->plotArea->replot();
 }
 
-void SpectrumDialog::saveSpectrum()
+void SpectroscopeTab::saveSpectrum()
 {
     QString fileName = QFileDialog::getSaveFileName(
         this,
@@ -139,7 +139,7 @@ void SpectrumDialog::saveSpectrum()
     file.close();
 }
 
-void SpectrumDialog::resetSpectrum()
+void SpectroscopeTab::resetSpectrum()
 {
     for(unsigned int i = 0; i < this->spectrumBinCount; i++)
     {
@@ -157,7 +157,7 @@ void SpectrumDialog::resetSpectrum()
     this->ui->plotArea->replot();
 }
 
-void SpectrumDialog::loadConfigFromDevice()
+void SpectroscopeTab::loadConfigFromDevice()
 {
     uint32_t retval;
     this->context->digitizer->readUserRegister(UL_TARGET, TRIGGER_REGISTER, &retval);
@@ -168,7 +168,7 @@ void SpectrumDialog::loadConfigFromDevice()
     this->ui->windowDuration->setValue(static_cast<uint32_t>(windowLength));
 }
 
-void SpectrumDialog::setTriggerLevel()
+void SpectroscopeTab::setTriggerLevel()
 {
     int trigger = this->ui->boxcarTrigger->value();
     unsigned int retval;
@@ -178,7 +178,7 @@ void SpectrumDialog::setTriggerLevel()
     }
 }
 
-void SpectrumDialog::changePlotChannel(int ch)
+void SpectroscopeTab::changePlotChannel(int ch)
 {
     this->context->digitizer->removeRecordProcessor(this->plotter.get());
     this->plotter->changeChannel(ch-1);
@@ -189,13 +189,13 @@ void SpectrumDialog::changePlotChannel(int ch)
 }
 
 
-void SpectrumDialog::updateScope(QVector<double> &x, QVector<double> y)
+void SpectroscopeTab::updateScope(QVector<double> &x, QVector<double> y)
 {
     this->ui->plotArea->graph(0)->setData(x,y, true);
     this->ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
 }
-void SpectrumDialog::reallocatePlotSize(int binCount)
+void SpectroscopeTab::reallocatePlotSize(int binCount)
 {
     this->x.clear();
     this->y.clear();
@@ -208,7 +208,7 @@ void SpectrumDialog::reallocatePlotSize(int binCount)
     }
 }
 
-void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
+void SpectroscopeTab::changeSpectrumBinCount(int sliderPos)
 {
     unsigned int reductionShift = this->ui->binCount->maximum() - sliderPos;
     int binCount = MAX_SPECTRUM_BIN_COUNT >> reductionShift;
@@ -223,7 +223,7 @@ void SpectrumDialog::changeSpectrumBinCount(int sliderPos)
 
 }
 
-void SpectrumDialog::setSpectrumWindow()
+void SpectroscopeTab::setSpectrumWindow()
 {
     unsigned int toSet = static_cast<uint32_t>(this->ui->windowDuration->value());
     unsigned int returnValue;
@@ -231,12 +231,12 @@ void SpectrumDialog::setSpectrumWindow()
     this->windowDuration = toSet;
 }
 
-void SpectrumDialog::setSpectroscopeEnabled(int checked)
+void SpectroscopeTab::setSpectroscopeEnabled(int checked)
 {
     this->context->digitizer->setSpectroscopeEnabled(bool(checked));
 }
 
-void SpectrumDialog::updateSpectrumCalculatedParams(unsigned long long totalCount)
+void SpectroscopeTab::updateSpectrumCalculatedParams(unsigned long long totalCount)
 {
     this->ui->totalCount->setText(QString::fromStdString(fmt::format("{}",totalCount)));
     this->ui->pulseRate->setText(QString::fromStdString(fmt::format("{:.2f}",(double)totalCount / this->windowDuration * 1000)));

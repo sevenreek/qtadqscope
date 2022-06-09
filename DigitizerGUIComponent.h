@@ -8,16 +8,19 @@
 class DigitizerGUIComponent
 {
 protected:
+    ApplicationContext *context = nullptr;
     Digitizer *digitizer = nullptr;
-    ApplicationConfiguration *config;
+    ApplicationConfiguration *config = nullptr;
 public:
     virtual void initialize(ApplicationContext * context)
     {
+        this->context = context;
         this->digitizer = context->digitizer;
         this->config = context->config;
     }
-    virtual void reloadUI() = 0;
-    virtual void enableVolatileSettings(bool enabled) = 0;
+    virtual void reloadUI() {};
+    virtual void enableVolatileSettings(bool enabled) {};
+    virtual void onAcquisitionStateChanged(Digitizer::DIGITIZER_STATE state) {};
 };
 
 

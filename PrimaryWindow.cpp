@@ -19,48 +19,22 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
 #endif
 #endif
     this->setWindowTitle(QString::fromStdString(windowTitle));
-    this->primaryControls = this->ui->primaryControls;
-    this->primaryControls->initialize(this->context);
-    this->acqSettings = ui->sideSettings;
-    this->acqSettings->initialize(this->context);
     connect(this->ui->actionSave, &QAction::triggered, this, &PrimaryWindow::openConfigSaveDialog);
     connect(this->ui->actionLoad, &QAction::triggered, this, &PrimaryWindow::openConfigLoadDialog);
-    this->ui->plotArea->addGraph();
-    this->ui->plotArea->setInteraction(QCP::iRangeDrag, true);
-    this->ui->plotArea->setInteraction(QCP::iRangeZoom, true);
-    this->triggerLine = new QCPItemLine(this->ui->plotArea);
-    this->triggerLine->setPen(QPen(Qt::red));
-    this->context->scopeUpdater->connect(
-        this->context->scopeUpdater,
-        &ScopeUpdater::onScopeUpdate,
-        this,
-        &PrimaryWindow::updateScope,
-        Qt::ConnectionType::BlockingQueuedConnection
-    );
-    this->primaryControls->connect(
-        this->primaryControls,
-        &PrimaryControls::resetPlot,
-        this,
-        [=]{
-            this->ui->plotArea->xAxis->setRange(0, this->context->digitizer->getSamplesPerRecordComplete());
-            this->ui->plotArea->yAxis->setRange(-(1<<15), 1<<15);
-        }
-    );
     this->calibrationDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this));
     this->buffersDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog(this));
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog(this));
-    this->spectrumDialog = std::unique_ptr<SpectrumDialog>(new SpectrumDialog(this));
+    this->scopeTab = this->ui->scopeTabWidget;
+    this->spectroscopeTab = this->ui->spectroscopeTabWidget;
+    this->primaryControls = this->ui->primaryControls;
     this->calibrationDialog->initialize(this->context);
     this->buffersDialog->initialize(this->context);
     this->registerDialog->initialize(this->context);
-    this->spectrumDialog->initialize(this->context);
+    this->scopeTab->initialize(this->context);
+    this->spectroscopeTab->initialize(this->context);
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
-    connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
-    connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
-    connect(this->ui->actionSpectrumAnalyzer, &QAction::triggered, this, &PrimaryWindow::openSpectrumAnalyzer);
-    connect(this->acqSettings, &AcquisitionSettings::onChannelTabChanged, this->primaryControls, &PrimaryControls::changePlotChannel);
 }
 
 PrimaryWindow::~PrimaryWindow()
@@ -70,9 +44,8 @@ PrimaryWindow::~PrimaryWindow()
 
 void PrimaryWindow::reloadUI()
 {
-    this->primaryControls->reloadUI();
-    this->acqSettings->reloadUI();
-    this->autoSetTriggerLine();
+    this->scopeTab->reloadUI();
+
 }
 
 void PrimaryWindow::openConfigSaveDialog()
@@ -123,26 +96,7 @@ void PrimaryWindow::openConfigLoadDialog()
     this->reloadUI();
 }
 
-void PrimaryWindow::replot()
-{
-    this->ui->plotArea->replot();
-}
 
-void PrimaryWindow::updateScope(QVector<double> &x, QVector<double> y)
-{
-    this->ui->plotArea->graph(0)->setData(x,y, true);
-    //this->mainWindow.ui->plotArea->rescaleAxes();
-    this->ui->plotArea->replot();
-}
-
-void PrimaryWindow::autoSetTriggerLine()
-{
-    int sampleCount = this->context->digitizer->getSamplesPerRecordComplete();
-    int pos = this->context->digitizer->getTriggerLevel();
-    this->triggerLine->start->setCoords(0, pos);
-    this->triggerLine->end->setCoords(sampleCount-1, pos);
-    this->replot();
-}
 
 void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
 {
@@ -151,8 +105,6 @@ void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         this->calibrationDialog->enableVolatileSettings(false);
         this->buffersDialog->enableVolatileSettings(false);
         this->registerDialog->enableVolatileSettings(false);
-        this->primaryControls->enableVolatileSettings(false);
-        this->acqSettings->enableVolatileSettings(false);
         this->ui->centralwidget->setStyleSheet("#centralwidget {border: 4px solid red;}");
     }
     else if (state == Digitizer::DIGITIZER_STATE::READY)
@@ -160,13 +112,6 @@ void PrimaryWindow::onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state)
         this->calibrationDialog->enableVolatileSettings(true);
         this->buffersDialog->enableVolatileSettings(true);
         this->registerDialog->enableVolatileSettings(true);
-        this->primaryControls->enableVolatileSettings(true);
-        this->acqSettings->enableVolatileSettings(true);
         this->ui->centralwidget->setStyleSheet("#centralwidget {border: 0px solid red;}");
     }
-}
-void PrimaryWindow::openSpectrumAnalyzer()
-{
-    this->spectrumDialog->reloadUI();
-    this->spectrumDialog->show();
 }

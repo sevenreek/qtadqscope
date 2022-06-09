@@ -1,25 +1,24 @@
-#include "AcquisitionSettings.h"
-#include "ui_AcquisitionSettings.h"
+#include "AcquisitionSettingsSidePanel.h"
+#include "ui_AcquisitionSettingsSidePanel.h"
 #include "spdlog/fmt/fmt.h"
 #include "util.h"
 #include <cmath>
-AcquisitionSettings::AcquisitionSettings( QWidget *parent) :
+AcquisitionSettingsSidePanel::AcquisitionSettingsSidePanel( QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::AcquisitionSettings)
+    ui(new Ui::AcquisitionSettingsSidePanel)
 {
     ui->setupUi(this);
 
 }
 
-AcquisitionSettings::~AcquisitionSettings()
+AcquisitionSettingsSidePanel::~AcquisitionSettingsSidePanel()
 {
     this->ui->channelTabs->disconnect(this);
     delete ui;
 }
 
-void AcquisitionSettings::reloadUI()
+void AcquisitionSettingsSidePanel::reloadUI()
 {
-    this->ui->recordProcessorsPanel->reloadUI();
     this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<0))?true:false);
     this->ui->bypassUL2->setChecked((this->digitizer->getUserLogicBypass()&(1<<1))?true:false);
     this->ui->acquisitionTag->setText(QString::fromStdString(this->digitizer->getAcquisitionTag()));
@@ -56,9 +55,11 @@ void AcquisitionSettings::reloadUI()
         tabs.at(ch)->reloadUI();
     }
     this->handleTabNameChange(0, true);
+    this->ui->fileSavePanel->reloadUI();
+    this->ui->scopeUpdatePanel->reloadUI();
 }
 
-void AcquisitionSettings::initialize(ApplicationContext * context)
+void AcquisitionSettingsSidePanel::initialize(ApplicationContext * context)
 {
     this->DigitizerGUIComponent::initialize(context);
     for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
@@ -149,9 +150,9 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
         this->ui->triggeringApproach,
         static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
         this,
-        &AcquisitionSettings::handleApproachChanged
+        &AcquisitionSettingsSidePanel::handleApproachChanged
     );
-    this->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this, &AcquisitionSettings::handleTabChanged);
+    this->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this, &AcquisitionSettingsSidePanel::handleTabChanged);
     for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
     {
         this->tabs.at(ch)->connect(
@@ -180,10 +181,11 @@ void AcquisitionSettings::initialize(ApplicationContext * context)
                 this->digitizer->setAcquisitionTag(text.toStdString());
             }
      );
-    this->ui->recordProcessorsPanel->initialize(context);
+    this->ui->fileSavePanel->initialize(context);
+    this->ui->scopeUpdatePanel->initialize(context);
 }
 
-std::string AcquisitionSettings::calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip)
+std::string AcquisitionSettingsSidePanel::calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip)
 {
     int timesDivided = 0;
     double sr = double(samplingRate)/sampleSkip;
@@ -195,7 +197,7 @@ std::string AcquisitionSettings::calculateFrequency(unsigned long long samplingR
     return fmt::format("{:.2f} {}Hz", sr, UNIT_PREFIXES[timesDivided]);
 }
 
-void AcquisitionSettings::handleTabChanged(int tab)
+void AcquisitionSettingsSidePanel::handleTabChanged(int tab)
 {
     if(clip(tab, 0, int(this->tabs.size())-1) != tab) return;
     if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
@@ -211,7 +213,7 @@ void AcquisitionSettings::handleTabChanged(int tab)
     emit this->onChannelTabChanged(tab);
 }
 
-void AcquisitionSettings::handleSetChannelActive(int channel, bool active)
+void AcquisitionSettingsSidePanel::handleSetChannelActive(int channel, bool active)
 {
     if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
@@ -226,7 +228,7 @@ void AcquisitionSettings::handleSetChannelActive(int channel, bool active)
     this->lastActiveChannel = channel;
 }
 
-void AcquisitionSettings::handleSetChannelTriggerActive(int channel, bool active)
+void AcquisitionSettingsSidePanel::handleSetChannelTriggerActive(int channel, bool active)
 {
     if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
@@ -241,7 +243,7 @@ void AcquisitionSettings::handleSetChannelTriggerActive(int channel, bool active
     this->handleTabNameChange(channel, true);
 }
 
-void AcquisitionSettings::handleTabNameChange(int channel, bool recreateAll)
+void AcquisitionSettingsSidePanel::handleTabNameChange(int channel, bool recreateAll)
 {
     int chMask = this->digitizer->getChannelMask();
     int trMask = this->digitizer->getTriggerMask();
@@ -269,7 +271,7 @@ void AcquisitionSettings::handleTabNameChange(int channel, bool recreateAll)
 
 
 
-void AcquisitionSettings::enableVolatileSettings(bool enabled)
+void AcquisitionSettingsSidePanel::enableVolatileSettings(bool enabled)
 {
     this->ui->bypassUL1->setEnabled(enabled);
     this->ui->bypassUL2->setEnabled(enabled);
@@ -287,10 +289,11 @@ void AcquisitionSettings::enableVolatileSettings(bool enabled)
     {
         this->tabs.at(ch)->enableVolatileSettings(enabled);
     }
-    this->ui->recordProcessorsPanel->enableVolatileSettings(enabled);
+    this->ui->scopeUpdatePanel->enableVolatileSettings(enabled);
+    this->ui->fileSavePanel->enableVolatileSettings(enabled);
 }
 
-void AcquisitionSettings::handleApproachChanged(int approachi)
+void AcquisitionSettingsSidePanel::handleApproachChanged(int approachi)
 {
     this->digitizer->setTriggerApproach(static_cast<TRIGGER_APPROACHES>(approachi));
     TRIGGER_APPROACHES approach = this->digitizer->getTriggerApproach();

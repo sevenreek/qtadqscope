@@ -18,12 +18,7 @@ public:
     void reloadUI() override;
 private:
     Ui::RecordProcessorsPanel *ui;
-    ScopeUpdater *scopeUpdater;
     ApplicationContext *context;
-    std::unique_ptr<IRecordProcessor> fileSaver = std::unique_ptr<IRecordProcessor>(nullptr);
-    void autosetFileSaver();
-    bool scopeUpdaterAdded = false;
-    void autosetUpdateScope();
 
     // DigitizerGUIComponent interface
 public:

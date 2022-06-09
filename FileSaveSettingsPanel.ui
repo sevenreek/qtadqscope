@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RecordProcessorsPanel</class>
- <widget class="QWidget" name="RecordProcessorsPanel">
+ <class>FileSaveSettingsPanel</class>
+ <widget class="QWidget" name="FileSaveSettingsPanel">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
-    <height>147</height>
+    <width>353</width>
+    <height>80</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">font-family: Roboto; font-size: 14px;</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <widget class="QGroupBox" name="analysisSettingsContainer">
      <property name="enabled">
@@ -31,34 +28,13 @@
      <property name="font">
       <font>
        <family>Roboto</family>
-       <pointsize>-1</pointsize>
       </font>
      </property>
      <property name="title">
-      <string>Processing</string>
+      <string>Save to file</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
-      <item row="1" column="1">
-       <widget class="QCheckBox" name="updateScopeCB">
-        <property name="font">
-         <font>
-          <family>Roboto</family>
-          <pointsize>-1</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Update scope</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>File save</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
+      <item row="1" column="2">
        <widget class="QComboBox" name="fileTypeSelector">
         <property name="enabled">
          <bool>true</bool>
@@ -80,10 +56,10 @@
         </item>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QPushButton" name="softwareTrigger">
+      <item row="1" column="1">
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>RUN SW TRIG</string>
+         <string>Mode</string>
         </property>
        </widget>
       </item>

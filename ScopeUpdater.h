@@ -20,7 +20,8 @@ public:
     const char* getName() override;
     unsigned long long getProcessedBytes() override;
 signals:
-    void onScopeUpdate(QVector<double> &x, QVector<double> y);
+    // onScopeUpdate must be a signal as the UI has to be updated from the main thread
+    void onScopeUpdate(QVector<double> &x, QVector<double> y); 
 public slots:
     void changeChannel(int ch);
 };

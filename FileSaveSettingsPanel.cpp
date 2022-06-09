@@ -1,13 +1,19 @@
-#include "RecordProcessorsPanel.h"
-#include "ui_RecordProcessorsPanel.h"
-#include "BinaryFileWriter.h"
-RecordProcessorsPanel::RecordProcessorsPanel(QWidget *parent) :
+#include "FileSaveSettingsPanel.h"
+#include "ui_FileSaveSettingsPanel.h"
+
+FileSaveSettingsPanel::FileSaveSettingsPanel(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::RecordProcessorsPanel)
+    ui(new Ui::FileSaveSettingsPanel)
 {
     ui->setupUi(this);
 }
-void RecordProcessorsPanel::initialize(ApplicationContext *context)
+
+FileSaveSettingsPanel::~FileSaveSettingsPanel()
+{
+    delete ui;
+}
+
+void FileSaveSettingsPanel::initialize(ApplicationContext *context)
 {
     this->DigitizerGUIComponent::initialize(context);
     this->autosetFileSaver();
@@ -19,20 +25,18 @@ void RecordProcessorsPanel::initialize(ApplicationContext *context)
             this->autosetFileSaver();
         }
     );
-    this->ui->softwareTrigger->connect(
-        this->ui->softwareTrigger, &QAbstractButton::clicked,
-        [=]() {
-            this->context->digitizer->SWTrig();
-        }
-    );
 }
 
-void RecordProcessorsPanel::reloadUI()
+void FileSaveSettingsPanel::enableVolatileSettings(bool en)
+{
+    this->ui->fileTypeSelector->setEnabled(en);
+}
+void FileSaveSettingsPanel::reloadUI()
 {
     this->ui->fileTypeSelector->setCurrentIndex(this->config->getFileSaveMode());
 }
 
-void RecordProcessorsPanel::autosetFileSaver()
+void FileSaveSettingsPanel::autosetFileSaver()
 {
     if(this->fileSaver)
     {
@@ -57,17 +61,4 @@ void RecordProcessorsPanel::autosetFileSaver()
         this->digitizer->appendRecordProcessor(this->fileSaver.get());
     }
     this->context->fileSaver = this->fileSaver.get();
-}
-
-RecordProcessorsPanel::~RecordProcessorsPanel()
-{
-    delete ui;
-}
-
-
-
-void RecordProcessorsPanel::enableVolatileSettings(bool enabled)
-{
-    this->ui->updateScopeCB->setEnabled(enabled);
-    this->ui->fileTypeSelector->setEnabled(enabled);
 }
