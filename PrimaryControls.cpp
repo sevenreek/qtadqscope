@@ -30,7 +30,34 @@ void PrimaryControls::reloadUI()
         this->ui->timedRunCheckbox->setChecked(false);
         this->ui->timedRunValue->setEnabled(false);
     }
-
+    switch(this->digitizer->getDigitizerState())
+    {
+        case Digitizer::DIGITIZER_STATE::ACTIVE:
+            this->ui->streamStartStopButton->setText("STOP");
+            this->ui->streamStatusLabel->setText("ACTIVE");
+            this->ui->streamStartStopButton->setEnabled(false);
+        break;
+        case Digitizer::DIGITIZER_STATE::STABILIZING:
+            this->ui->streamStartStopButton->setText("STOP");
+            this->ui->streamStatusLabel->setText("STABILIZING");
+            this->ui->streamStartStopButton->setEnabled(true);
+        break;
+        case Digitizer::DIGITIZER_STATE::READY:
+            this->ui->streamStartStopButton->setText("START");
+            this->ui->streamStatusLabel->setText("READY");
+            this->ui->streamStartStopButton->setEnabled(true);
+        break;
+        case Digitizer::DIGITIZER_STATE::STOPPING:
+            this->ui->streamStartStopButton->setText("STOP");
+            this->ui->streamStatusLabel->setText("STOPPING");
+            this->ui->streamStartStopButton->setEnabled(false);
+        break;
+        case Digitizer::DIGITIZER_STATE::STARTING:
+            this->ui->streamStartStopButton->setText("STOP");
+            this->ui->streamStatusLabel->setText("STARTING");
+            this->ui->streamStartStopButton->setEnabled(true);
+        break;
+    }
 }
 void PrimaryControls::resetFillIndicators()
 {
@@ -84,7 +111,7 @@ void PrimaryControls::initialize(ApplicationContext *context)
         this,
         &PrimaryControls::periodicUIUpdate
     );
-
+    this->reloadUI();
 }
 
 void PrimaryControls::dumpAppConfig()

@@ -21,17 +21,22 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     this->setWindowTitle(QString::fromStdString(windowTitle));
     connect(this->ui->actionSave, &QAction::triggered, this, &PrimaryWindow::openConfigSaveDialog);
     connect(this->ui->actionLoad, &QAction::triggered, this, &PrimaryWindow::openConfigLoadDialog);
+
     this->calibrationDialog = std::unique_ptr<FullCalibrationDialog>(new FullCalibrationDialog(this));
     this->buffersDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog(this));
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog(this));
     this->scopeTab = this->ui->scopeTabWidget;
     this->spectroscopeTab = this->ui->spectroscopeTabWidget;
     this->primaryControls = this->ui->primaryControls;
+
+
     this->calibrationDialog->initialize(this->context);
     this->buffersDialog->initialize(this->context);
     this->registerDialog->initialize(this->context);
     this->scopeTab->initialize(this->context);
     this->spectroscopeTab->initialize(this->context);
+    this->primaryControls->initialize(this->context);
+
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);

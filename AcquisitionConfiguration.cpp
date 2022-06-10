@@ -1,100 +1,26 @@
-#include "Acquisition.h"
+#include "AcquisitionConfiguration.h"
 #include "util.h"
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QFile>
-float Acquisition::getObtainedInputRange(int ch) const
+
+ChannelConfiguration::ChannelConfiguration(int channelIndex): channelIndex(channelIndex)
 {
-    return obtainedInputRange.at(ch);
+
 }
 
-void Acquisition::setObtainedInputRange(int ch, float val)
-{
-    obtainedInputRange.at(ch) = val;
-}
-
-float Acquisition::getDesiredInputRange(int channel) const
-{
-    return INPUT_RANGE_VALUES[int(this->inputRange.at(channel))];
-}
-
-INPUT_RANGES Acquisition::getInputRange(int ch) const
-{
-    return this->inputRange.at(ch);
-}
-
-void Acquisition::setInputRange(int ch, const INPUT_RANGES &value)
-{
-    this->inputRange.at(ch) = value;
-}
-
-int Acquisition::getDcBias(int ch) const
-{
-    return this->dcBias.at(ch);
-}
-
-void Acquisition::setDcBias(int ch, int value)
-{
-    this->dcBias.at(ch) = value;
-}
-
-int Acquisition::getDigitalGain(int ch) const
-{
-    return this->digitalGain.at(ch);
-}
-
-void Acquisition::setDigitalGain(int ch, int value)
-{
-    this->digitalGain.at(ch) = value;
-}
-
-int Acquisition::getDigitalOffset(int ch) const
-{
-    return this->digitalOffset.at(ch);
-}
-
-void Acquisition::setDigitalOffset(int ch, int value)
-{
-    this->digitalOffset.at(ch) = value;
-}
-
-int Acquisition::getAnalogOffset(int ch) const
-{
-    return this->analogOffset.at(ch);
-}
-
-void Acquisition::setAnalogOffset(int ch, int value)
-{
-    this->analogOffset.at(ch) = value;
-}
-
-int Acquisition::getTotalDCShift(int ch, int& unclipped)
+int AcquisitionConfiguration::getTotalDCShift(int ch, int& unclipped)
 {
     unclipped = this->getAnalogOffset(ch) + this->getDcBias(ch);
     return clip(unclipped, CODE_MIN, CODE_MAX);
 }
 
-unsigned long long Acquisition::getFileSizeLimit() const
+float AcquisitionConfiguration::getTargetInputRangeFloat(int ch)
 {
-    return fileSizeLimit;
+    return INPUT_RANGE_VALUES[this->inputRange.at(ch)];
 }
 
-void Acquisition::setFileSizeLimit(unsigned long long value)
-{
-    fileSizeLimit = value;
-}
-
-int Acquisition::getTriggerLevel() const
-{
-    return triggerLevel;
-}
-
-void Acquisition::setTriggerLevel(int value)
-{
-    triggerLevel = value;
-}
-
-unsigned char Acquisition::verifyChannelMaskForSingularApproach(unsigned char channelMask)
+unsigned char AcquisitionConfiguration::verifyChannelMaskForSingularApproach(unsigned char channelMask)
 {
     if(!isOnlyOneBitSet(channelMask))
     {
@@ -110,9 +36,9 @@ unsigned char Acquisition::verifyChannelMaskForSingularApproach(unsigned char ch
     return channelMask;
 }
 
-Acquisition Acquisition::fromJson(const QJsonObject &json)
+AcquisitionConfiguration AcquisitionConfiguration::fromJson(const QJsonObject &json)
 {
-    Acquisition returnValue;
+    AcquisitionConfiguration returnValue;
     returnValue.tag                     = json["tag"].toString("").toStdString();
     returnValue.isContinuous            = json["continuous"].toBool(false);
     returnValue.duration                = json["duration"].toInt(0);
@@ -165,8 +91,8 @@ Acquisition Acquisition::fromJson(const QJsonObject &json)
     returnValue.triggerApproach = static_cast<TRIGGER_APPROACHES>(json["trigger_approach"].toInt(0));
     if(returnValue.triggerApproach == TRIGGER_APPROACHES::SINGLE)
     {
-        unsigned char properTriggerMask = Acquisition::verifyChannelMaskForSingularApproach(returnValue.triggerMask);
-        unsigned char properChannelMask = Acquisition::verifyChannelMaskForSingularApproach(returnValue.channelMask);
+        unsigned char properTriggerMask = AcquisitionConfiguration::verifyChannelMaskForSingularApproach(returnValue.triggerMask);
+        unsigned char properChannelMask = AcquisitionConfiguration::verifyChannelMaskForSingularApproach(returnValue.channelMask);
 
         if(properChannelMask != returnValue.channelMask)
         {
@@ -201,7 +127,7 @@ Acquisition Acquisition::fromJson(const QJsonObject &json)
     return returnValue;
 }
 
-QJsonObject Acquisition::toJson()
+QJsonObject AcquisitionConfiguration::toJson()
 {
     QJsonObject returnValue;
     returnValue.insert("tag",               QString::fromStdString(this->tag));
@@ -235,37 +161,7 @@ QJsonObject Acquisition::toJson()
     return returnValue;
 }
 
-int Acquisition::getTriggerReset() const
-{
-    return triggerReset;
-}
-
-void Acquisition::setTriggerReset(int value)
-{
-    triggerReset = value;
-}
-
-TRIGGER_APPROACHES Acquisition::getTriggerApproach() const
-{
-    return triggerApproach;
-}
-
-void Acquisition::setTriggerApproach(TRIGGER_APPROACHES newTriggerApproach)
-{
-    triggerApproach = newTriggerApproach;
-}
-
-bool Acquisition::getSpectroscopeEnabled() const
-{
-    return spectroscopeEnabled;
-}
-
-void Acquisition::setSpectroscopeEnabled(bool newSpectroscopeEnabled)
-{
-    spectroscopeEnabled = newSpectroscopeEnabled;
-}
-
-void Acquisition::log()
+void AcquisitionConfiguration::log()
 {
 
     QJsonObject j = this->toJson();
@@ -297,176 +193,7 @@ void Acquisition::log()
     spdlog::info("obtainedInputRange = {}, {}, {}, {}", this->obtainedInputRange[0], this->obtainedInputRange[1], this->obtainedInputRange[2], this->obtainedInputRange[3]);*/
 }
 
-std::string Acquisition::getTag() const
-{
-    return tag;
-}
-
-void Acquisition::setTag(const std::string &value)
-{
-    tag = value;
-}
-
-bool Acquisition::getIsContinuous() const
-{
-    return isContinuous;
-}
-
-void Acquisition::setIsContinuous(bool value)
-{
-    isContinuous = value;
-}
-
-unsigned long Acquisition::getDuration() const
-{
-    return duration;
-}
-
-void Acquisition::setDuration(unsigned long value)
-{
-    duration = value;
-}
-
-unsigned long Acquisition::getTransferBufferSize() const
-{
-    return transferBufferSize;
-}
-
-void Acquisition::setTransferBufferSize(unsigned long value)
-{
-    transferBufferSize = value;
-}
-
-unsigned long Acquisition::getTransferBufferCount() const
-{
-    return transferBufferCount;
-}
-
-void Acquisition::setTransferBufferCount(unsigned long value)
-{
-    transferBufferCount = value;
-}
-
-unsigned long Acquisition::getTransferBufferQueueSize() const
-{
-    return transferBufferQueueSize;
-}
-
-void Acquisition::setTransferBufferQueueSize(unsigned long value)
-{
-    transferBufferQueueSize = value;
-}
-
-unsigned char Acquisition::getUserLogicBypassMask() const
-{
-    return userLogicBypassMask;
-}
-
-void Acquisition::setUserLogicBypassMask(unsigned char value)
-{
-    userLogicBypassMask = value;
-}
-
-CLOCK_SOURCES Acquisition::getClockSource() const
-{
-    return clockSource;
-}
-
-void Acquisition::setClockSource(const CLOCK_SOURCES &value)
-{
-    clockSource = value;
-}
-
-TRIGGER_MODES Acquisition::getTriggerMode() const
-{
-    return triggerMode;
-}
-
-void Acquisition::setTriggerMode(const TRIGGER_MODES &value)
-{
-    triggerMode = value;
-}
-
-TRIGGER_EDGES Acquisition::getTriggerEdge() const
-{
-    return triggerEdge;
-}
-
-void Acquisition::setTriggerEdge(const TRIGGER_EDGES &value)
-{
-    triggerEdge = value;
-}
-
-unsigned char Acquisition::getTriggerMask() const
-{
-    return triggerMask;
-}
-
-void Acquisition::setTriggerMask(unsigned char value)
-{
-    triggerMask = value;
-}
-
-unsigned short Acquisition::getPretrigger() const
-{
-    return pretrigger;
-}
-
-void Acquisition::setPretrigger(unsigned short value)
-{
-    pretrigger = value;
-}
-
-unsigned short Acquisition::getTriggerDelay() const
-{
-    return triggerDelay;
-}
-
-void Acquisition::setTriggerDelay(unsigned short value)
-{
-    triggerDelay = value;
-}
-
-unsigned long Acquisition::getRecordCount() const
-{
-    return recordCount;
-}
-
-void Acquisition::setRecordCount(unsigned long value)
-{
-    recordCount = value;
-}
-
-unsigned long Acquisition::getRecordLength() const
-{
-    return recordLength;
-}
-
-void Acquisition::setRecordLength(unsigned long value)
-{
-    recordLength = value;
-}
-
-unsigned char Acquisition::getChannelMask() const
-{
-    return channelMask;
-}
-
-void Acquisition::setChannelMask(unsigned char value)
-{
-    channelMask = value;
-}
-
-unsigned int Acquisition::getSampleSkip() const
-{
-    return sampleSkip;
-}
-
-void Acquisition::setSampleSkip(unsigned int value)
-{
-    sampleSkip = value;
-}
-unsigned int Acquisition::getPrimaryTriggerChannel() const
+unsigned int AcquisitionConfiguration::getPrimaryTriggerChannel() const
 {
     int returnChannel = 0;
     unsigned char mask = this->getTriggerMask();

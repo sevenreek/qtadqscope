@@ -63,6 +63,7 @@ set(PROJECT_SOURCES
         Semaphore.h
         RecordProcessor.h
         ScopeUpdater.cpp ScopeUpdater.h
+        ApplicationConfiguration.h ApplicationConfiguration.cpp
         ApplicationContext.cpp ApplicationContext.h
         BinaryFileWriter.cpp BinaryFileWriter.h
         SignalParameterComputer.cpp SignalParameterComputer.h
