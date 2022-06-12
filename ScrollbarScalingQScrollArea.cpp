@@ -1,8 +1,8 @@
 #include "ScrollbarScalingQScrollArea.h"
 
 ScrollbarScalingQScrollArea::ScrollbarScalingQScrollArea(QWidget * parent)
+: QScrollArea(parent)
 {
-    QScrollArea::QScrollArea(parent);
 }
 
 QSize ScrollbarScalingQScrollArea::sizeHint() const

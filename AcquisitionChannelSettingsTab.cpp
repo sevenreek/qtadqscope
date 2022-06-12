@@ -2,6 +2,8 @@
 #include "ui_AcquisitionChannelSettingsTab.h"
 #include <QRadioButton>
 #include "util.h"
+//            
+
 AcquisitionChannelSettingsTab::AcquisitionChannelSettingsTab(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AcquisitionChannelSettingsTab)

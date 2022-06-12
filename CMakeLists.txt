@@ -73,7 +73,7 @@ set(PROJECT_SOURCES
         ADQInterfaceWrappers.cpp ADQInterfaceWrappers.h
         Digitizer.cpp Digitizer.h
         DigitizerConstants.h
-        Acquisition.cpp Acquisition.h
+        AcquisitionConfiguration.cpp AcquisitionConfiguration.h
         util.h util.cpp
         GUIApplication.cpp GUIApplication.h
         DigitizerGUIComponent.h
@@ -84,6 +84,7 @@ set(PROJECT_SOURCES
         RegisterConstants.h
         SpectrumPlotter.h SpectrumPlotter.cpp
         ScopeTab.h ScopeTab.cpp ScopeTab.ui
+        ConfigurationController.h ConfigurationController.cpp
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

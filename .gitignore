@@ -7,6 +7,7 @@ wslbuild
 CMakeFiles
 build
 compile_commands.json
-.vscode/
+.vscode/c_cpp_properties.json
 *.autosave
 *.user
+.cache

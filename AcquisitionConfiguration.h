@@ -1,47 +1,35 @@
 #ifndef ACQUISITIONCONFIGURATION_H
 #define ACQUISITIONCONFIGURATION_H
 #include "DigitizerConstants.h"
+#include "Configuration.h"
 #include <string>
 #include <array>
 #include <QJsonObject>
 #include "spdlog/spdlog.h"
 
-class ChannelConfiguration {
-protected:
-    int channelIndex = -1;
-public:
-    const static int DEFAULT_NO_CHANNEL; // constant to signify that the channel config applies to a default/all channels
-    ChannelConfiguration(int channelIndex);
-    virtual QJsonObject toJSON() = 0;
-    virtual static fromJSON(QJsonObject json) = 0;
-};
 
 class TriggerChannelConfiguration: public ChannelConfiguration {
 public:
-    enum TriggerTruthSources {
-        CODE = 0,
-        MV = 1
-    };
     int triggerReset = 0;
     int horizontalShift = 0;
     void setTriggerLevel(int code);
-    void setTriggerMillis(float mv);
-    TriggerTruthSources getTriggerTruthSource();
     int getTriggerLevel();
-    float getTriggerLevelMillis();
 private:
-    TriggerTruthSources truthSource = TriggerTruthSources::CODE;
     int triggerLevel = 0;
-    float triggerLevelMillivolts = 0;
     TRIGGER_EDGES triggerEdge = TRIGGER_EDGES::RISING;
     TRIGGER_MODES triggerMode = TRIGGER_MODES::SOFTWARE;
+    static TriggerChannelConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
-class DataTransferConfiguration {
+class DataTransferConfiguration: public IConfiguration {
 public:
     unsigned long transferBufferSize = 2048;
     unsigned long transferBufferCount = 32;
     unsigned long transferBufferQueueSize = 128;
+    unsigned long dmaCheckMinimumTimeout = 500;
+    static DataTransferConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
 class AnalogFrontEndChannelConfiguration: public ChannelConfiguration {
@@ -49,51 +37,65 @@ public:
     INPUT_RANGES desiredInputRange = INPUT_RANGES::MV_5000;
     float obtainedInputRange = 5000;
     int dcBias = 0;
+    static AnalogFrontEndChannelConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
 class CalibrationChannelConfiguration: public ChannelConfiguration {
 public:
-    int digitalGain = DEFAULT_GAIN;
+    int digitalGain = DEFAULT_DIGITAL_USER_GAIN;
     int digitalOffset = 0;
     int analogOffset = 0;
+    static CalibrationChannelConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
-class FileSaveConfiguration {
+class FileSaveConfiguration : public IConfiguration {
 public:
     std::string tag;
-    bool appendDate = false
+    bool appendDate = false;
     bool storeHeaders = false;
+    bool bufferInRAM = false;
     unsigned long long fileSizeLimit = 2e9;
+    static FileSaveConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
 class RecordChannelConfiguration: public ChannelConfiguration  {
 public:
     unsigned long recordCount = INFINITE_RECORDS;
     unsigned long recordLength = 256;
+    static RecordChannelConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
-class SpectroscopeConfiguration {
+class SpectroscopeConfiguration : public IConfiguration {
 public:
+    unsigned char userLogicBypassMask = 0b11;
     bool enabled = false;
+    static SpectroscopeConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 };
 
-class AcquisitionConfiguration {
+class DataCollectionConfiguration: public IConfiguration {
 public:
-    const static unsigned long INFINITE_RECORDS = -1;
     const static unsigned long NO_DURATION = 0;
-    const static int DEFAULT_GAIN = 1024;
-
     CLOCK_SOURCES clockSource = CLOCK_SOURCES::INTSRC_INTREF_10MHZ;
-
     ACQUISITION_MODES triggeringMode = ACQUISITION_MODES::TRIGGERED;
     unsigned int sampleSkip = 1;
     unsigned long duration = 200;
 
-    unsigned char userLogicBypassMask = 0b11;
     unsigned char channelMask = 0b0001;
     unsigned char triggerMask = 0b0001;
     TRIGGER_APPROACHES triggerApproach = TRIGGER_APPROACHES::SINGLE;
+    static DataCollectionConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
 
+};
+
+class AcquisitionConfiguration : public IConfiguration {
+public:
+    DataCollectionConfiguration dataCollection;
     DataTransferConfiguration dataTransfer;
     FileSaveConfiguration storage;
     SpectroscopeConfiguration spectroscope;
@@ -106,8 +108,8 @@ public:
 public:
     unsigned int getPrimaryTriggerChannel() const;
     void log();
-    static Acquisition fromJson(const QJsonObject &json);
-    QJsonObject toJson();
+    static AcquisitionConfiguration fromJSON(const QJsonObject &json);
+    QJsonObject toJSON() override;
     int getTotalDCShift(int ch, int& unclipped);
     static unsigned char verifyChannelMaskForSingularApproach(unsigned char channelMask);
     float getTargetInputRangeFloat(int channel);
