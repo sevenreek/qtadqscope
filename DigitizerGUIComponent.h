@@ -2,25 +2,24 @@
 #define DIGITIZERGUICOMPONENT_H
 #include <QObject>
 #include <QWidget>
+#include "AcquisitionStateChangeListener.h"
 #include "Digitizer.h"
 #include "ApplicationContext.h"
-
-class DigitizerGUIComponent
+#include "ConfigurationController.h"
+#include "DigitizerConstants.h"
+class DigitizerGUIComponent : public AcquisitionStateChangeListener
 {
 protected:
     ApplicationContext *context = nullptr;
     Digitizer *digitizer = nullptr;
-    ApplicationConfiguration *config = nullptr;
 public:
     virtual void initialize(ApplicationContext * context)
     {
         this->context = context;
         this->digitizer = context->digitizer;
-        this->config = context->config;
     }
     virtual void reloadUI() {};
-    virtual void enableVolatileSettings(bool enabled) {};
-    virtual void onAcquisitionStateChanged(Digitizer::DIGITIZER_STATE state) {};
+    virtual void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override {};
 };
 
 

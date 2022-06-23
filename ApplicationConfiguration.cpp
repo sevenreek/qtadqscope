@@ -16,14 +16,14 @@ ApplicationConfiguration ApplicationConfiguration::fromJSON(const QJsonObject& j
     return returnValue;
 }
 
-QJsonObject ApplicationConfiguration::toJson()
+QJsonObject ApplicationConfiguration::toJSON()
 {
     QJsonObject returnValue;
     returnValue.insert("device_number", int(this->deviceNumber));
     returnValue.insert("ui_buffer_status_update", int(this->periodicUpdatePeriod));
-    returnValue.insert("log_adq" , this->adqLoggingLevel);
-    returnValue.insert("log_ui"  , this->uiLoggingLevel);
-    returnValue.insert("log_file", this->fileLoggingLevel);
+    returnValue.insert("log_adq" , static_cast<int>(this->adqLoggingLevel));
+    returnValue.insert("log_ui"  , static_cast<int>(this->uiLoggingLevel));
+    returnValue.insert("log_file", static_cast<int>(this->fileLoggingLevel));
     returnValue.insert("offset_from_zero", this->offsetTriggerFromZero);
     returnValue.insert("update_scope", this->updateScopeEnabled);
     return returnValue;

@@ -1,7 +1,5 @@
-#ifndef APPLICATIONCONFIGURATION_H
-#define APPLICATIONCONFIGURATION_H
-
-
+#ifndef APPLICATIONCONTEXT_H
+#define APPLICATIONCONTEXT_H
 #include "Digitizer.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -16,7 +14,7 @@
 class ApplicationContext {
 public:
     ApplicationContext(ApplicationConfiguration * config, Digitizer * digitizer, ScopeUpdater *scope, spdlog::logger *logger);
-    ApplicationConfiguration * config = nullptr;
+    ApplicationConfiguration * appConfiguration = nullptr;
     Digitizer * digitizer = nullptr;
     ScopeUpdater *scopeUpdater = nullptr;
     IRecordProcessor *fileSaver = nullptr;

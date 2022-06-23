@@ -2,37 +2,40 @@
 #define CONFIGURATIONCONTROLLER_H
 
 #include <QObject>
-#include "ApplicationConfiguration.h"
 #include "AcquisitionConfiguration.h"
+#include <QFile>
+#include <QJsonDocument>
 
-class ConfigurationController : public QObject
+class QConfigurationController : public QObject 
 {
     Q_OBJECT
 protected:
-    AcquisitionConfiguration defaultAcquisitionConfiguration;
-    ApplicationConfiguration applicationConfiguration;
+    AcquisitionConfiguration acquisitionConfiguration;
+    AcquisitionConfiguration acqFromV0JSON(QJsonObject &json);
 public:
-    explicit ConfigurationController(QObject *parent = nullptr);
+    explicit QConfigurationController(QObject *parent = nullptr);
     AcquisitionConfiguration &acq();
-    ApplicationConfiguration &app();
-    bool loadConfigurationsFromFile(const QString &path);
-    bool saveConfigurationsToFile(const QString &path);
-    void notifyDataCollectionChanged();
+    void notifyCollectionChanged();
     void notifySpectroscopeChanged();
-    void notifyFileSaveChanged();
-    void notifyDataTransferChanged();
+    void notifyStorageChanged();
+    void notifyTransferChanged();
     void notifyRecordChanged(int ch);
     void notifyCalibrationChanged(int ch);
     void notifyAFEChanged(int ch);
+    void notifyTriggerChanged(int ch);
+    bool loadAcquisitionFromFile(const std::string &path);
+    bool saveAcquisitionToFile(const std::string &path);
+    void hookUpConfigChangedListeners();
 
 signals:
-    void dataCollectionChanged();
+    void collectionChanged();
     void spectroscopeChanged();
-    void fileSaveChanged();
-    void dataTransferChanged();
+    void storageChanged();
+    void transferChanged();
     void recordChanged(int ch);
     void calibrationChanged(int ch);
     void afeChanged(int ch);
+    void triggerChanged(int ch);
 
 };
 

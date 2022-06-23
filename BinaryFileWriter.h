@@ -1,5 +1,6 @@
 #ifndef BINARYFILEWRITER_H
 #define BINARYFILEWRITER_H
+#include "AcquisitionConfiguration.h"
 #include "RecordProcessor.h"
 #include "ADQAPIIncluder.h"
 #include <iostream>
@@ -17,7 +18,7 @@ public:
     static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();
-    bool startNewAcquisition(Acquisition* acq) override;
+    bool startNewAcquisition(AcquisitionConfiguration* acq) override;
     STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
     unsigned long long finish() override;
     const char* getName() override;
@@ -31,7 +32,7 @@ public:
     STATUS processRecord(ADQRecord * record, size_t bufferSize) override;
     ~VerboseBinaryWriter();
     const char* getName() override;
-    bool startNewAcquisition(Acquisition* acq) override;
+    bool startNewAcquisition(AcquisitionConfiguration* acq) override;
 };
 
 

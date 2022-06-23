@@ -52,7 +52,6 @@ set(PROJECT_SOURCES
         ScrollbarScalingQScrollArea.h ScrollbarScalingQScrollArea.cpp
         BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
         RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
-        FullCalibrationDialog.cpp FullCalibrationDialog.h FullCalibrationDialog.ui
         SpectroscopeTab.h SpectroscopeTab.cpp SpectroscopeTab.ui
         AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
         AcquisitionSettingsSidePanel.cpp AcquisitionSettingsSidePanel.h AcquisitionSettingsSidePanel.ui
@@ -66,11 +65,8 @@ set(PROJECT_SOURCES
         ApplicationConfiguration.h ApplicationConfiguration.cpp
         ApplicationContext.cpp ApplicationContext.h
         BinaryFileWriter.cpp BinaryFileWriter.h
-        SignalParameterComputer.cpp SignalParameterComputer.h
         MockADQAPI.cpp MockADQAPI.h
-        CalibrationTable.h CalibrationTable.cpp
         MinifiedRecordHeader.h
-        ADQInterfaceWrappers.cpp ADQInterfaceWrappers.h
         Digitizer.cpp Digitizer.h
         DigitizerConstants.h
         AcquisitionConfiguration.cpp AcquisitionConfiguration.h

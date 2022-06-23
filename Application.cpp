@@ -1,7 +1,76 @@
-#include "GUIApplication.h"
+#include "Application.h"
+#include "AcquisitionConfiguration.h"
 #include "BinaryFileWriter.h"
+#include "qapplication.h"
 #include <algorithm>
-spdlog::level::level_enum ScopeApplication::getFileLevel(LOGGING_LEVELS lvl)
+Application::Application(int argc, char* argv[]) : qapp(argc, argv)
+{
+}
+
+int Application::start()
+{
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Test helper");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("config_file", "Configuration JSON to load.");
+    QCommandLineOption commandLineMode("c", "Start acqusition in command line mode.");
+    parser.addOption(commandLineMode);
+    parser.process(this->qapp);
+
+    const QStringList args = parser.positionalArguments();
+    QString acquisitionFile = "lastconfig.json";
+
+    if(args.count() > 0)
+        acquisitionFile = args.at(0);
+    QFile file(acquisitionFile);
+    if(file.exists()) {
+        file.open(QFile::OpenModeFlag::ReadOnly);
+        QJsonParseError err;
+        QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
+        if(err.error == QJsonParseError::NoError) {
+            this->appConfiguration = ApplicationConfiguration::fromJSON(json.object()["app"].toObject());
+            acq = AcquisitionConfiguration::fromJSON(json.object()["acquisition"].toObject());
+        } else {
+            spdlog::warn("Failed to load configuration {}. JSON parsing error.", acquisitionFile.toStdString());
+        }
+    }
+    cfg.setStartGUI(!parser.isSet(commandLineMode));
+
+    this->stdSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+    this->primaryLogger = std::make_shared<spdlog::logger>("primary", stdSink);
+    spdlog::set_default_logger(this->primaryLogger);
+    this->primaryLogger->set_pattern(LOGGER_PATTERN);
+    this->primaryLogger->set_level(this->getFileLoggingLevel(this->appConfiguration.fileLoggingLevel));
+    this->adqControlUnit = CreateADQControlUnit();
+#ifdef MOCK_ADQAPI
+    spdlog::warn("Using mock ADQAPI");
+#else
+    if(this->adqControlUnit == NULL)
+    {
+        spdlog::critical("Failed to create ADQControlUnit. Exiting...");
+        return false;
+    }
+#endif
+
+    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->appConfiguration.adqLoggingLevel, 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
+    ADQControlUnit_FindDevices(this->adqControlUnit);
+    int numberOfDevices = ADQControlUnit_NofADQ(adqControlUnit);
+    if(numberOfDevices == 0)
+    {
+        spdlog::critical("No ADQ devices found. Exiting.");
+        return false;
+    }
+    else if(numberOfDevices != 1)
+    {
+        spdlog::warn("Found {} devices. Using {}.", numberOfDevices, this->appConfiguration.deviceNumber);
+    }
+    this->digitizer = std::unique_ptr<Digitizer>(new Digitizer(this->adq));
+    this->digitizer->cfg().
+    this->config = cfg;
+    return true;
+}
+spdlog::level::level_enum Application::getFileLoggingLevel(LOGGING_LEVELS lvl)
 {
     switch(lvl)
     {
@@ -24,44 +93,7 @@ spdlog::level::level_enum ScopeApplication::getFileLevel(LOGGING_LEVELS lvl)
     return spdlog::level::trace;
 }
 
-bool ScopeApplication::start(ApplicationConfiguration cfg, Acquisition acq)
-{
-    this->stdSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-    this->primaryLogger = std::make_shared<spdlog::logger>("primary", stdSink);
-    spdlog::set_default_logger(this->primaryLogger);
-    this->primaryLogger->set_pattern(LOGGER_PATTERN);
-    this->primaryLogger->set_level(this->getFileLevel(cfg.getFileLoggingLevel()));
-    this->adqControlUnit = CreateADQControlUnit();
-#ifdef MOCK_ADQAPI
-    spdlog::warn("Using mock ADQAPI");
-#else
-    if(this->adqControlUnit == NULL)
-    {
-        spdlog::critical("Failed to create ADQControlUnit. Exiting...");
-        return false;
-    }
-#endif
-
-    ADQControlUnit_EnableErrorTrace(this->adqControlUnit, std::max((int)this->config.getAdqLoggingLevel(), 3), "."); // log to root dir, LOGGING_LEVEL::DEBUG is 4 but API only supports INFO=3
-    ADQControlUnit_FindDevices(this->adqControlUnit);
-    int numberOfDevices = ADQControlUnit_NofADQ(adqControlUnit);
-    if(numberOfDevices == 0)
-    {
-        spdlog::critical("No ADQ devices found. Exiting.");
-        return false;
-    }
-    else if(numberOfDevices != 1)
-    {
-        spdlog::warn("Found {} devices. Using {}.", numberOfDevices, this->config.getDeviceNumber());
-    }
-    this->adqWrapper = std::unique_ptr<ADQInterfaceWrapper>(new MutexADQWrapper(this->adqControlUnit, this->config.getDeviceNumber()));
-    this->digitizer = std::unique_ptr<Digitizer>(new Digitizer(*this->adqWrapper.get()));
-    this->digitizer->setAcquisition(acq);
-    this->config = cfg;
-    return true;
-}
-
-ScopeApplication::~ScopeApplication()
+Application::~Application()
 {
     DeleteADQControlUnit(this->adqControlUnit);
 }

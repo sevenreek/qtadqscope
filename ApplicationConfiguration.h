@@ -1,9 +1,9 @@
 #ifndef APPLICATIONCONFIGURATION_H
 #define APPLICATIONCONFIGURATION_H
-#include "Configuration.h"
+#include "DigitizerConstants.h"
+#include "util.h"
 
-
-class ApplicationConfiguration: public IConfiguration
+class ApplicationConfiguration: public JSONSerializable
 {
 public:
     bool startGUI = true;

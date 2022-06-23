@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <QJsonObject>
 const char UNIT_PREFIXES[7]  = {' ', 'k', 'M', 'G', 'P', 'Y', 'Z'};
+class JSONSerializable {
+public:
+    virtual QJsonObject toJSON() = 0;
+};
 template <typename T>
 T clip(const T& n, const T& lower, const T& upper) {
   return std::max(lower, std::min(n, upper));

@@ -16,16 +16,23 @@ class FileSaveSettingsPanel : public QWidget, public DigitizerGUIComponent
     Q_OBJECT
 
 public:
+    enum class FileSaveSelectorOptions 
+    {
+        DISABLED = 0,
+        BINARY = 1,
+        BINARY_HEADERS = 2,
+    };
     explicit FileSaveSettingsPanel(QWidget *parent = nullptr);
     ~FileSaveSettingsPanel();
     void initialize(ApplicationContext * context) override;
     void reloadUI() override;
-    void enableVolatileSettings(bool enabled) override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    void enableUnsafeADQControls(bool enabled);
 
 private:
     Ui::FileSaveSettingsPanel *ui;
-    std::unique_ptr<IRecordProcessor> fileSaver;
-    void autosetFileSaver();
+private slots:
+    void changeFileSaveMode(int mode);
 };
 
 #endif // FILESAVESETTINGSPANELL_H

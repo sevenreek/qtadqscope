@@ -1,6 +1,6 @@
 #ifndef RECORDPROCESSOR_H
 #define RECORDPROCESSOR_H
-#include "Acquisition.h"
+#include "AcquisitionConfiguration.h"
 #include "ADQAPIIncluder.h"
 class IRecordProcessor {
 public:
@@ -9,7 +9,7 @@ public:
       LIMIT_REACHED=1,
       ERRORED=2
     };
-    virtual bool startNewAcquisition(Acquisition* acq) = 0;
+    virtual bool startNewAcquisition(AcquisitionConfiguration* acq) = 0;
     virtual STATUS processRecord(ADQRecord* record, size_t bufferSize) = 0;
     virtual unsigned long long finish() = 0;
     virtual const char* getName() = 0;

@@ -106,6 +106,7 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
 {
     int ramFill = (record->header->RecordStatus & 0b01110000) >> 4;
     int lostData = (record->header->RecordStatus & 0b00001111) >> 0;
+    bool returnValue = true;
     if(ramFill != lastRAMFillLevel)
     {
         spdlog::debug("DRAM fill > {:.2f}%.", this->getRamFillLevel()*100.0f);
@@ -124,15 +125,15 @@ bool BufferProcessor::completeRecord(ADQRecord *record, size_t bufferSize)
             spdlog::warn("Lost {} full records", record->header->RecordNumber-this->lastRecordNumber);
         }
         spdlog::warn("Overflow: {}", this->adq.GetStreamOverflow());
-        return true;
+        returnValue = true;
         //record->header->RecordLength = this->recordLength;
     }
     for(auto rp : this->recordProcessors)
     {
-        if(rp->processRecord(record, bufferSize)) return false;
+        if(rp->processRecord(record, bufferSize)) returnValue = false;
     }
     this->lastRecordNumber = record->header->RecordNumber;
-    return true;
+    return returnValue;
 }
 void BufferProcessor::enterErrorCondition()
 {

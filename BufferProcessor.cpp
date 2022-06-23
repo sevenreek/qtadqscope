@@ -1,190 +1,128 @@
 #include "BufferProcessor.h"
+#include "DigitizerConstants.h"
+#include <algorithm>
 
-#include <cstring>
-#include "spdlog/spdlog.h"
+const float BufferProcessor::RAM_FILL_LEVELS[] = {
+    0, 1.0 / 8, 2.0 / 8, 3.0 / 8, 4.0 / 8, 5.0 / 8, 6.0 / 8, 7.0 / 8};
 
-IBufferProcessor::~IBufferProcessor() = default;
-BaseBufferProcessor::BaseBufferProcessor(
-    std::list<IRecordProcessor*> &recordProcessors,
-    unsigned long recordLength
-):
-    recordLength(recordLength),
-    recordProcessors(recordProcessors)
-{
-    for(int i = 0; i < MAX_NOF_CHANNELS; i++)
-    {
-        //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-        recordBuffer[i] = (short*)std::malloc(2UL*(size_t)recordLength*sizeof(short));
-        if(recordBuffer[i] == nullptr)
-        {
-            spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
-        }
+void BufferProcessorGen3::startLoop() {
+  if (this->mState != AcquisitionStates::INACTIVE) {
+    spdlog::critical("Buffer Processor loop already active.");
+    return;
+  }
+  this->changeState(AcquisitionStates::ACTIVE);
+  while (this->mState == AcquisitionStates::ACTIVE) {
+    long long bufferPayloadSize;
+    int channel =
+        ADQ_ANY_CHANNEL; // must pass the channel to get its buffers, use
+                         // ADQ_ANY_CHANNEL to capture all channels; is passed
+                         // as a pointer, so the actual channel is returned
+    ADQDataReadoutStatus status = {0};
+    ADQRecord *record = nullptr;
+
+#ifdef DEBUG_DMA_DELAY
+#if DEBUG_DMA_DELAY > 0
+    /////////////////////////////////////// // THIS IS AN ARTIFIICAL DELAY FOR
+    /// TESTING OVERFLOWS.
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(
+        std::chrono::duration<std::chrono::milliseconds>(DEBUG_DMA_DELAY));
+    /////////////////////////////////////// //  ENSURE THAT IT IS DISABLED IN
+    /// PRODUCTION!
+#endif
+#endif
+    bufferPayloadSize = this->adq.WaitForRecordBuffer(
+        &channel, reinterpret_cast<void **>(&record), 500, &status);
+    if (status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING) {
+      this->lastStarved = std::chrono::high_resolution_clock::now();
     }
+    if (bufferPayloadSize < 0) {
+      if (!this->handleWaitForRecordErrors(bufferPayloadSize) &&
+          this->mState != AcquisitionStates::STOPPING) {
+        this->changeState(AcquisitionStates::STOPPING_ERROR);
+        continue;
+      }
+    } else if (bufferPayloadSize == 0) {
+      if (status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_INCOMPLETE) {
+        spdlog::warn("Record is incomplete and empty??");
+      }
+      continue;
+    } else {
+      // spdlog::debug("Got {} buffer", bufferPayloadSize);
+      if (this->mState == AcquisitionStates::ACTIVE) {
+        if (!this->completeRecord(record, bufferPayloadSize)) {
+          changeState(AcquisitionStates::STOPPING_ERROR);
+        }
+      }
+      this->adq.ReturnRecordBuffer(channel, record);
+    }
+  }
+  this->changeState(AcquisitionStates::INACTIVE);
 }
-bool BaseBufferProcessor::reallocateBuffers(unsigned long recordLength)
-{
-    this->recordsStored = 0;
-    if(recordLength != this->recordLength)
-    {
-        this->recordLength = recordLength;
-        for(int i = 0; i < MAX_NOF_CHANNELS; i++)
-        {
-            if(recordBuffer[i] != nullptr) free(recordBuffer[i]);
-            //spdlog::debug("Allocating RecordStoringProcessor's buffer {}", i);
-            recordBuffer[i] = (short*)std::malloc(2UL*(size_t)recordLength*sizeof(short));
-            if(recordBuffer[i] == nullptr)
-            {
-                spdlog::critical("Out of memory for RecordStoringProcessor's recordbuffers.");
-                return false;
-            }
-        }
-    }
-    this->resetBuffers();
-    return true;
+void BufferProcessorGen3::stop() {
+  this->changeState(AcquisitionStates::STOPPING);
 }
-bool BaseBufferProcessor::completeRecord(ADQRecordHeader *header, short *buffer, unsigned long sampleCount, char channel)
-{
-    if(recordsToStore && recordsStored >= recordsToStore)
-    {
-        this->status |= IRecordProcessor::STATUS::LIMIT_REACHED;
-        return false;
-    }
-    for(auto rp : this->recordProcessors)
-    {
-        //spdlog::debug("Processing record");
-        this->status |= rp->processRecord(header, buffer, sampleCount, channel);
-    }
-    recordsStored++;
-    if (this->status) return false;
-    return true;
+float BufferProcessorGen3::dmaUsage() {
+  auto lastStarve = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::high_resolution_clock::now() - this->lastStarved);
+  return std::min((100LL - lastStarve.count()), 0LL) / 100.0f;
 }
-bool BaseBufferProcessor::processBuffers(StreamingBuffers &buffers, bool isTriggeredStreaming)
-{
-    bool success = true;
-    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
-    {
-        if((buffers.channelMask & (1<<ch)) != (1<<ch)) continue;
-
-        if(buffers.nof_samples[ch] == 0)
-            continue;
-        unsigned long unparsedSamplesInBuffer = buffers.nof_samples[ch];
-        // if the ADC is not configured in triggered streaming mode
-        // buffer processor will pass the whole buffer to the record processors
-        if(!isTriggeredStreaming)
-        {
-            //spdlog::debug("Completing record. Samples {}. Channel {}.", unparsedSamplesInBuffer, ch);
-            //buffers.headers[ch][0].Channel = ch;
-            //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength);
-            success = this->completeRecord(nullptr, buffers.data[ch], buffers.nof_samples[ch], ch);
-            if(!success) return false;
-            continue;
-        }
-        // when triggered streaming is used the buffer has to be spliced into
-        // multiple records (window of samples after trigger)
-        // each record comes with a header
-        unsigned long completedHeaders = 0;
-        if(buffers.nof_headers[ch]>0) {
-            completedHeaders = (buffers.header_status[ch] ?
-                buffers.nof_headers[ch] : buffers.nof_headers[ch] - 1);
-        }
-        if(completedHeaders > 0)
-        {
-            //spdlog::debug("Samples remaining to complete record {}", samplesToCompleteRecord);
-            // the sanity check below can likely be removed for a tiny performance boost, as its cause was pinpointed to be a fixed bug in WriteBuffers
-            if(buffers.headers[ch][0].RecordLength != this->recordLength)
-            {
-                spdlog::warn("Recieved a record(#{}) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].RecordLength);
-                spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRBL={}",buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Timestamp, this->recordBufferLength[ch]);
-                buffers.headers[ch][0].RecordLength = this->recordLength;
-            }
-            unsigned long samplesToCompleteRecord = buffers.headers[ch][0].RecordLength - this->recordBufferLength[ch];
-            std::memcpy(
-                (void*)&this->recordBuffer[ch][this->recordBufferLength[ch]],
-                &buffers.data[ch][0],
-                samplesToCompleteRecord*sizeof(short)
-            );
-            //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{} , ts:{}",ch, buffers.headers[ch][0].RecordNumber, buffers.headers[ch][0].Channel, buffers.headers[ch][0].RecordLength, buffers.headers[ch][0].Timestamp);
-            success &= this->completeRecord(
-                &(buffers.headers[ch][0]),
-                this->recordBuffer[ch],
-                buffers.headers[ch][0].RecordLength,
-                ch
-            );
-            unparsedSamplesInBuffer -= samplesToCompleteRecord;
-            this->recordBufferLength[ch] = 0;
-
-            for(unsigned int recordIndex = 1; recordIndex < completedHeaders; recordIndex++)
-            {
-                if(buffers.headers[ch][recordIndex].RecordLength != this->recordLength)
-                {
-                    spdlog::warn("Recieved a record(#{}) longer than buffer({}). Data might be mangled. Attempting to recover.", buffers.headers[ch][recordIndex].RecordNumber, buffers.headers[ch][recordIndex].RecordLength);
-                    spdlog::warn("CH={}\nRNUM={}\nTSTAMP={}\nRSTART={}",buffers.headers[ch][recordIndex].Channel, buffers.headers[ch][recordIndex].RecordNumber, buffers.headers[ch][recordIndex].Timestamp, buffers.headers[ch][recordIndex].RecordStart);
-                    buffers.headers[ch][recordIndex].RecordLength = this->recordLength;
-                }
-
-                //spdlog::debug("Header in ch{}: rn:{}, ch:{}, rl:{}",ch, buffers.headers[ch][recordIndex].RecordNumber, buffers.headers[ch][recordIndex].Channel, buffers.headers[ch][recordIndex].RecordLength);
-                success &= this->completeRecord(
-                    &(buffers.headers[ch][recordIndex]),
-                    (short*)&(buffers.data[ch][buffers.nof_samples[ch]-unparsedSamplesInBuffer]),
-                    buffers.headers[ch][recordIndex].RecordLength,
-                    ch
-                );
-                unparsedSamplesInBuffer -= buffers.headers[ch][recordIndex].RecordLength;
-            }
-        }
-
-        // it may happen that an incomplete record is obtained, e.g.
-        // the record length is 100 but only 80 samples are collected
-        // at the moment of the function call
-        // in this case the incomplete header has to be copied to the beginning
-        // of the buffer so that it can be filled on the next call(s) together with
-        // the remaining 20 samples that still need to be obtained
-        if(unparsedSamplesInBuffer>0)
-        {
-            // store the leftover samples in a buffer
-            std::memcpy(
-                (void*)&(this->recordBuffer[ch][this->recordBufferLength[ch]]),
-                &(buffers.data[ch][buffers.nof_samples[ch]-unparsedSamplesInBuffer]),
-                unparsedSamplesInBuffer*sizeof(short)
-            );
-            this->recordBufferLength[ch] += unparsedSamplesInBuffer;
-            unparsedSamplesInBuffer = 0;
-        }
-
-
-
-    }
-    return success;
+float BufferProcessorGen3::ramUsage() {
+  return RAM_FILL_LEVELS[this->lastRAMFillLevel];
 }
 
-void BaseBufferProcessor::resetBuffers()
-{
-    for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+bool BufferProcessorGen3::completeRecord(ADQRecord *record, size_t bufferSize) {
+  int ramFill = (record->header->RecordStatus & 0b01110000) >> 4;
+  int lostData = (record->header->RecordStatus & 0b00001111) >> 0;
+  bool returnValue = true;
+  if (ramFill != lastRAMFillLevel) {
+    spdlog::debug("DRAM fill > {:.2f}%.", this->ramUsage() * 100.0f);
+  }
+  lastRAMFillLevel = ramFill;
+  if (lostData) {
+    spdlog::warn("Obtained record(#{}) with missing data - status={:#B}",
+                 record->header->RecordNumber, record->header->RecordStatus);
+    if (lostData & 0b1) // lost whole records before this one
     {
-        this->recordBufferLength[ch] = 0;
+      spdlog::warn("Lost {} full records",
+                   record->header->RecordNumber - this->lastRecordNumber);
     }
-    this->status = IRecordProcessor::STATUS::OK;
+    spdlog::warn("Overflow: {}", this->adq.GetStreamOverflow());
+    returnValue = true;
+    // record->header->RecordLength = this->recordLength;
+  }
+  for (auto rp : this->recordProcessors) {
+    if (rp->processRecord(record, bufferSize))
+      returnValue = false;
+  }
+  this->lastRecordNumber = record->header->RecordNumber;
+  return returnValue;
 }
-
-void BaseBufferProcessor::resetRecordsToStore(unsigned long long recordsToStore)
-{
-    this->recordsStored = 0;
-    this->recordsToStore = recordsToStore;
+bool BufferProcessorGen3::handleWaitForRecordErrors(long long returnValue) {
+  switch (returnValue) {
+  case ADQ_EINVAL:
+    spdlog::error("Invalid arguments pased to WaitForRecordBuffer");
+    return false;
+    break;
+  case ADQ_EAGAIN:
+    // spdlog::info("WaitForRecordBuffer timed out.");
+    break;
+  case ADQ_ENOTREADY:
+    spdlog::error("WaitForRecordBuffer called despite no acquisition running.");
+    return false;
+    break;
+  case ADQ_EINTERRUPTED:
+    spdlog::error("WaitForRecordBuffer interrupted.");
+    break;
+  case ADQ_EEXTERNAL:
+    spdlog::error("External error when calling WaitForRecordBuffer.");
+    return false;
+    break;
+  }
+  return true;
 }
-
-int BaseBufferProcessor::getStatus() const
-{
-    return status;
-}
-BaseBufferProcessor::~BaseBufferProcessor()
-{
-    for(int i = 0; i < MAX_NOF_CHANNELS; i++)
-    {
-        //spdlog::debug("Freeing RecordStoringProcessor's buffer {}", i);
-        if(recordBuffer[i] != nullptr)
-        {
-            std::free(recordBuffer[i]);
-            this->recordBuffer[i] = nullptr;
-        }
-    }
+void BufferProcessorGen3::changeState(AcquisitionStates newState) {
+  AcquisitionStates lastState = this->mState;
+  this->mState = newState;
+  this->stateChangeCallback(lastState, newState);
 }

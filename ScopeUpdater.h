@@ -12,7 +12,7 @@ protected:
     unsigned long long sampleCount;
     int activeChannel;
 public:
-    bool startNewAcquisition(Acquisition* config) override;
+    bool startNewAcquisition(AcquisitionConfiguration* config) override;
     ScopeUpdater(unsigned long long sampleCount);
     STATUS processRecord(ADQRecord* record, size_t bufferSize) override;
     unsigned long long finish() override;

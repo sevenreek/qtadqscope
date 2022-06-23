@@ -1,42 +1,10 @@
-#include "GUIApplication.h"
-#include <QApplication>
+#include "Application.h"
 #include "spdlog/spdlog.h"
 #include <thread>
 #include <iostream>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 
-void processArguments(QApplication &app, ApplicationConfiguration &cfg, Acquisition &acq)
-{
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Test helper");
-    parser.addHelpOption();
-    parser.addVersionOption();
-    parser.addPositionalArgument("config_file", "Configuration JSON to load.");
-
-    QCommandLineOption commandLineMode("c", "Start acqusition in command line mode.");
-    parser.addOption(commandLineMode);
-
-
-    parser.process(app);
-
-    const QStringList args = parser.positionalArguments();
-    QString acquisitionFile = "defaultconfig.json";
-
-    if(args.count() > 0)
-        acquisitionFile = args.at(0);
-    QFile file(acquisitionFile);
-    if(file.exists()) {
-        file.open(QFile::OpenModeFlag::ReadOnly);
-        QJsonParseError err;
-        QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &err);
-        if(err.error == QJsonParseError::NoError) {
-            cfg = ApplicationConfiguration::fromJson(json.object());
-            acq = Acquisition::fromJson(json.object()["acquisition"].toObject());
-        }
-    }
-    cfg.setStartGUI(!parser.isSet(commandLineMode));
-}
 
 int main(int argc, char *argv[])
 {
@@ -63,7 +31,6 @@ int main(int argc, char *argv[])
     app->start(config, acq);
     int appres = a.exec();
     spdlog::info("Application exit");
-    app.reset();
     return appres;
 }
 

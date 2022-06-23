@@ -1,14 +1,18 @@
 #include "AcquisitionSettingsSidePanel.h"
-#include "ui_AcquisitionSettingsSidePanel.h"
-#include "spdlog/fmt/fmt.h"
-#include "util.h"
+
 #include <cmath>
-AcquisitionSettingsSidePanel::AcquisitionSettingsSidePanel( QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::AcquisitionSettingsSidePanel)
+
+#include "AcquisitionConfiguration.h"
+#include "ConfigurationController.h"
+#include "DigitizerConstants.h"
+#include "spdlog/fmt/fmt.h"
+#include "ui_AcquisitionSettingsSidePanel.h"
+#include "util.h"
+
+AcquisitionSettingsSidePanel::AcquisitionSettingsSidePanel(QWidget* parent)
+    : QWidget(parent), ui(new Ui::AcquisitionSettingsSidePanel)
 {
     ui->setupUi(this);
-
 }
 
 AcquisitionSettingsSidePanel::~AcquisitionSettingsSidePanel()
@@ -19,179 +23,119 @@ AcquisitionSettingsSidePanel::~AcquisitionSettingsSidePanel()
 
 void AcquisitionSettingsSidePanel::reloadUI()
 {
-    this->ui->bypassUL1->setChecked((this->digitizer->getUserLogicBypass()&(1<<0))?true:false);
-    this->ui->bypassUL2->setChecked((this->digitizer->getUserLogicBypass()&(1<<1))?true:false);
-    this->ui->acquisitionTag->setText(QString::fromStdString(this->digitizer->getAcquisitionTag()));
-    this->ui->delay->setValue(this->digitizer->getTriggerDelay());
+    AcquisitionConfiguration& cfg = this->context->digitizer->cfg().acq();
+    this->ui->bypassUL1->setChecked(cfg.spectroscope.isBypassed(UserLogic::UL1));
+    this->ui->bypassUL2->setChecked(cfg.spectroscope.isBypassed(UserLogic::UL2));
+    this->ui->acquisitionTag->setText(QString::fromStdString(cfg.storage.tag()));
+    auto horizontalShift = cfg.triggers.at(0).horizontalShift();
+    this->ui->delay->setValue(horizontalShift > 0 ? horizontalShift : 0);
+    this->ui->pretrigger->setValue(horizontalShift < 0 ? horizontalShift : 0);
+    if (cfg.collection.isContinuous())
+    {
+        this->ui->triggerMode->setCurrentIndex(0); // force set software
+    }
+    else
+    {
+        this->ui->triggerMode->setCurrentIndex(
+            triggerModeToSelectIndex(cfg.triggers.at(0).mode())); // set depending on the config
+    }
 
-    this->ui->pretrigger->setValue(this->digitizer->getPretrigger());
-    this->ui->triggerMode->setCurrentIndex(this->digitizer->getTriggerMode());
+    this->ui->sampleSkip->setValue(cfg.collection.sampleSkip());
+    this->ui->frequency->setText(QString::fromStdString(
+        this->calculateFrequency(MAX_SAMPLING_RATE, cfg.collection.sampleSkip())));
+    this->ui->recordLength->setValue(cfg.records.at(0).recordLength());
 
-    this->ui->sampleSkip->setValue(this->digitizer->getSampleSkip());
-    this->ui->frequency->setText(QString::fromStdString(this->calculateFrequency(MAX_SAMPLING_RATE, this->digitizer->getSampleSkip())));
-    this->ui->recordLength->setValue(this->digitizer->getRecordLength());
-
-    if(this->digitizer->getRecordCount() == Acquisition::INFINITE_RECORDS)
+    if (cfg.records.at(0).isInfinite())
     {
         this->ui->recordCount->setValue(0);
         this->ui->limitRecords->setChecked(false);
         this->ui->recordCount->setEnabled(false);
     }
-    this->ui->triggeringApproach->setCurrentIndex(this->digitizer->getTriggerApproach());
-    if(isOnlyOneBitSet(this->digitizer->getChannelMask())) // switch tab to the only active channel
+    if (isOnlyOneBitSet(cfg.collection.channelMask())) // switch tab to the
+                                                       // only active channel
     {
         int index = 0;
-        for(int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+        for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
         {
-            if(this->digitizer->getChannelMask() & (1<<ch))
+            if (cfg.collection.channelMask() & (1 << ch))
             {
-                index = ch; break;
+                index = ch;
+                break;
             }
         }
         this->ui->channelTabs->setCurrentIndex(index);
     }
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
+    for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
     {
         tabs.at(ch)->reloadUI();
     }
-    this->handleTabNameChange(0, true);
+    this->changeTabNames();
+
+    // call sublayouts to reload
     this->ui->fileSavePanel->reloadUI();
     this->ui->scopeUpdatePanel->reloadUI();
 }
 
-void AcquisitionSettingsSidePanel::initialize(ApplicationContext * context)
+void AcquisitionSettingsSidePanel::initialize(ApplicationContext* context)
 {
     this->DigitizerGUIComponent::initialize(context);
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
-    {
-        tabs.at(ch) = std::unique_ptr<AcquisitionChannelSettingsTab>(new AcquisitionChannelSettingsTab(this));
-        tabs.at(ch)->initialize(context, ch);
-        this->ui->channelTabs->addTab(tabs.at(ch).get(), QString::fromStdString(fmt::format("CH{}",ch+1)));
-    }
-    this->connect(
-        this->ui->bypassUL1, &QCheckBox::stateChanged,
-        this, [=](int state){
-            if(state) this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() | 0b01);
-            else this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() & ~0b01);
-        }
-    );
-    this->connect(
-        this->ui->bypassUL2, &QCheckBox::stateChanged,
-        this, [=](int state){
-            if(state) this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() | 0b10);
-            else this->digitizer->setUserLogicBypass(this->digitizer->getUserLogicBypass() & ~0b10);
-        }
-    );
-    this->connect(
-        this->ui->delay, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        this, [=](int val) {
-            this->digitizer->setTriggerDelay(val);
-        }
-    );
-    this->connect(
-        this->ui->pretrigger, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        this, [=](int val) {
-            this->digitizer->setPretrigger(val);
-        }
-    );
-    this->connect(
-        this->ui->recordLength, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        this, [=](int val) {
-            this->digitizer->setRecordLength(val);
-        }
-    );
-    this->connect(
-        this->ui->recordCount, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        this, [=](int val){
-            if(this->ui->limitRecords->isChecked())
-            {
-                this->digitizer->setRecordCount(val);
-            }
-            else
-            {
-                this->digitizer->setRecordCount(Acquisition::INFINITE_RECORDS);
-            }
-        }
-    );
-    this->connect(
-        this->ui->sampleSkip, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-        this, [=](int val){
-            if(val == 3)
-            {
-                this->ui->sampleSkip->setValue(this->digitizer->getSampleSkip()==2?4:2);
-                return;
-            }
-            this->digitizer->setSampleSkip(val);
-            this->ui->frequency->setText(QString::fromStdString(this->calculateFrequency(MAX_SAMPLING_RATE, val)));
-        }
-    );
-    this->connect(
-        this->ui->limitRecords, &QCheckBox::stateChanged,
-        this, [=](int state){
-            if(state)
-            {
-                this->digitizer->setRecordCount(this->ui->recordCount->value());
-                this->ui->recordCount->setEnabled(true);
-            }
-            else
-            {
-                this->digitizer->setRecordCount(Acquisition::INFINITE_RECORDS);
-                this->ui->recordCount->setEnabled(false);
-            }
-        }
-    );
-    this->connect(
-        this->ui->triggerMode,
-        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-        this,
-        [=](int index){ this->digitizer->setTriggerMode(static_cast<Digitizer::DIGITIZER_TRIGGER_MODE>(index));}
-    );
-    this->connect(
-        this->ui->triggeringApproach,
-        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-        this,
-        &AcquisitionSettingsSidePanel::handleApproachChanged
-    );
-    this->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this, &AcquisitionSettingsSidePanel::handleTabChanged);
-    for(int ch=0; ch < MAX_NOF_CHANNELS; ch++)
-    {
-        this->tabs.at(ch)->connect(
-            this->tabs.at(ch).get(), &AcquisitionChannelSettingsTab::channelActiveChanged,
-            this, [this, ch](bool act){this->handleSetChannelActive(ch, act);}
-        );
-        this->tabs.at(ch)->connect(
-            this->tabs.at(ch).get(), &AcquisitionChannelSettingsTab::triggerActiveChanged,
-            this, [this, ch](bool act){this->handleSetChannelTriggerActive(ch, act);}
-        );
-    }
-    this->connect(
-        this->digitizer,
-        &Digitizer::inputRangeChanged,
-        this,
-        [=](int ch, INPUT_RANGES r) {
-            this->tabs.at(ch)->setObtainedRange(this->digitizer->getObtainedRange(ch));
-        }
-    );
-    this->connect(
-        this->ui->acquisitionTag,
-        &QLineEdit::textChanged,
-        this,
-        [=](const QString &text)
-            {
-                this->digitizer->setAcquisitionTag(text.toStdString());
-            }
-     );
+    this->createChannelSettingsTabs();
+
+    // Connect UI slots
+    this->connect(this->ui->bypassUL1, &QCheckBox::stateChanged, this,
+                  &AcquisitionSettingsSidePanel::setUL1Bypass);
+    this->connect(this->ui->bypassUL2, &QCheckBox::stateChanged, this,
+                  &AcquisitionSettingsSidePanel::setUL2Bypass);
+    this->connect(this->ui->horizontalShift,
+                  static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+                  &AcquisitionSettingsSidePanel::setHorizontalShift);
+    this->connect(this->ui->recordLength,
+                  static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+                  &AcquisitionSettingsSidePanel::setRecordLength);
+    this->connect(this->ui->recordCount,
+                  static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+                  &AcquisitionSettingsSidePanel::setRecordCount);
+    this->connect(this->ui->sampleSkip,
+                  static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
+                  &AcquisitionSettingsSidePanel::setSampleSkip);
+    this->connect(this->ui->limitRecords, &QCheckBox::stateChanged, this,
+                  &AcquisitionSettingsSidePanel::setLimitRecordsEnabled);
+    this->connect(this->ui->triggerMode,
+                  static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this,
+                  &AcquisitionSettingsSidePanel::setTriggerMode);
+    this->connect(this->ui->channelTabs, &QTabWidget::currentChanged, this,
+                  &AcquisitionSettingsSidePanel::handleTabChanged);
+    this->connect(this->ui->acquisitionTag, &QLineEdit::textChanged, this,
+                  &AcquisitionSettingsSidePanel::setAcquisitionTag);
+
+    // Connect the config change signals if needed. This is actually necessary only if the settings 
+    // can be modified from another spot in the program. Otherwise reloadUI handles repopulating the whole component.
+    //this->connect(this->context->digitizer->cfg(), &QConfigurationController::notifyCollectionChanged, this, 
+
+    // Initialize children components
     this->ui->fileSavePanel->initialize(context);
     this->ui->scopeUpdatePanel->initialize(context);
 }
+void AcquisitionSettingsSidePanel::createChannelSettingsTabs()
+{
+    for (int ch = 0; ch < MAX_NOF_CHANNELS; ch++)
+    {
+        tabs.at(ch) =
+            std::unique_ptr<AcquisitionChannelSettingsTab>(new AcquisitionChannelSettingsTab(this));
+        tabs.at(ch)->initialize(context, ch);
+        this->ui->channelTabs->addTab(tabs.at(ch).get(),
+                                      QString::fromStdString(fmt::format("CH{}", ch + 1)));
+    }
 
-std::string AcquisitionSettingsSidePanel::calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip)
+}
+std::string AcquisitionSettingsSidePanel::calculateFrequency(unsigned long long samplingRate,
+                                                             unsigned long long sampleSkip)
 {
     int timesDivided = 0;
-    double sr = double(samplingRate)/sampleSkip;
-    while(sr >= 1000)
+    double sr = double(samplingRate) / sampleSkip;
+    while (sr >= 1000)
     {
-        sr/=1000.0;
+        sr /= 1000.0;
         timesDivided++;
     }
     return fmt::format("{:.2f} {}Hz", sr, UNIT_PREFIXES[timesDivided]);
@@ -199,8 +143,8 @@ std::string AcquisitionSettingsSidePanel::calculateFrequency(unsigned long long 
 
 void AcquisitionSettingsSidePanel::handleTabChanged(int tab)
 {
-    if(clip(tab, 0, int(this->tabs.size())-1) != tab) return;
-    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
+    /*
+    if (this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
         this->tabs.at(this->lastActiveChannel)->setChannelActive(false);
         this->tabs.at(this->lastActiveChannel)->setTriggerActive(false);
@@ -209,20 +153,23 @@ void AcquisitionSettingsSidePanel::handleTabChanged(int tab)
         this->handleSetChannelActive(tab, true);
         this->handleSetChannelTriggerActive(tab, true);
     }
+    */
     this->tabs.at(tab)->reloadUI();
     emit this->onChannelTabChanged(tab);
 }
-
+/*
 void AcquisitionSettingsSidePanel::handleSetChannelActive(int channel, bool active)
 {
-    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
+    if (this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
-        this->digitizer->setChannelMask((1<<channel));
+        this->digitizer->setChannelMask((1 << channel));
     }
     else
     {
-        if(active) this->digitizer->setChannelMask(this->digitizer->getChannelMask() | (1<<channel));
-        else this->digitizer->setChannelMask(this->digitizer->getChannelMask() & ~(1<<channel));
+        if (active)
+            this->digitizer->setChannelMask(this->digitizer->getChannelMask() | (1 << channel));
+        else
+            this->digitizer->setChannelMask(this->digitizer->getChannelMask() & ~(1 << channel));
     }
     this->handleTabNameChange(channel, true);
     this->lastActiveChannel = channel;
@@ -230,45 +177,39 @@ void AcquisitionSettingsSidePanel::handleSetChannelActive(int channel, bool acti
 
 void AcquisitionSettingsSidePanel::handleSetChannelTriggerActive(int channel, bool active)
 {
-    if(this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
+    if (this->digitizer->getTriggerApproach() == TRIGGER_APPROACHES::SINGLE)
     {
-        this->digitizer->setTriggerMask((1<<channel));
+        this->digitizer->setTriggerMask((1 << channel));
     }
     else
     {
-        if(active) this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() | (1<<channel));
-        else this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() & ~(1<<channel));
+        if (active)
+            this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() | (1 << channel));
+        else
+            this->digitizer->setTriggerMask(this->digitizer->getTriggerMask() & ~(1 << channel));
     }
 
     this->handleTabNameChange(channel, true);
 }
-
-void AcquisitionSettingsSidePanel::handleTabNameChange(int channel, bool recreateAll)
+*/
+void AcquisitionSettingsSidePanel::changeTabNames()
 {
-    int chMask = this->digitizer->getChannelMask();
-    int trMask = this->digitizer->getTriggerMask();
-    if(recreateAll)
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    int chMask = acq.collection.channelMask();
+    int trMask = acq.collection.triggerMask();
+    for (int ch = 0; ch < this->ui->channelTabs->count(); ch++)
     {
-        for(int ch = 0; ch < this->ui->channelTabs->count(); ch++)
-        {
-            bool active = isBitSet(ch, chMask);
-            std::string tabname;
-            if(active) tabname = fmt::format("CH{}{}{}", ch+1, CHANNEL_ACTIVE_EMOJI, isBitSet(ch, trMask)?TRIGGER_ACTIVE_EMOJI:"");/*▶🗲*/
-            else tabname = fmt::format("CH{}{}", ch+1, isBitSet(ch, trMask)?TRIGGER_ACTIVE_EMOJI:"");/*▶🗲*/
-            this->ui->channelTabs->setTabText(ch, QString::fromStdString(tabname));
-        }
-    }
-    else if(channel < this->ui->channelTabs->count())
-    {
-        bool active = isBitSet(channel, chMask);
+        bool active = isBitSet(ch, chMask);
         std::string tabname;
-        if(active) tabname = fmt::format("CH{}{}{}", channel+1, CHANNEL_ACTIVE_EMOJI, isBitSet(channel, trMask)?TRIGGER_ACTIVE_EMOJI:"");/*▶🗲*/
-        else tabname = fmt::format("CH{}{}", channel+1, isBitSet(channel, trMask)?TRIGGER_ACTIVE_EMOJI:"");/*▶🗲*/
-        this->ui->channelTabs->setTabText(channel, QString::fromStdString(tabname));
+        if (active)
+            tabname = fmt::format("CH{}{}{}", ch + 1, CHANNEL_ACTIVE_EMOJI,
+                                    isBitSet(ch, trMask) ? TRIGGER_ACTIVE_EMOJI : ""); /*▶🗲*/
+        else
+            tabname = fmt::format("CH{}{}", ch + 1,
+                                    isBitSet(ch, trMask) ? TRIGGER_ACTIVE_EMOJI : ""); /*▶🗲*/
+        this->ui->channelTabs->setTabText(ch, QString::fromStdString(tabname));
     }
 }
-
-
 
 
 void AcquisitionSettingsSidePanel::enableVolatileSettings(bool enabled)
@@ -285,26 +226,26 @@ void AcquisitionSettingsSidePanel::enableVolatileSettings(bool enabled)
     this->ui->recordLength->setEnabled(enabled);
     this->ui->sampleSkip->setEnabled(enabled);
     this->ui->triggerMode->setEnabled(enabled);
-    for(int ch = 0; ch < this->ui->channelTabs->count(); ch++)
+    for (int ch = 0; ch < this->ui->channelTabs->count(); ch++)
     {
         this->tabs.at(ch)->enableVolatileSettings(enabled);
     }
     this->ui->scopeUpdatePanel->enableVolatileSettings(enabled);
     this->ui->fileSavePanel->enableVolatileSettings(enabled);
 }
-
+/*
 void AcquisitionSettingsSidePanel::handleApproachChanged(int approachi)
 {
     this->digitizer->setTriggerApproach(static_cast<TRIGGER_APPROACHES>(approachi));
     TRIGGER_APPROACHES approach = this->digitizer->getTriggerApproach();
-    if(approach == TRIGGER_APPROACHES::SINGLE)
+    if (approach == TRIGGER_APPROACHES::SINGLE)
     {
         int openChannel = this->ui->channelTabs->currentIndex();
         this->tabs.at(openChannel)->setChannelActive(true);
         this->tabs.at(openChannel)->setTriggerActive(true);
         this->handleSetChannelTriggerActive(openChannel, true);
         this->handleSetChannelActive(openChannel, true);
-        for(int ch=0; ch < this->tabs.size(); ch++)
+        for (int ch = 0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(false);
             this->tabs.at(ch)->setTriggerChangeAllowed(false);
@@ -312,7 +253,7 @@ void AcquisitionSettingsSidePanel::handleApproachChanged(int approachi)
     }
     else if (approach == TRIGGER_APPROACHES::INDIVIDUAL)
     {
-        for(int ch=0; ch < this->tabs.size(); ch++)
+        for (int ch = 0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(true);
             this->tabs.at(ch)->setTriggerChangeAllowed(true);
@@ -320,7 +261,7 @@ void AcquisitionSettingsSidePanel::handleApproachChanged(int approachi)
     }
     else
     {
-        for(int ch=0; ch < this->tabs.size(); ch++)
+        for (int ch = 0; ch < this->tabs.size(); ch++)
         {
             this->tabs.at(ch)->setActiveChangeAllowed(true);
             this->tabs.at(ch)->setTriggerChangeAllowed(false);
@@ -331,4 +272,126 @@ void AcquisitionSettingsSidePanel::handleApproachChanged(int approachi)
         this->handleSetChannelTriggerActive(setChannel, true);
         this->tabs.at(setChannel)->setTriggerActive(true);
     }
+}
+*/
+
+void AcquisitionSettingsSidePanel::setUL1Bypass(bool bypass)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    acq.spectroscope.setBypass(UserLogic::UL1, bypass);
+}
+
+void AcquisitionSettingsSidePanel::setUL2Bypass(bool bypass)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    acq.spectroscope.setBypass(UserLogic::UL2, bypass);
+}
+
+void AcquisitionSettingsSidePanel::setHorizontalShift(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    acq.triggers.at(0).setHorizontalShift(val);
+}
+
+void AcquisitionSettingsSidePanel::setRecordLength(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    acq.records.at(0).setRecordLength(val);
+}
+
+void AcquisitionSettingsSidePanel::setRecordCount(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    if (this->ui->limitRecords->isChecked())
+    {
+        acq.records.at(0).setRecordCount(val);
+    }
+    else
+    {
+        acq.records.at(0).setInfinite();
+    }
+}
+void AcquisitionSettingsSidePanel::setSampleSkip(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    if (val == 3)
+    { // 3 is not supported by ADQ14
+        this->ui->sampleSkip->setValue(acq.collection.sampleSkip() == 2 ? 4 : 2);
+        return;
+    }
+    acq.collection.setSampleSkip(val);
+    this->ui->frequency->setText(
+        QString::fromStdString(this->calculateFrequency(MAX_SAMPLING_RATE, val)));
+}
+
+void AcquisitionSettingsSidePanel::setLimitRecordsEnabled(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    if (val)
+    {
+        acq.records.at(0).setRecordCount(this->ui->recordCount->value());
+        this->ui->recordCount->setEnabled(true);
+    }
+    else
+    {
+        acq.records.at(0).setInfinite();
+        this->ui->recordCount->setEnabled(false);
+    }
+}
+void AcquisitionSettingsSidePanel::setTriggerMode(int val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    TriggerModeOptions opt = static_cast<AcquisitionSettingsSidePanel::TriggerModeOptions>(val);
+    switch (opt)
+    {
+    case AcquisitionSettingsSidePanel::TriggerModeOptions::CONTINUOUS: {
+        acq.triggers.at(0).setMode(TRIGGER_MODES::SOFTWARE);
+        acq.collection.setAcquisitionMode(ACQUISITION_MODES::CONTINOUS);
+    }
+    break;
+    case AcquisitionSettingsSidePanel::TriggerModeOptions::SOFTWARE: {
+        acq.triggers.at(0).setMode(TRIGGER_MODES::SOFTWARE);
+        acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
+    }
+    break;
+    case AcquisitionSettingsSidePanel::TriggerModeOptions::LEVEL: {
+        acq.triggers.at(0).setMode(TRIGGER_MODES::LEVEL);
+        acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
+    }
+    break;
+    case AcquisitionSettingsSidePanel::TriggerModeOptions::INTERNAL: {
+        acq.triggers.at(0).setMode(TRIGGER_MODES::INTERNAL);
+        acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
+    }
+    break;
+    case AcquisitionSettingsSidePanel::TriggerModeOptions::EXTERNAL: {
+        acq.triggers.at(0).setMode(TRIGGER_MODES::EXTERNAL);
+        acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
+    }
+    break;
+    }
+}
+void AcquisitionSettingsSidePanel::setAcquisitionTag(const QString& val)
+{
+    AcquisitionConfiguration& acq = this->context->digitizer->cfg().acq();
+    acq.storage.setTag(val.toStdString());
+}
+int AcquisitionSettingsSidePanel::triggerModeToSelectIndex(TRIGGER_MODES mode)
+{
+    switch (mode)
+    {
+    case TRIGGER_MODES::SOFTWARE:
+        return 1;
+    case TRIGGER_MODES::EXTERNAL:
+        return 2;
+    case TRIGGER_MODES::LEVEL:
+        return 3;
+    case TRIGGER_MODES::INTERNAL:
+        return 4;
+    case TRIGGER_MODES::EXTERNAL_2:
+        return -1;
+    case TRIGGER_MODES::EXTERNAL_3:
+        return -1;
+    }
+    return -1;
 }
