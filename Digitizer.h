@@ -21,16 +21,13 @@ private:
     SpectroscopeController spectroscope_;
 public:
     Digitizer(ADQInterface *adq);
-    ~Digitizer();
     QConfigurationController &cfg() {return cfg_;};
     SpectroscopeController &spectroscope() {return spectroscope_;};
     void appendRecordProcessor(IRecordProcessor *rp);
     void removeRecordProcessor(IRecordProcessor *rp);
-    bool startCustomAcquisition(AcquisitionConfiguration * config, std::vector<IRecordProcessor*> recordProcessors);
+    bool startCustomAcquisition(AcquisitionConfiguration *config, std::vector<IRecordProcessor*> *recordProcessors);
     bool startAcquisition();
     bool stopAcquisition();
-    void SWTrig();
-
 };
 
 #endif // DIGITIZER_H

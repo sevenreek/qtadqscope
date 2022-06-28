@@ -21,7 +21,6 @@ public:
     ~SpectroscopeTab();
     void reloadUI() override;
     void initialize(ApplicationContext * context) override;
-    void enableVolatileSettings(bool enabled) override;
 
 private:
     QVector<double> x;
@@ -31,7 +30,6 @@ private:
     Ui::SpectroscopeTab *ui;
     ApplicationContext * context;
     int windowDuration = 0;
-    unsigned int spectrumBinCount = MAX_SPECTRUM_BIN_COUNT;
     void loadConfigFromDevice();
     void reallocatePlotSize(int binCount);
 private slots:
@@ -39,10 +37,8 @@ private slots:
     void loadSpectrum();
     void saveSpectrum();
     void resetSpectrum();
-    void setTriggerLevel();
     void debugSpectrum();
     void changeSpectrumDMAEnabled(int checked);
-    void changeUseZCDTrigger(int checked);
     void changePlotChannel(int selection);
     void changeSpectrumBinCount(int count);
     void setSpectrumWindow();

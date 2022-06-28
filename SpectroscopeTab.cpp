@@ -1,6 +1,8 @@
 #include "SpectroscopeTab.h"
+#include "DigitizerGUIComponent.h"
 #include "ui_SpectroscopeTab.h"
 #include "DigitizerConstants.h"
+using namespace Spectroscopy;
 SpectroscopeTab::SpectroscopeTab(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SpectroscopeTab)
@@ -16,18 +18,20 @@ SpectroscopeTab::~SpectroscopeTab()
 
 void SpectroscopeTab::reloadUI()
 {
-    this->loadConfigFromDevice();
-    unsigned int reductionShift = std::round(std::log2(MAX_SPECTRUM_BIN_COUNT/this->spectrumBinCount));
+    auto &spec = this->digitizer->cfg().acq().spectroscope;
+    unsigned int binCount = spec.binCount();
+    unsigned int reductionShift = spec.binCountReductionShift();
     unsigned int sliderPos = this->ui->binCount->maximum() - reductionShift;
     this->ui->binCount->setValue(sliderPos);
-    this->ui->binCountLabel->setText(QString::number(this->spectrumBinCount));
-    this->ui->spectroscopeEnable->setChecked(this->context->digitizer->getSpectroscopeEnabled());
+    this->ui->binCountLabel->setText(QString::number(binCount));
+    this->ui->spectroscopeEnable->setChecked(spec.enabled());
 }
 
 void SpectroscopeTab::initialize(ApplicationContext *context)
 {
-    this->context = context;
-    this->reallocatePlotSize(this->spectrumBinCount);
+    DigitizerGUIComponent::initialize(context);
+    auto &spec = this->digitizer->cfg().acq().spectroscope;
+    this->reallocatePlotSize(spec.binCount());
     this->ui->plotArea->addGraph();
     this->ui->plotArea->setInteraction(QCP::iRangeDrag, true);
     this->ui->plotArea->setInteraction(QCP::iRangeZoom, true);
@@ -35,53 +39,31 @@ void SpectroscopeTab::initialize(ApplicationContext *context)
     this->connect(this->ui->loadButton, &QAbstractButton::pressed, this, &SpectroscopeTab::loadSpectrum);
     this->connect(this->ui->saveButton, &QAbstractButton::pressed, this, &SpectroscopeTab::saveSpectrum);
     this->connect(this->ui->resetButton, &QAbstractButton::pressed, this, &SpectroscopeTab::resetSpectrum);
-    this->connect(this->ui->setBoxcarTrigger, &QAbstractButton::pressed, this, &SpectroscopeTab::setTriggerLevel);
     this->connect(this->ui->enableSpectrumDMA, &QCheckBox::stateChanged, this, &SpectroscopeTab::changeSpectrumDMAEnabled);
-    this->connect(this->ui->useZCDTrigger, &QCheckBox::stateChanged, this, &SpectroscopeTab::changeUseZCDTrigger);
     this->connect(this->ui->channelPlotSource, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SpectroscopeTab::changePlotChannel);
     this->connect(this->plotter.get(), &SpectrumPlotter::onScopeUpdate, this, &SpectroscopeTab::updateScope, Qt::ConnectionType::BlockingQueuedConnection);
     this->connect(this->ui->binCount, &QAbstractSlider::valueChanged, this, &SpectroscopeTab::changeSpectrumBinCount);
     this->connect(this->plotter.get(), &SpectrumPlotter::updateSpectrumCalculatedParams, this, &SpectroscopeTab::updateSpectrumCalculatedParams, Qt::ConnectionType::BlockingQueuedConnection);
     this->connect(this->ui->setWindowDuration, &QAbstractButton::released, this, &SpectroscopeTab::setSpectrumWindow);
     this->connect(this->ui->spectroscopeEnable, &QCheckBox::stateChanged, this, &SpectroscopeTab::setSpectroscopeEnabled);
-    unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~ACTIVE_SPECTRUM_BIT, 0, &retval); // disable pha
+    // Disable spectroscope on application start.
+    this->context->digitizer->spectroscope().disable();
 }
 
 void SpectroscopeTab::changeSpectrumDMAEnabled(int checked)
 {
-    unsigned int retval;
-    unsigned int value;
-    if(checked) value = TRANSFER_SPECTRA_BIT;
-    else value = 0;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~TRANSFER_SPECTRA_BIT, value, &retval); // debug pha
-    if((retval & TRANSFER_SPECTRA_BIT) != value) {
-        spdlog::error("Failed to configure DMA spectrum transmission. {} != {}", retval, value);
-    }
-
+    this->digitizer->cfg().acq().spectroscope.setTransferOverDMA(checked);
 }
 
-void SpectroscopeTab::enableVolatileSettings(bool enabled)
-{
-
-}
-void SpectroscopeTab::changeUseZCDTrigger(int checked)
-{
-    checked = static_cast<bool>(checked);
-    unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~USE_ZCD_BIT, checked?USE_ZCD_BIT:0, &retval);
-
-}
 void SpectroscopeTab::debugSpectrum()
 {
 
 }
 void SpectroscopeTab::downloadSpectrum()
 {
-    std::unique_ptr<uint32_t[]> data(new uint32_t[this->spectrumBinCount]());
-
-    this->context->digitizer->readBlockUserRegister(UL_TARGET, FIRST_REGISTER, data.get(), this->spectrumBinCount*sizeof(uint32_t), READ_USER_REGISTER_LIKE_RAM);
-    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
+    unsigned int binCount = this->digitizer->cfg().acq().spectroscope.binCount();
+    auto data = this->digitizer->spectroscope().downloadSpectrum(binCount);
+    for(unsigned int i = 0; i < binCount; i++)
     {
         //if(i%10==1) spdlog::debug("{} = {}",i, data[i]);
         this->y[i] = data[i];
@@ -93,6 +75,7 @@ void SpectroscopeTab::downloadSpectrum()
 
 void SpectroscopeTab::loadSpectrum()
 {
+    unsigned int binCount = this->digitizer->cfg().acq().spectroscope.binCount();
     QString fileName = QFileDialog::getOpenFileName(
         this,
         "Load spectrum",
@@ -107,7 +90,7 @@ void SpectroscopeTab::loadSpectrum()
         return;
     }
     file.open(QFile::OpenModeFlag::ReadOnly);
-    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < binCount; i++)
     {
         QByteArray line = file.readLine();
         QList<QByteArray> vals = line.split(',');
@@ -123,6 +106,7 @@ void SpectroscopeTab::loadSpectrum()
 
 void SpectroscopeTab::saveSpectrum()
 {
+    unsigned int spectrumBinCount = this->digitizer->cfg().acq().spectroscope.binCount();
     QString fileName = QFileDialog::getSaveFileName(
         this,
         "Save spectrum",
@@ -132,7 +116,7 @@ void SpectroscopeTab::saveSpectrum()
     if(!fileName.length()) return;
     QFile file(fileName);
     file.open(QFile::OpenModeFlag::WriteOnly);
-    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
+    for(unsigned int i = 0; i < spectrumBinCount; i++)
     {
         file.write( fmt::format("{:f},{:f}\n", this->x.at(i), this->y.at(i)).c_str() );
     }
@@ -141,41 +125,15 @@ void SpectroscopeTab::saveSpectrum()
 
 void SpectroscopeTab::resetSpectrum()
 {
-    for(unsigned int i = 0; i < this->spectrumBinCount; i++)
+    unsigned int spectrumBinCount = this->digitizer->cfg().acq().spectroscope.binCount();
+    this->digitizer->spectroscope().resetSpectrum();
+    for(unsigned int i = 0; i < spectrumBinCount; i++)
     {
         y[i] = 0;
     }
-    unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, RESET_SPECTRUM_BIT, &retval);
-    int timeToReset = ceil(4.0*this->spectrumBinCount/1000000); // 4 ns clock period
-    QTimer::singleShot(timeToReset, this, [=] {
-        unsigned int retval;
-        this->context->digitizer->writeUserRegister(UL_TARGET, PHA_CONTROL_REGISTER, ~RESET_SPECTRUM_BIT, 0, &retval);
-    });
     this->ui->plotArea->graph(0)->setData(this->x, this->y, true);
     this->ui->plotArea->rescaleAxes();
     this->ui->plotArea->replot();
-}
-
-void SpectroscopeTab::loadConfigFromDevice()
-{
-    uint32_t retval;
-    this->context->digitizer->readUserRegister(UL_TARGET, TRIGGER_REGISTER, &retval);
-    this->ui->boxcarTrigger->setValue(static_cast<int32_t>(retval));
-
-    this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
-    unsigned int windowLength = retval & WINDOWLENGTH_MASK;
-    this->ui->windowDuration->setValue(static_cast<uint32_t>(windowLength));
-}
-
-void SpectroscopeTab::setTriggerLevel()
-{
-    int trigger = this->ui->boxcarTrigger->value();
-    unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, TRIGGER_REGISTER, 0, trigger, &retval);
-    if(int(retval)!=trigger) {
-        spdlog::warn("Trigger not set properly. Should be {}. Returned {}.", trigger, int(retval));
-    }
 }
 
 void SpectroscopeTab::changePlotChannel(int ch)
@@ -197,11 +155,12 @@ void SpectroscopeTab::updateScope(QVector<double> &x, QVector<double> y)
 }
 void SpectroscopeTab::reallocatePlotSize(int binCount)
 {
+    unsigned int spectrumBinCount = this->digitizer->cfg().acq().spectroscope.binCount();
     this->x.clear();
     this->y.clear();
-    this->x.reserve(this->spectrumBinCount);
-    this->y.reserve(this->spectrumBinCount);
-    for(size_t i = 0; i < this->spectrumBinCount; i++)
+    this->x.reserve(spectrumBinCount);
+    this->y.reserve(spectrumBinCount);
+    for(size_t i = 0; i < spectrumBinCount; i++)
     {
         this->x.append( i/**(double)USHRT_MAX/REGISTER_COUNT-SHRT_MIN*/);
         this->y.append( 0 );
@@ -211,29 +170,23 @@ void SpectroscopeTab::reallocatePlotSize(int binCount)
 void SpectroscopeTab::changeSpectrumBinCount(int sliderPos)
 {
     unsigned int reductionShift = this->ui->binCount->maximum() - sliderPos;
-    int binCount = MAX_SPECTRUM_BIN_COUNT >> reductionShift;
-    this->spectrumBinCount = binCount;
-    this->plotter->reallocate(binCount);
-    unsigned int shiftedReductionShift = (reductionShift << BINCOUNT_SHIFT);
-    this->ui->binCountLabel->setText(QString::number(binCount));
-    unsigned int retval;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~BINCOUNT_MASK, shiftedReductionShift, &retval);
-    this->context->digitizer->readUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, &retval);
-    this->reallocatePlotSize(this->spectrumBinCount);
+    this->digitizer->cfg().acq().spectroscope.setBinCountReductionShift(reductionShift);
+    unsigned int spectrumBinCount = this->digitizer->cfg().acq().spectroscope.binCount();
+    this->plotter->reallocate(spectrumBinCount);
+    this->ui->binCountLabel->setText(QString::number(spectrumBinCount));
+    this->reallocatePlotSize(spectrumBinCount);
 
 }
 
 void SpectroscopeTab::setSpectrumWindow()
 {
     unsigned int toSet = static_cast<uint32_t>(this->ui->windowDuration->value());
-    unsigned int returnValue;
-    this->context->digitizer->writeUserRegister(UL_TARGET, PHA_WINDOW_LENGTH_AND_BINCOUNT_REGISTER, ~WINDOWLENGTH_MASK, toSet, &returnValue);
-    this->windowDuration = toSet;
+    this->digitizer->cfg().acq().spectroscope.setWindowLength(toSet);
 }
 
 void SpectroscopeTab::setSpectroscopeEnabled(int checked)
 {
-    this->context->digitizer->setSpectroscopeEnabled(bool(checked));
+    this->digitizer->cfg().acq().spectroscope.setEnabled(checked);
 }
 
 void SpectroscopeTab::updateSpectrumCalculatedParams(unsigned long long totalCount)

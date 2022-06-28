@@ -34,6 +34,7 @@ public:
   bool requestStop() override;
   float ramFill() override;
   float dmaUsage() override;
+  AcquisitionStates state() const override;
 signals:
   void requestProcessorProxyStart();
   void requestProcessorProxyStop();
@@ -52,16 +53,17 @@ private:
   const AcquisitionConfiguration *config = nullptr;
   ADQInterface *adq;
   QTimer acquisitionStabilizationTimer;
-  QTimer acqusitionTimer;
+  QTimer acquisitionTimer;
   std::unique_ptr<QBufferProcessorProxy> processorProxy;
   std::unique_ptr<BufferProcessor> bufferProcessor;
   QThread processingThread;
-  void onAcquisitionFullyStopped();
   void finishRecordProcessors();
-  void startDelayedAcquisition()
+  void delayAcquisitionStart();
+  void processorStopped();
 
 private slots:
   void startAcquisition();
+  void stopAcquisition();
   void onProcessorStateChanged(AcquisitionStates oldState, AcquisitionStates newState);
 };
 

@@ -28,7 +28,7 @@ const char* SpectrumPlotter::getName()
 {
     return "SpectrumPlotter";
 }
-bool SpectrumPlotter::startNewAcquisition(Acquisition* acq)
+bool SpectrumPlotter::startNewAcquisition(AcquisitionConfiguration* acq)
 {
     return true;
 }

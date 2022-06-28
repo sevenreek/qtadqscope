@@ -1,6 +1,7 @@
 #ifndef ACQUISITIONCONFIGURATION_H
 #define ACQUISITIONCONFIGURATION_H
 #include "DigitizerConstants.h"
+#include "RegisterConstants.h"
 #include "qjsonobject.h"
 #include "spdlog/spdlog.h"
 #include "util.h"
@@ -335,6 +336,10 @@ class SpectroscopeConfiguration : public JSONSerializable, public ModificationOb
     unsigned int binCountReductionShift() const
     {
         return binCountReductionShift_;
+    }
+    unsigned int binCount() const 
+    {
+        return Spectroscopy::MAX_SPECTRUM_BIN_COUNT >> this->binCountReductionShift();
     }
     unsigned int windowLength() const
     {

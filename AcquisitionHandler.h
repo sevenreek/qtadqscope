@@ -26,7 +26,7 @@ public:
      * @brief Returns the current state of acquisition and the data collection thread.
      * @return AcquisitionStates 
      */
-    virtual AcquisitionStates state() = 0;
+    virtual AcquisitionStates state() const = 0;
     /**
      * @brief Returns the percentage usage of the digitizer's internal RAM.
      * Values range from 0 to 1.

@@ -12,7 +12,7 @@ public:
     void enable();
     void disable();
     void resetSpectrum();
-    std::vector<unsigned int> downloadSpectrum();
+    std::vector<unsigned int> downloadSpectrum(unsigned int binCount);
 
 };
 

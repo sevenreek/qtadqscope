@@ -71,11 +71,11 @@ set(PROJECT_SOURCES
         DigitizerConstants.h
         AcquisitionConfiguration.cpp AcquisitionConfiguration.h
         util.h util.cpp
-        GUIApplication.cpp GUIApplication.h
+        Application.cpp Application.h
         DigitizerGUIComponent.h
         GUILogger.h
         MockADQAPIGen3Constants.h
-        BufferProcessorThread.h BufferProcessorThread.cpp
+        BufferProcessor.h BufferProcessor.cpp
         ADQAPIIncluder.h
         RegisterConstants.h
         SpectrumPlotter.h SpectrumPlotter.cpp
