@@ -15,6 +15,7 @@ protected:
 public:
     explicit QConfigurationController(QObject *parent = nullptr);
     AcquisitionConfiguration &acq();
+    void setAcquisition(AcquisitionConfiguration acq);
     void notifyCollectionChanged();
     void notifySpectroscopeChanged();
     void notifyStorageChanged();

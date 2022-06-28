@@ -6,6 +6,8 @@
 #include "AcquisitionConfiguration.h"
 #include "AcquisitionHandler.h"
 #include "ConfigurationController.h"
+#include "DigitizerConstants.h"
+#include "QAcquisitionHandler.h"
 #include "SpectroscopeController.h"
 #include "RecordProcessor.h"
 
@@ -15,7 +17,7 @@ class Digitizer : public QObject
 
 private:
     ADQInterface *adq;
-    std::unique_ptr<AcquisitionHandler> acquisitionHandler;
+    std::unique_ptr<QAcquisitionHandlerGen3> acquisitionHandler;
     std::vector<IRecordProcessor *> recordProcessors;
     QConfigurationController cfg_;
     SpectroscopeController spectroscope_;
@@ -28,6 +30,8 @@ public:
     bool startCustomAcquisition(AcquisitionConfiguration *config, std::vector<IRecordProcessor*> *recordProcessors);
     bool startAcquisition();
     bool stopAcquisition();
+signals:
+    void acquisiitionStateChanged(AcquisitionStates oldState, AcquisitionStates newState);
 };
 
 #endif // DIGITIZER_H

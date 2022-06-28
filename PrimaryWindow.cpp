@@ -1,4 +1,4 @@
-#include "PrimaryWindow.h"
+include "PrimaryWindow.h"
 #include "ui_PrimaryWindow.h"
 
 PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :

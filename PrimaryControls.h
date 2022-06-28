@@ -18,7 +18,6 @@ public:
     void reloadUI();
     void initialize(ApplicationContext * context);
     void dumpAppConfig();
-    void enableVolatileSettings(bool enabled) override;
 public slots:
     void resetFillIndicators();
 private:
@@ -28,9 +27,9 @@ private:
     ApplicationContext *context;
 private slots:
     void primaryButtonClicked();
-    void digitizerStateChanged(Digitizer::DIGITIZER_STATE state);
     void periodicUIUpdate();
-
+    void enableTimedRun(int enabled);
+    void changeRunDuration(int duration);
 
 };
 

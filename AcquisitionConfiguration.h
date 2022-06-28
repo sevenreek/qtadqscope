@@ -454,6 +454,11 @@ class DataCollectionConfiguration : public JSONSerializable, public Modification
         duration_ = val;
         this->modified();
     }
+    void disableDuration()
+    {
+        duration_ = NO_DURATION;
+        this->modified();
+    }
     void setStabilizationDelay(unsigned long val)
     {
         stabilizationDelay_ = val;

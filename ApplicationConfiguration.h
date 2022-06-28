@@ -6,9 +6,8 @@
 class ApplicationConfiguration: public JSONSerializable
 {
 public:
-    bool startGUI = true;
     unsigned int deviceNumber = 1;
-    unsigned int periodicUpdatePeriod = 10;
+    unsigned int periodicUpdatePeriod = 100;
     bool offsetTriggerFromZero = true;
     bool updateScopeEnabled = true;
     LOGGING_LEVELS adqLoggingLevel = LOGGING_LEVELS::DEBUG;
