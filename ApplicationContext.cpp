@@ -1,9 +1,24 @@
 #include "ApplicationContext.h"
+#include "ConfigurationController.h"
+#include "Digitizer.h"
 #include <iostream>
 #include <fstream>
 
-ApplicationContext::ApplicationContext(ApplicationConfiguration *config, Digitizer *digitizer, ScopeUpdater *scope, spdlog::logger *logger) :
-    appConfiguration(config), digitizer(digitizer), scopeUpdater(scope), primaryLogger(logger)
+ApplicationContext ApplicationContext::instance;
+ApplicationContext &ApplicationContext::get()
 {
-
+    return ApplicationContext::instance;
+}
+QConfigurationController *ApplicationContext::config() {return this->config_};
+void ApplicationContext::setConfig(QConfigurationController *config)
+{
+    this->config_ = config;
+}
+void ApplicationContext::setLogger(spdlog::logger *logger)
+{
+    this->logger_ = logger;
+}
+void ApplicationContext::setDigitizer(Digitizer *digitizer)
+{
+    this->digitizer_ = digitizer;;
 }

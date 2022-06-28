@@ -1,5 +1,6 @@
 #ifndef APPLICATIONCONTEXT_H
 #define APPLICATIONCONTEXT_H
+#include "ConfigurationController.h"
 #include "Digitizer.h"
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -12,12 +13,18 @@
 
 
 class ApplicationContext {
+protected:
+    static ApplicationContext instance;
+    QConfigurationController * config_ = nullptr;
+    Digitizer * digitizer_ = nullptr;
+    spdlog::logger *logger_ = nullptr;
 public:
-    ApplicationContext(ApplicationConfiguration * config, Digitizer * digitizer, ScopeUpdater *scope, spdlog::logger *logger);
-    ApplicationConfiguration * appConfiguration = nullptr;
-    Digitizer * digitizer = nullptr;
-    ScopeUpdater *scopeUpdater = nullptr;
-    IRecordProcessor *fileSaver = nullptr;
-    spdlog::logger *primaryLogger = nullptr;
+    QConfigurationController * config();
+    Digitizer * digitizer();
+    spdlog::logger *logger();
+    void setConfig(QConfigurationController *config);
+    void setDigitizer(Digitizer *digitizer);
+    void setLogger(spdlog::logger *logger);
+    ApplicationContext &get();
 };
 #endif // APPLICATIONCONFIGURATION_H
