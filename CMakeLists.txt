@@ -14,6 +14,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+option(IGNORE_UNSAFE_FUNCTIONS "Ignore warning about unsafe functions like scanf" ON)
+
+if(IGNORE_UNSAFE_FUNCTIONS)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif()
+
 
 option(MOCK_ADQAPI "Use a mock ADQ library" ON)
 option(LINUX_BUILD "Build on Linux" OFF)
@@ -51,7 +57,6 @@ set(PROJECT_SOURCES
         main.cpp
         ScrollbarScalingQScrollArea.h ScrollbarScalingQScrollArea.cpp
         BuffersDialog.cpp BuffersDialog.h BuffersDialog.ui
-        RegisterDialog.cpp RegisterDialog.h RegisterDialog.ui
         SpectroscopeTab.h SpectroscopeTab.cpp SpectroscopeTab.ui
         AcquisitionChannelSettingsTab.cpp AcquisitionChannelSettingsTab.h AcquisitionChannelSettingsTab.ui
         AcquisitionSettingsSidePanel.cpp AcquisitionSettingsSidePanel.h AcquisitionSettingsSidePanel.ui
@@ -70,6 +75,7 @@ set(PROJECT_SOURCES
         Digitizer.cpp Digitizer.h
         DigitizerConstants.h
         AcquisitionConfiguration.cpp AcquisitionConfiguration.h
+        SpectroscopeController.h SpectroscopeController.cpp
         util.h util.cpp
         Application.cpp Application.h
         DigitizerGUIComponent.h
@@ -81,6 +87,8 @@ set(PROJECT_SOURCES
         SpectrumPlotter.h SpectrumPlotter.cpp
         ScopeTab.h ScopeTab.cpp ScopeTab.ui
         ConfigurationController.h ConfigurationController.cpp
+        QAcquisitionHandler.h QAcquisitionHandler.cpp
+        version.h
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

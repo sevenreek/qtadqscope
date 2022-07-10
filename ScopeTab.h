@@ -23,8 +23,9 @@ class ScopeTab : public QWidget, public DigitizerGUIComponent
 public:
     explicit ScopeTab(QWidget *parent = nullptr);
     ~ScopeTab();
-    void initialize(ApplicationContext * context) override;
     void reloadUI() override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    void enableAcquisitionSettings(bool en) override;
 
 private:
     QCPItemLine * triggerLine = nullptr;

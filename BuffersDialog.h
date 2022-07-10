@@ -32,13 +32,13 @@ public:
     explicit BuffersDialog(QWidget *parent = nullptr);
     ~BuffersDialog();
     Ui::BuffersDialog *ui;
-    void initialize(ApplicationContext *context);
-    void reloadUI();
-private:
-
-    // DigitizerGUIComponent interface
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    void reloadUI() override;
+private slots:
+    void saveValuesToActiveAcquisition();
+    void loadPreconfiguredBuffer(int index);
 public:
-    void enableVolatileSettings(bool enabled) override;
+    void enableAcquisitionSettings(bool enabled) override;
 };
 
 #endif // BUFFERSDIALOG_H

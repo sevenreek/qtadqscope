@@ -18,10 +18,11 @@ class AcquisitionSettingsSidePanel : public QWidget, public DigitizerGUIComponen
 public:
     explicit AcquisitionSettingsSidePanel(QWidget *parent = nullptr);
     ~AcquisitionSettingsSidePanel();
-    void reloadUI() override;
-    void initialize(ApplicationContext * context) override;
     static std::string calculateFrequency(unsigned long long samplingRate, unsigned long long sampleSkip);
-    void enableVolatileSettings(bool enabled) override;
+// DigitizerGUIComponent interface
+    void reloadUI() override;
+    void enableAcquisitionSettings(bool enabled) override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
 private:
     enum class TriggerModeOptions {
         CONTINUOUS = 0,

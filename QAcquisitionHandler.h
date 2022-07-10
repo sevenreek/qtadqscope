@@ -5,9 +5,12 @@
 #include "BufferProcessor.h"
 #include "DigitizerConstants.h"
 #include "RecordProcessor.h"
+#include "util.h"
 #include <QObject>
 #include <QThread>
 #include <QTimer>
+#include <chrono>
+#include <ratio>
 
 
 class QBufferProcessorProxy : public QObject {
@@ -35,6 +38,7 @@ public:
   float ramFill() override;
   float dmaUsage() override;
   AcquisitionStates state() const override;
+  std::chrono::milliseconds remainingDuration() const;
 signals:
   void requestProcessorProxyStart();
   void requestProcessorProxyStop();

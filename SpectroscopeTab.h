@@ -2,6 +2,8 @@
 #define SPECTRUMDIALOG_H
 
 #include <QDialog>
+#include "AcquisitionStateChangeListener.h"
+#include "DigitizerConstants.h"
 #include "spdlog/spdlog.h"
 #include <memory>
 #include "DigitizerGUIComponent.h"
@@ -20,7 +22,8 @@ public:
     explicit SpectroscopeTab(QWidget *parent = nullptr);
     ~SpectroscopeTab();
     void reloadUI() override;
-    void initialize(ApplicationContext * context) override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    void enableAcquisitionSettings(bool en) override;
 
 private:
     QVector<double> x;
@@ -28,7 +31,6 @@ private:
     std::unique_ptr<SpectrumPlotter> plotter;
     bool isPlotterActive = false;
     Ui::SpectroscopeTab *ui;
-    ApplicationContext * context;
     int windowDuration = 0;
     void loadConfigFromDevice();
     void reallocatePlotSize(int binCount);

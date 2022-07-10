@@ -24,10 +24,9 @@ public:
     };
     explicit FileSaveSettingsPanel(QWidget *parent = nullptr);
     ~FileSaveSettingsPanel();
-    void initialize(ApplicationContext * context) override;
     void reloadUI() override;
     void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
-    void enableUnsafeADQControls(bool enabled);
+    void enableAcquisitionSettings(bool enabled) override;
 
 private:
     Ui::FileSaveSettingsPanel *ui;

@@ -10,16 +10,14 @@
 class DigitizerGUIComponent : public AcquisitionStateChangeListener
 {
 protected:
-    ApplicationContext *context = nullptr;
-    Digitizer *digitizer = nullptr;
+    ApplicationContext &context;
+    Digitizer &digitizer;
 public:
-    virtual void initialize(ApplicationContext * context)
-    {
-        this->context = context;
-        this->digitizer = context->digitizer;
-    }
-    virtual void reloadUI() {};
+    DigitizerGUIComponent(): context(ApplicationContext::get()), digitizer(*context.digitizer()) {};
+    virtual ~DigitizerGUIComponent() {};
+    virtual void reloadUI() = 0;
     virtual void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override {};
+    virtual void enableAcquisitionSettings(bool enabled) = 0;
 };
 
 

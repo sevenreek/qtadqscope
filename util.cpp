@@ -1,4 +1,5 @@
 #include "util.h"
+#include "DigitizerConstants.h"
 #include <cmath>
 #include <spdlog/fmt/fmt.h>
 std::vector<char> ILLEGAL_CHARACTERS = {'/', '<', '>', ':', '"', '/', '\\','|', '?', '*'};
@@ -38,4 +39,12 @@ std::string doubleToPrefixNotation(double value)
         timesDivided++;
     }
     return fmt::format("{:.2f} {}", value, UNIT_PREFIXES[timesDivided]);
+}
+int inputRangeEnumToValue(INPUT_RANGES ir)
+{
+    return inputRangeEnumToValue(static_cast<int>(ir));
+}
+int inputRangeEnumToValue(int e)
+{
+    return INPUT_RANGE_VALUES[e];
 }

@@ -4,39 +4,39 @@
 #include <QMainWindow>
 #include "Digitizer.h"
 #include "AcquisitionSettingsSidePanel.h"
+#include "DigitizerConstants.h"
+#include "DigitizerGUIComponent.h"
 #include "PrimaryControls.h"
 #include "ApplicationContext.h"
-#include "FullCalibrationDialog.h"
+// #include "FullCalibrationDialog.h"
 #include "BuffersDialog.h"
-#include "RegisterDialog.h"
 #include "SpectroscopeTab.h"
 #include "ScopeTab.h"
 namespace Ui {
 class PrimaryWindow;
 }
 
-class PrimaryWindow : public QMainWindow
+class PrimaryWindow : public QMainWindow, public DigitizerGUIComponent
 {
     Q_OBJECT
 
 public:
-    explicit PrimaryWindow(ApplicationContext * context, QWidget *parent = nullptr);
+    explicit PrimaryWindow(QWidget *parent = nullptr);
     ~PrimaryWindow();
-    void reloadUI();
+    void reloadUI() override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    void enableAcquisitionSettings(bool enable) override;
 
 private:
     Ui::PrimaryWindow *ui;
-    ApplicationContext *context;
     ScopeTab *scopeTab;
     SpectroscopeTab *spectroscopeTab;
     PrimaryControls *primaryControls;
-    std::unique_ptr<FullCalibrationDialog> calibrationDialog;
+    // std::unique_ptr<FullCalibrationDialog> calibrationDialog;
     std::unique_ptr<BuffersDialog> buffersDialog;
-    std::unique_ptr<RegisterDialog> registerDialog;
 private slots:
     void openConfigSaveDialog();
     void openConfigLoadDialog();
-    void onDigitizerStateChanged(Digitizer::DIGITIZER_STATE state);
 };
 
 #endif // PRIMARYWINDOW_H

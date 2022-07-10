@@ -25,6 +25,6 @@ public:
     void setConfig(QConfigurationController *config);
     void setDigitizer(Digitizer *digitizer);
     void setLogger(spdlog::logger *logger);
-    ApplicationContext &get();
+    static ApplicationContext &get();
 };
 #endif // APPLICATIONCONFIGURATION_H

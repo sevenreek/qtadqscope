@@ -1,5 +1,6 @@
 #ifndef DIGITIZER_H
 #define DIGITIZER_H
+#include <ratio>
 #include <string>
 #include <chrono>
 #include <QObject>
@@ -19,19 +20,21 @@ private:
     ADQInterface *adq;
     std::unique_ptr<QAcquisitionHandlerGen3> acquisitionHandler;
     std::vector<IRecordProcessor *> recordProcessors;
-    QConfigurationController cfg_;
     SpectroscopeController spectroscope_;
 public:
     Digitizer(ADQInterface *adq);
-    QConfigurationController &cfg() {return cfg_;};
     SpectroscopeController &spectroscope() {return spectroscope_;};
     void appendRecordProcessor(IRecordProcessor *rp);
     void removeRecordProcessor(IRecordProcessor *rp);
     bool startCustomAcquisition(AcquisitionConfiguration *config, std::vector<IRecordProcessor*> *recordProcessors);
     bool startAcquisition();
     bool stopAcquisition();
+    float ramFill();
+    float dmaUsage();
+    AcquisitionStates state();
+    std::chrono::milliseconds durationRemaining();
 signals:
-    void acquisiitionStateChanged(AcquisitionStates oldState, AcquisitionStates newState);
+    void acquisitionStateChanged(AcquisitionStates oldState, AcquisitionStates newState);
 };
 
 #endif // DIGITIZER_H

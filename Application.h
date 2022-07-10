@@ -1,5 +1,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
+#include "ConfigurationController.h"
 #include "PrimaryWindow.h"
 #include "ADQAPIIncluder.h"
 #include "Digitizer.h"
@@ -15,9 +16,12 @@ class ScopeApplication : public QObject
 {
     Q_OBJECT
 protected:
+    bool createConfigurationController(QJsonDocument * initialJSON);
+    bool createLogger();
+    bool createDigitizer();
     std::shared_ptr<spdlog::sinks::stdout_sink_mt> stdSink;
     std::shared_ptr<spdlog::logger> primaryLogger;
-    ApplicationConfiguration config;
+    std::unique_ptr<QConfigurationController> configurationController; 
     void* adqControlUnit = nullptr;
     ADQInterface * adq = nullptr;
     std::unique_ptr<Digitizer> digitizer;
@@ -30,13 +34,10 @@ public:
 class GUIApplication : public ScopeApplication
 {
 protected:
-    std::unique_ptr<ScopeUpdater> scopeUpdater;
-    std::unique_ptr<ApplicationContext> context;
     std::unique_ptr<PrimaryWindow> primaryWindow;
-    std::unique_ptr<QGUILogSink_mt> guiSink;
 public:
     GUIApplication();
-    bool start(QJsonDocument *json=nullptr);
+    bool start(QJsonDocument *json=nullptr) override;
 };
 
 class CLIApplication : public ScopeApplication
@@ -47,7 +48,7 @@ private:
     std::unique_ptr<IRecordProcessor> fileSaver;
 public:
     CLIApplication();
-    bool start(QJsonDocument *json=nullptr);
+    bool start(QJsonDocument *json=nullptr) override;
 };
 
 #endif // APPLICATION_H

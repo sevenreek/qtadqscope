@@ -6,26 +6,18 @@
 PrimaryControls::PrimaryControls(QWidget *parent)
     : QWidget(parent), ui(new Ui::PrimaryControls) {
   ui->setupUi(this);
-}
-
-PrimaryControls::~PrimaryControls() {
-  this->periodicUpdateTimer.stop();
-  delete ui;
-}
-void PrimaryControls::initialize(ApplicationContext *context) {
-  this->DigitizerGUIComponent::initialize(context);
   // Create and append the log sink for printing logs to the UI
   this->logSink = std::shared_ptr<QGUILogSink_mt>(
       new QGUILogSink_mt(this->ui->notificationsTextArea));
   this->logSink->set_pattern(LOGGER_PATTERN);
-  this->context->primaryLogger->sinks().push_back(this->logSink);
+  this->context.logger()->sinks().push_back(this->logSink);
 
   // React to acquisition state changes
-  this->digitizer->connect(this->digitizer,
-                           &Digitizer::acquisiitionStateChanged, this,
-                           [=](AcquisitionStates oldS, AcquisitionStates newS) {
-                             this->onAcquisitionStateChanged(oldS, newS);
-                           });
+  this->digitizer.connect(&this->digitizer, &Digitizer::acquisitionStateChanged,
+                          this,
+                          [=](AcquisitionStates oldS, AcquisitionStates newS) {
+                            this->onAcquisitionStateChanged(oldS, newS);
+                          });
 
   // Connect the UI elements behaviour.
   this->ui->streamStartStopButton->connect(
@@ -43,8 +35,13 @@ void PrimaryControls::initialize(ApplicationContext *context) {
                                     &PrimaryControls::periodicUIUpdate);
   this->reloadUI();
 }
+
+PrimaryControls::~PrimaryControls() {
+  this->periodicUpdateTimer.stop();
+  delete ui;
+}
 void PrimaryControls::enableTimedRun(int enabled) {
-  auto &acq = this->digitizer->cfg().acq();
+  AcquisitionConfiguration &acq = this->context.config()->acq();
   if (enabled) {
     acq.collection.setDuration(this->ui->timedRunValue->value());
     this->ui->timedRunValue->setEnabled(true);
@@ -54,7 +51,7 @@ void PrimaryControls::enableTimedRun(int enabled) {
   }
 }
 void PrimaryControls::changeRunDuration(int duration) {
-  auto &acq = this->digitizer->cfg().acq();
+  AcquisitionConfiguration &acq = this->context.config()->acq();
   if (this->ui->timedRunCheckbox->isChecked()) {
     acq.collection.setDuration(duration);
   } else {
@@ -62,13 +59,13 @@ void PrimaryControls::changeRunDuration(int duration) {
   }
 }
 void PrimaryControls::reloadUI() {
-  auto &acq = this->digitizer->cfg().acq();
+  AcquisitionConfiguration &acq = this->context.config()->acq();
   this->resetFillIndicators();
   this->ui->notificationsTextArea->clear();
   if (acq.collection.duration()) {
     this->ui->timedRunCheckbox->setChecked(true);
     this->ui->timedRunValue->setEnabled(true);
-    this->ui->timedRunValue->setValue(this->digitizer->getDuration());
+    this->ui->timedRunValue->setValue(acq.collection.duration());
   } else {
     this->ui->timedRunCheckbox->setChecked(false);
     this->ui->timedRunValue->setEnabled(false);
@@ -81,81 +78,67 @@ void PrimaryControls::resetFillIndicators() {
 }
 
 void PrimaryControls::dumpAppConfig() {
-  this->digitizer->cfg()
-  QFile file("last_app_config.json");
-  file.open(QFile::OpenModeFlag::WriteOnly);
-  QJsonDocument doc;
-  QJsonObject cfg = this->context->config->toJson();
-  QJsonObject acq = this->context->digitizer->getAcquisition().toJson();
-  cfg.insert("acquisition", acq);
-  doc.setObject(cfg);
-  file.write(doc.toJson());
-  file.close();
+  this->context.config()->saveToFile("last_app_config.json");
 }
 
 void PrimaryControls::primaryButtonClicked() {
-  switch (this->digitizer->getDigitizerState()) {
-  case Digitizer::DIGITIZER_STATE::ACTIVE:
-  case Digitizer::DIGITIZER_STATE::STABILIZING:
+  switch (this->digitizer.state()) {
+  case AcquisitionStates::ACTIVE:
+  case AcquisitionStates::STARTING:
     this->ui->streamStartStopButton->setEnabled(false);
-    this->digitizer->stopAcquisition();
+    this->digitizer.stopAcquisition();
     break;
-  case Digitizer::DIGITIZER_STATE::READY:
+  case AcquisitionStates::INACTIVE:
     this->ui->streamStartStopButton->setText("STOP");
     this->ui->streamStatusLabel->setText("STARTING");
     this->ui->streamStartStopButton->setEnabled(false);
     this->dumpAppConfig();
-    this->digitizer->runAcquisition();
+    this->digitizer.startAcquisition();
     break;
-  case Digitizer::DIGITIZER_STATE::STOPPING:
-  case Digitizer::DIGITIZER_STATE::STARTING:
-
+  default:
     break;
   }
 }
 
-void PrimaryControls::digitizerStateChanged(Digitizer::DIGITIZER_STATE state) {
-  switch (state) {
-  case Digitizer::DIGITIZER_STATE::ACTIVE:
+void PrimaryControls::onAcquisitionStateChanged(AcquisitionStates os,
+                                                AcquisitionStates ns) {
+  switch (ns) {
+  case AcquisitionStates::ACTIVE:
     this->ui->streamStartStopButton->setEnabled(true);
     this->ui->streamStatusLabel->setText("ACTIVE");
     this->ui->streamStartStopButton->setText("STOP");
-    this->periodicUpdateTimer.start(this->config->getPeriodicUpdatePeriod());
+    this->periodicUpdateTimer.start(this->context.config()->app().periodicUpdatePeriod);
     break;
-  case Digitizer::DIGITIZER_STATE::READY:
+  case AcquisitionStates::INACTIVE:
     this->ui->streamStartStopButton->setEnabled(true);
     this->ui->streamStatusLabel->setText("READY");
     this->periodicUpdateTimer.stop();
     this->ui->streamStartStopButton->setText("START");
     this->resetFillIndicators();
     break;
-  case Digitizer::DIGITIZER_STATE::STOPPING:
+  case AcquisitionStates::STOPPING:
     this->ui->streamStartStopButton->setEnabled(false);
     this->ui->streamStatusLabel->setText("STOPPING");
     break;
-  case Digitizer::DIGITIZER_STATE::STARTING:
+  case AcquisitionStates::STARTING:
     this->ui->streamStartStopButton->setEnabled(false);
     this->ui->streamStatusLabel->setText("STARTING");
-    break;
-  case Digitizer::DIGITIZER_STATE::STABILIZING:
-    this->ui->streamStartStopButton->setEnabled(true);
-    this->ui->streamStatusLabel->setText("STABILIZING");
     break;
   }
 }
 
 void PrimaryControls::periodicUIUpdate() {
+  /*
   if (this->context->fileSaver)
     this->ui->FileFillStatus->setValue(
         100 * double(this->context->fileSaver->getProcessedBytes()) /
         this->digitizer->getFileSizeLimit());
-  long long starvation = this->digitizer->getMillisFromLastStarve().count();
-  this->ui->dmaUsage->setValue(std::min(100LL - starvation, 100LL));
-  this->ui->RAMFillStatus->setValue(
-      100 * double(this->digitizer->getDeviceRamFillLevel()));
+        */
+  this->ui->dmaUsage->setValue(this->digitizer.dmaUsage() * 100.0);
+  this->ui->RAMFillStatus->setValue(100.0 * this->digitizer.ramFill());
 }
 
-void PrimaryControls::enableVolatileSettings(bool enabled) {
+void PrimaryControls::enableAcquisitionSettings(bool enabled) {
   this->ui->timedRunCheckbox->setEnabled(enabled);
   this->ui->timedRunValue->setEnabled(enabled);
 }

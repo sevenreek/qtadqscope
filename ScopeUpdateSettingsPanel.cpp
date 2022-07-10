@@ -1,61 +1,46 @@
 #include "ScopeUpdateSettingsPanel.h"
+#include "ScopeUpdater.h"
 #include "ui_ScopeUpdateSettingsPanel.h"
 
-ScopeUpdateSettingsPanel::ScopeUpdateSettingsPanel(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ScopeUpdateSettingsPanel)
-{
-    ui->setupUi(this);
+ScopeUpdateSettingsPanel::ScopeUpdateSettingsPanel(QWidget *parent)
+    : QWidget(parent), ui(new Ui::ScopeUpdateSettingsPanel) {
+  ui->setupUi(this);
+  this->scopeUpdater = std::unique_ptr<ScopeUpdater>(new ScopeUpdater(0));
+  this->connect(this->ui->updateScopeCB, &QCheckBox::stateChanged, this,
+                &ScopeUpdateSettingsPanel::setUpdateScope);
+  this->connect(
+      this->ui->plotChannel,
+      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+      this, &ScopeUpdateSettingsPanel::changePlotChannel);
+
+  this->connect(
+      &this->digitizer, &Digitizer::acquisitionStateChanged, this,
+      [this](auto os, auto ns) { this->onAcquisitionStateChanged(os, ns); });
 }
 
-ScopeUpdateSettingsPanel::~ScopeUpdateSettingsPanel()
-{
-    delete ui;
+ScopeUpdateSettingsPanel::~ScopeUpdateSettingsPanel() { delete ui; }
+
+void ScopeUpdateSettingsPanel::setUpdateScope(int enable) {
+  this->context.config()->app().updateScopeEnabled = enable;
+  this->digitizer.removeRecordProcessor(this->scopeUpdater.get());
+  if (enable) {
+    this->digitizer.appendRecordProcessor(this->scopeUpdater.get());
+  }
+}
+void ScopeUpdateSettingsPanel::reloadUI() {
+  this->ui->updateScopeCB->setChecked(
+      this->context.config()->app().updateScopeEnabled);
 }
 
-void ScopeUpdateSettingsPanel::initialize(ApplicationContext *context) 
-{
-    this->DigitizerGUIComponent::initialize(context);
-    this->scopeUpdater = context->scopeUpdater;
-    this->ui->updateScopeCB->connect(
-        this->ui->updateScopeCB, &QCheckBox::stateChanged,
-        [=](int state) {
-            this->config->setUpdateScopeEnabled(state?true:false);
-            this->autosetUpdateScope();
-        }
-    );
-    this->ui->plotChannel->connect(
-        this->ui->plotChannel,
-        static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-        this,
-        &ScopeUpdateSettingsPanel::onPlotChannelCheckboxChanged
-    );
+void ScopeUpdateSettingsPanel::changePlotChannel(int ch) {
+  this->scopeUpdater->changeChannel(ch);
 }
-void ScopeUpdateSettingsPanel::reloadUI()
-{
-    this->ui->updateScopeCB->setChecked(this->config->getUpdateScopeEnabled());
+void ScopeUpdateSettingsPanel::enableAcquisitionSettings(bool en) {
+  // no dangerous settings in this panel
 }
-void ScopeUpdateSettingsPanel::autosetUpdateScope()
-{
-    if(this->config->getUpdateScopeEnabled() && !this->scopeUpdaterAdded)
-    {
-        this->digitizer->appendRecordProcessor(this->scopeUpdater);
-        this->scopeUpdaterAdded = true;
-    }
-    else if(this->scopeUpdaterAdded)
-    {
-        this->digitizer->removeRecordProcessor(this->scopeUpdater);
-        this->scopeUpdaterAdded = false;
-    }
-}
-
-void ScopeUpdateSettingsPanel::onPlotChannelCheckboxChanged(int ch)
-{
-    this->scopeUpdater->changeChannel(ch);
-}
-void ScopeUpdateSettingsPanel::enableVolatileSettings(bool en)
-{
-    // no dangerous settings in this panel
+void ScopeUpdateSettingsPanel::onAcquisitionStateChanged(AcquisitionStates os,
+                                                         AcquisitionStates ns) {
+  // do nothing for now
 }
 /*
 void ScopeUpdateSettingsPanel::allowChangePlotChannel(bool allow)

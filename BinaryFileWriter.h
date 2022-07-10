@@ -15,6 +15,7 @@ protected:
     std::ofstream dataStream[MAX_NOF_CHANNELS];
     unsigned long expectedRecordLength = 0;
 public:
+    static std::unique_ptr<IRecordProcessor> createFileSaverFromConfig(AcquisitionConfiguration &c);
     static const char ILLEGAL_CHAR_REPLACE = '_';
     explicit BinaryFileWriter(unsigned long long sizeLimit);
     ~BinaryFileWriter();

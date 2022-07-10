@@ -2,7 +2,7 @@
 #include "MockADQAPI.h"
 #include <stdexcept>
 const char* FILE_DATA_SOURCE[] = {"ch1.mock", "ch2.mock", "ch3.mock", "ch4.mock"};
-const float BUFFER_FILL_PROBABILITY = 0.0001;
+const double BUFFER_FILL_PROBABILITY = 0.0001;
 #include <algorithm>
 #include <random>
 const unsigned long ADQInterface::DEFAULT_BUFFER_SIZE = 4096UL*4UL;
@@ -23,7 +23,7 @@ ADQInterface::ADQInterface()
 #else
         for(size_t sa = 0; sa < DEFAULT_BUFFER_SIZE/sizeof(short); sa++)
         {
-            this->sourceData[ch][sa] = (sa+1) * (ch+1);
+            this->sourceData[ch][sa] = static_cast<short>((sa+1) * (ch+1));
         }
 #endif
     }
@@ -206,7 +206,7 @@ int ADQInterface::SetParameters(void * const parameters)
     {
         case ADQParameterId::ADQ_PARAMETER_ID_DATA_ACQUISITION:
         {
-            this->recordLength = acqp->channel[0].record_length;
+            this->recordLength = static_cast<unsigned long>(acqp->channel[0].record_length);
         }
         break;
         case ADQParameterId::ADQ_PARAMETER_ID_DATA_TRANSFER:
@@ -257,6 +257,10 @@ int ADQInterface::SetChannelSampleSkip(unsigned int channel, unsigned int skipfa
     return 1;
 }
 
+int ADQInterface::SetChannelTriggerMode(unsigned int channel, int trig_mode) {
+    return 1;
+}
+
 unsigned int ADQInterface::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
 {
     return 1;
@@ -269,7 +273,7 @@ int ADQInterface::WriteUserRegister(int ul_target, unsigned int regnum, unsigned
 
 int ADQInterface::ReadBlockUserRegister(int ulTarget, uint32_t startAddr, uint32_t *data, uint32_t numBytes, uint32_t options)
 {
-    for(size_t i=0; i < numBytes/4; i++)
+    for(uint32_t i=0; i < numBytes/4; i++)
     {
         data[i] = i;
     }
@@ -291,7 +295,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             ADQRecordHeader * hp = (ADQRecordHeader *)h[ch];
             hp[0].Channel = ch;
             hp[0].RecordLength = std::min(DEFAULT_BUFFER_SIZE, this->bufferSize);
-            hp[0].RecordNumber = this->recordNumber++;
+            hp[0].RecordNumber = static_cast<uint32_t>(this->recordNumber++);
             headersAdded[ch] = 1;
             samplesAdded[ch] = this->bufferSize/sizeof(short);
         }
@@ -307,9 +311,9 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             if(remainingSamplesToAdd)
             {
 
-                for(size_t sa = 0; sa < remainingSamplesToAdd; sa++)
+                for(uint32_t sa = 0; sa < remainingSamplesToAdd; sa++)
                 {
-                    this->sourceData[ch][ this->recordLength - this->remainingSamplesInRecord[ch] + sa] = this->recordNumber%32 * 1000 + this->recordLength - this->remainingSamplesInRecord[ch] + sa;
+                    this->sourceData[ch][ this->recordLength - this->remainingSamplesInRecord[ch] + sa] = static_cast<short>(this->recordNumber%32 * 1000 + this->recordLength - this->remainingSamplesInRecord[ch] + sa);
                 }
                 memcpy(&dp[0], &this->sourceData[ch][this->recordLength - this->remainingSamplesInRecord[ch]], remainingSamplesToAdd*sizeof(short));
                 headersAdded[ch] += 1;
@@ -326,7 +330,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
                     memset(&hp[0], 0, sizeof(ADQRecordHeader));
                     hp[0].Channel = ch;
                     hp[0].RecordLength = this->recordLength;
-                    hp[0].RecordNumber = this->recordNumber++;
+                    hp[0].RecordNumber = static_cast<uint32_t>(this->recordNumber++);
                     //spdlog::debug("Stored [{} {} {}] at i={}", hp[0].Channel, hp[0].RecordLength,  hp[0].RecordNumber, 0);
                 }
             }
@@ -334,16 +338,16 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
             unsigned long fullRecordsToAddInBuffer = samplesToAddInBuffer / this->recordLength;
             for (unsigned long i = 0; i < fullRecordsToAddInBuffer; i++)
             {
-                for(size_t sa = 0; sa < this->recordLength; sa++)
+                for(uint32_t sa = 0; sa < this->recordLength; sa++)
                 {
-                    this->sourceData[ch][sa] = this->recordNumber%32 * 1000 + sa;
+                    this->sourceData[ch][sa] = static_cast<short>(this->recordNumber%32 * 1000 + sa);
                 }
                 memcpy(&(dp[samplesAdded[ch]]), this->sourceData[ch], this->recordLength*sizeof(short));
                 ADQRecordHeader * hp = (ADQRecordHeader *)(h[ch]);
                 memset(&hp[headersAdded[ch]], 0, sizeof(ADQRecordHeader));
                 hp[headersAdded[ch]].Channel = ch;
                 hp[headersAdded[ch]].RecordLength = this->recordLength;
-                hp[headersAdded[ch]].RecordNumber = this->recordNumber++;
+                hp[headersAdded[ch]].RecordNumber = static_cast<uint32_t>(this->recordNumber++);
                 //spdlog::debug("Stored [{} {} {}] at i={}", hp[headersAdded[ch]].Channel, hp[headersAdded[ch]].RecordLength,  hp[headersAdded[ch]].RecordNumber, headersAdded[ch]);
                 samplesAdded[ch] += this->recordLength;
                 headersAdded[ch] += 1;
@@ -356,7 +360,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
                 {
                     for(size_t sa = 0; sa < leftoverBufferSpace; sa++)
                     {
-                        this->sourceData[ch][sa] = this->recordNumber%32 * 1000 + this->recordLength-this->remainingSamplesInRecord[ch] + sa;
+                        this->sourceData[ch][sa] = static_cast<short>(this->recordNumber%32 * 1000 + this->recordLength-this->remainingSamplesInRecord[ch] + sa);
                     }
                     memcpy(&(dp[samplesAdded[ch]]), &this->sourceData[ch][this->recordLength-this->remainingSamplesInRecord[ch]], leftoverBufferSpace*sizeof(short));
                 }
@@ -364,7 +368,7 @@ int ADQInterface::GetDataStreaming(void **d, void **h, unsigned char channelMask
                 {
                     for(size_t sa = 0; sa < leftoverBufferSpace; sa++)
                     {
-                        this->sourceData[ch][sa] = headersAdded[ch]%32 * 1000 + sa;
+                        this->sourceData[ch][sa] = static_cast<short>(headersAdded[ch]%32 * 1000 + sa);
                     }
                     memcpy(&(dp[samplesAdded[ch]]), &this->sourceData[ch][0], leftoverBufferSpace*sizeof(short));
                     remainingSamplesInRecord[ch] = this->recordLength - leftoverBufferSpace;

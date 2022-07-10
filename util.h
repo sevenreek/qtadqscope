@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <QJsonObject>
+#include <chrono>
+#include "DigitizerConstants.h"
+
 const char UNIT_PREFIXES[7]  = {' ', 'k', 'M', 'G', 'P', 'Y', 'Z'};
 class JSONSerializable {
 public:
@@ -28,5 +31,7 @@ double codeToMv(int val, double inputRange);
 extern std::vector<char> ILLEGAL_CHARACTERS;
 std::string removeIllegalFilenameChars(const std::string &s, char replaceWith);
 std::string doubleToPrefixNotation(double value);
+int inputRangeEnumToValue(INPUT_RANGES ir);
+int inputRangeEnumToValue(int e);
 #endif // UTIL_H
 

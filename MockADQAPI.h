@@ -77,6 +77,7 @@ public:
     int SetParameters(void *const parameters);
     int InitializeParameters(enum ADQParameterId id, void *const parameters);
     int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
+    int SetChannelTriggerMode(unsigned int channel, int trig_mode);
     unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
 };
 void * CreateADQControlUnit();

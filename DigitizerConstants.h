@@ -2,7 +2,6 @@
 #define DIGITIZERCONSTANTS_H
 #include <climits>
 #include <string>
-#include "util.h"
 const int MAX_NOF_CHANNELS = 4;
 const unsigned long long MAX_SAMPLING_RATE = 1000000000UL;
 const unsigned int MAX_FINITE_RECORD_COUNT = 0x7FFFFFFF;

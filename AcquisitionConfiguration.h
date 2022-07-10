@@ -8,9 +8,9 @@
 #include <QJsonObject>
 #include <array>
 #include <string>
+#include "version.h"
 
 
-static const int CONFIGURATION_VERSION = 4;
 
 class ModificationObserver
 {
@@ -508,6 +508,7 @@ class AcquisitionConfiguration : public JSONSerializable
     int getTotalDCShift(int ch, int& unclipped);
     static unsigned char verifyChannelMaskForSingularApproach(unsigned char channelMask);
     float getTargetInputRangeFloat(int channel);
+    unsigned int maxRecordLength();
 };
 
 #endif // DIGITIZERCONFIGURATION_H

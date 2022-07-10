@@ -9,7 +9,9 @@ ApplicationContext &ApplicationContext::get()
 {
     return ApplicationContext::instance;
 }
-QConfigurationController *ApplicationContext::config() {return this->config_};
+QConfigurationController *ApplicationContext::config() {return this->config_;};
+spdlog::logger *ApplicationContext::logger() {return this->logger_;};
+Digitizer *ApplicationContext::digitizer() {return this->digitizer_;};
 void ApplicationContext::setConfig(QConfigurationController *config)
 {
     this->config_ = config;

@@ -228,6 +228,22 @@ unsigned char AcquisitionConfiguration::verifyChannelMaskForSingularApproach(uns
     return channelMask;
 }
 
+unsigned int AcquisitionConfiguration::maxRecordLength() {
+    auto maxRecord = this->records.at(0).recordCount();
+    if(this->collection.isContinuous())
+    {
+        // Continuous acquisition can produce "records" 
+        // equal to the amout of samples that fit in the buffer
+        // In reality it is slighly less as headers are also present there
+        return this->transfer.bufferSize()/sizeof(short);
+    }
+    for (auto &rec : this->records) {
+      if (rec.recordCount() > maxRecord)
+        maxRecord = rec.recordCount();
+    }
+    return maxRecord;
+}
+
 AcquisitionConfiguration AcquisitionConfiguration::fromJSON(const QJsonObject &json)
 {
     AcquisitionConfiguration rv;
@@ -257,7 +273,7 @@ AcquisitionConfiguration AcquisitionConfiguration::fromJSON(const QJsonObject &j
 QJsonObject AcquisitionConfiguration::toJSON()
 {
     return QJsonObject({
-        {"version", CONFIGURATION_VERSION},
+        {"version", APP_VERSION},
         {"collection", this->collection.toJSON()},
         {"transfer", this->transfer.toJSON()},
         {"storage", this->storage.toJSON()},

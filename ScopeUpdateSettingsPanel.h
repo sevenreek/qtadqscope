@@ -2,6 +2,7 @@
 #define SCOPEUPDATESETTINGSPANEL_H
 
 #include <QWidget>
+#include "DigitizerConstants.h"
 #include "DigitizerGUIComponent.h"
 #include "ApplicationContext.h"
 #include "ScopeUpdater.h"
@@ -18,18 +19,18 @@ class ScopeUpdateSettingsPanel : public QWidget, public DigitizerGUIComponent
 public:
     explicit ScopeUpdateSettingsPanel(QWidget *parent = nullptr);
     ~ScopeUpdateSettingsPanel();
-    void initialize(ApplicationContext * context) override;
-    void enableVolatileSettings(bool enabled) override;
+    void enableAcquisitionSettings(bool enabled) override;
+    void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
     void reloadUI() override;
 
 private:
     Ui::ScopeUpdateSettingsPanel *ui;
-    ScopeUpdater *scopeUpdater = nullptr;
-    void autosetUpdateScope();
+    std::unique_ptr<ScopeUpdater> scopeUpdater;
     bool scopeUpdaterAdded = false;
 
 private slots:
-    void onPlotChannelCheckboxChanged(int ch);
+    void changePlotChannel(int ch);
+    void setUpdateScope(int enable);
 
 
 

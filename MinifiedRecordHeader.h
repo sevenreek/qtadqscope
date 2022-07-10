@@ -1,11 +1,10 @@
 #ifndef MINIFIEDRECORDHEADER_H
 #define MINIFIEDRECORDHEADER_H
-#include "Acquisition.h"
+#include "AcquisitionConfiguration.h"
 #include "ADQAPIIncluder.h"
 #include <cinttypes>
 #include <string>
-
-const unsigned long CURRENT_VERSION = 3;
+#include "version.h"
 
 #ifdef __GNUC__
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
@@ -35,7 +34,7 @@ MinifiedRecordHeader minifyRecordHeader(const ADQRecordHeader &h)
 }
 const unsigned int MAX_TAG_LENGTH = 128;
 struct  MinifiedAcquisitionConfiguration {
-    uint64_t version = CURRENT_VERSION;
+    uint64_t version = APP_VERSION;
     char fileTag[MAX_TAG_LENGTH];
     uint32_t isContinuous;
     uint32_t userLogicBypass;
@@ -56,36 +55,34 @@ struct  MinifiedAcquisitionConfiguration {
 
     uint32_t recordLength;
     uint32_t recordCount;
-    uint32_t pretrigger;
-    uint32_t triggerDelay;
+    int32_t horizontalShift;
     uint64_t duration;
 
 };
-MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel);
-MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const Acquisition &c, int channel)
+MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const AcquisitionConfiguration &c, int channel);
+MinifiedAcquisitionConfiguration minifyAcquisitionConfiguration(const AcquisitionConfiguration &c, int channel)
 {
     MinifiedAcquisitionConfiguration returnValue;
-    returnValue.version = CURRENT_VERSION;
+    returnValue.version = APP_VERSION;
     returnValue.channel = channel;
-    returnValue.channelMask = c.getChannelMask();
-    returnValue.userLogicBypass = c.getUserLogicBypassMask();
-    returnValue.sampleSkip = c.getSampleSkip();
-    returnValue.obtainedInputRange = c.getObtainedInputRange(channel);
-    returnValue.triggerEdge = (unsigned char)c.getTriggerEdge();
-    returnValue.triggerMode = (unsigned char)c.getTriggerMode();
-    returnValue.isContinuous = (unsigned char)c.getIsContinuous();
-    returnValue.triggerLevelCode = (short)c.getTriggerLevel();
-    returnValue.triggerLevelReset = (short)c.getTriggerReset();
-    returnValue.digitalOffset = (short)c.getDigitalOffset(channel);
-    returnValue.analogOffset = (short)c.getAnalogOffset(channel);
-    returnValue.digitalGain = (short)c.getDigitalGain(channel);
-    returnValue.dcBias = (short)c.getDcBias(channel);
-    returnValue.recordLength = c.getRecordLength();
-    returnValue.recordCount = c.getRecordCount();
-    returnValue.pretrigger = (unsigned short)c.getPretrigger();
-    returnValue.triggerDelay = (unsigned short)c.getTriggerDelay();
-    returnValue.duration = c.getDuration();
-    strncpy(returnValue.fileTag, c.getTag().c_str(), MAX_TAG_LENGTH-1);
+    returnValue.channelMask = c.collection.channelMask();
+    returnValue.userLogicBypass = c.spectroscope.userLogicBypassMask();
+    returnValue.sampleSkip = c.collection.sampleSkip();
+    returnValue.obtainedInputRange = c.AFEs.at(channel).obtainedInputRange();
+    returnValue.triggerEdge = (unsigned char)c.triggers.at(channel).edge();
+    returnValue.triggerMode = (unsigned char)c.triggers.at(channel).mode();
+    returnValue.isContinuous = (unsigned char)c.collection.isContinuous();
+    returnValue.triggerLevelCode = (short)c.triggers.at(channel).level();
+    returnValue.triggerLevelReset = (short)c.triggers.at(channel).reset();
+    returnValue.digitalOffset = (short)c.calibrations.at(channel).digitalOffset();
+    returnValue.analogOffset = (short)c.calibrations.at(channel).analogOffset();
+    returnValue.digitalGain = (short)c.calibrations.at(channel).digitalGain();
+    returnValue.dcBias = (short)c.AFEs.at(channel).dcBias();
+    returnValue.recordLength = c.records.at(channel).recordLength();
+    returnValue.recordCount = c.records.at(channel).recordCount();
+    returnValue.horizontalShift = c.triggers.at(channel).horizontalShift();
+    returnValue.duration = c.collection.duration();
+    strncpy(returnValue.fileTag, c.storage.tag().c_str(), MAX_TAG_LENGTH-1);
     returnValue.fileTag[MAX_TAG_LENGTH-1] = '\0';
     return returnValue;
 }
