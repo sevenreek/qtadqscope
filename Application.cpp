@@ -159,7 +159,7 @@ bool CLIApplication::start(QJsonDocument *json) {
                              }
                            });
   this->fileSaver =
-      BinaryFileWriter::createFileSaverFromConfig(appContext.config()->acq());
+      createFileSaverFromConfig(appContext.config()->acq());
   if (this->fileSaver) {
     this->digitizer->appendRecordProcessor(this->fileSaver.get());
   }

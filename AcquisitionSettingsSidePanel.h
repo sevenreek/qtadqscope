@@ -6,6 +6,7 @@
 #include <array>
 #include "DigitizerConstants.h"
 #include "DigitizerGUIComponent.h"
+#include "ScopeUpdateSettingsPanel.h"
 #include "util.h"
 namespace Ui {
 class AcquisitionSettingsSidePanel;
@@ -23,6 +24,7 @@ public:
     void reloadUI() override;
     void enableAcquisitionSettings(bool enabled) override;
     void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
+    ScopeUpdateSettingsPanel *scopeSettingsPanel();
 private:
     enum class TriggerModeOptions {
         CONTINUOUS = 0,

@@ -229,7 +229,7 @@ unsigned char AcquisitionConfiguration::verifyChannelMaskForSingularApproach(uns
 }
 
 unsigned int AcquisitionConfiguration::maxRecordLength() {
-    auto maxRecord = this->records.at(0).recordCount();
+    auto maxRecord = this->records.at(0).recordLength();
     if(this->collection.isContinuous())
     {
         // Continuous acquisition can produce "records" 
@@ -238,8 +238,8 @@ unsigned int AcquisitionConfiguration::maxRecordLength() {
         return this->transfer.bufferSize()/sizeof(short);
     }
     for (auto &rec : this->records) {
-      if (rec.recordCount() > maxRecord)
-        maxRecord = rec.recordCount();
+      if (rec.recordLength() > maxRecord)
+        maxRecord = rec.recordLength();
     }
     return maxRecord;
 }

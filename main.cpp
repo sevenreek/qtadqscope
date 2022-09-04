@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     app->start(&inputParams.json);
   } else {
     app->start();
-  }
+ }
+  qRegisterMetaType<AcquisitionStates>("AcquisitionStates");
   int appres = a.exec();
   spdlog::info("Application exit");
   return appres;

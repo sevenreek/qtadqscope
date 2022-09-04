@@ -1,4 +1,5 @@
 #include "FileSaveSettingsPanel.h"
+#include "BinaryFileWriter.h"
 #include "Digitizer.h"
 #include "DigitizerConstants.h"
 #include "DigitizerGUIComponent.h"
@@ -27,16 +28,28 @@ void FileSaveSettingsPanel::changeFileSaveMode(int mode) {
   case FileSaveSettingsPanel::FileSaveSelectorOptions::DISABLED: {
     acq.storage.setEnabled(false);
     acq.storage.setStoreHeaders(false);
+    acq.storage.setDebug(false);
   } break;
   case FileSaveSettingsPanel::FileSaveSelectorOptions::BINARY: {
     acq.storage.setEnabled(true);
     acq.storage.setStoreHeaders(false);
+    acq.storage.setDebug(false);
   } break;
   case FileSaveSettingsPanel::FileSaveSelectorOptions::BINARY_HEADERS: {
     acq.storage.setEnabled(true);
     acq.storage.setStoreHeaders(true);
+    acq.storage.setDebug(false);
+  } break;
+  case FileSaveSettingsPanel::FileSaveSelectorOptions::NULL_WRITER: {
+    acq.storage.setEnabled(false);
+    acq.storage.setStoreHeaders(false);
+    acq.storage.setDebug(true);
   } break;
   }
+  this->digitizer.removeRecordProcessor(this->fileWriter.get());
+  this->fileWriter = createFileSaverFromConfig(acq);
+  if(this->fileWriter)
+    this->digitizer.appendRecordProcessor(this->fileWriter.get());
 }
 
 void FileSaveSettingsPanel::reloadUI() {

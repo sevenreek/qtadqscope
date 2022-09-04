@@ -2,6 +2,7 @@
 #define FILESAVESETTINGSPANEL_H
 
 #include <QWidget>
+#include <algorithm>
 #include "DigitizerGUIComponent.h"
 #include "ApplicationContext.h"
 #include "RecordProcessor.h"
@@ -21,6 +22,7 @@ public:
         DISABLED = 0,
         BINARY = 1,
         BINARY_HEADERS = 2,
+        NULL_WRITER = 3
     };
     explicit FileSaveSettingsPanel(QWidget *parent = nullptr);
     ~FileSaveSettingsPanel();
@@ -30,6 +32,7 @@ public:
 
 private:
     Ui::FileSaveSettingsPanel *ui;
+    std::unique_ptr<IRecordProcessor> fileWriter; 
 private slots:
     void changeFileSaveMode(int mode);
 };

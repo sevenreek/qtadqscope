@@ -6,6 +6,7 @@
 #include "DigitizerGUIComponent.h"
 #include "ApplicationContext.h"
 #include "ScopeUpdater.h"
+#include "qcustomplot.h"
 
 
 namespace Ui {
@@ -22,17 +23,16 @@ public:
     void enableAcquisitionSettings(bool enabled) override;
     void onAcquisitionStateChanged(AcquisitionStates os, AcquisitionStates ns) override;
     void reloadUI() override;
+    ScopeUpdater *scopeUpdater() {return this->scopeUpdater_.get(); };
 
 private:
     Ui::ScopeUpdateSettingsPanel *ui;
-    std::unique_ptr<ScopeUpdater> scopeUpdater;
+    std::unique_ptr<ScopeUpdater> scopeUpdater_;
     bool scopeUpdaterAdded = false;
 
 private slots:
     void changePlotChannel(int ch);
     void setUpdateScope(int enable);
-
-
 
 };
 

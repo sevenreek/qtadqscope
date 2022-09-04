@@ -88,6 +88,7 @@ set(PROJECT_SOURCES
         ScopeTab.h ScopeTab.cpp ScopeTab.ui
         ConfigurationController.h ConfigurationController.cpp
         QAcquisitionHandler.h QAcquisitionHandler.cpp
+        NullRecordProcessor.h NullRecordProcessor.cpp
         version.h
         )
 

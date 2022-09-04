@@ -303,22 +303,37 @@ void AcquisitionSettingsSidePanel::setTriggerMode(int val) {
   switch (opt) {
   case AcquisitionSettingsSidePanel::TriggerModeOptions::CONTINUOUS: {
     acq.triggers.at(0).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(1).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(2).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(3).setMode(TRIGGER_MODES::SOFTWARE);
     acq.collection.setAcquisitionMode(ACQUISITION_MODES::CONTINOUS);
   } break;
   case AcquisitionSettingsSidePanel::TriggerModeOptions::SOFTWARE: {
     acq.triggers.at(0).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(1).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(2).setMode(TRIGGER_MODES::SOFTWARE);
+    acq.triggers.at(3).setMode(TRIGGER_MODES::SOFTWARE);
     acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
   } break;
   case AcquisitionSettingsSidePanel::TriggerModeOptions::LEVEL: {
     acq.triggers.at(0).setMode(TRIGGER_MODES::LEVEL);
+    acq.triggers.at(1).setMode(TRIGGER_MODES::LEVEL);
+    acq.triggers.at(2).setMode(TRIGGER_MODES::LEVEL);
+    acq.triggers.at(3).setMode(TRIGGER_MODES::LEVEL);
     acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
   } break;
   case AcquisitionSettingsSidePanel::TriggerModeOptions::INTERNAL: {
     acq.triggers.at(0).setMode(TRIGGER_MODES::INTERNAL);
+    acq.triggers.at(1).setMode(TRIGGER_MODES::INTERNAL);
+    acq.triggers.at(2).setMode(TRIGGER_MODES::INTERNAL);
+    acq.triggers.at(3).setMode(TRIGGER_MODES::INTERNAL);
     acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
   } break;
   case AcquisitionSettingsSidePanel::TriggerModeOptions::EXTERNAL: {
     acq.triggers.at(0).setMode(TRIGGER_MODES::EXTERNAL);
+    acq.triggers.at(1).setMode(TRIGGER_MODES::EXTERNAL);
+    acq.triggers.at(2).setMode(TRIGGER_MODES::EXTERNAL);
+    acq.triggers.at(3).setMode(TRIGGER_MODES::EXTERNAL);
     acq.collection.setAcquisitionMode(ACQUISITION_MODES::TRIGGERED);
   } break;
   }
@@ -354,9 +369,13 @@ void AcquisitionSettingsSidePanel::onAcquisitionStateChanged(
     this->enableAcquisitionSettings(true);
     break;
   case AcquisitionStates::STARTING:
+  case AcquisitionStates::ACTIVE:
     this->enableAcquisitionSettings(false);
     break;
   default:
     break;
   }
+}
+ScopeUpdateSettingsPanel *AcquisitionSettingsSidePanel::scopeSettingsPanel() {
+  return this->ui->scopeUpdatePanel;
 }

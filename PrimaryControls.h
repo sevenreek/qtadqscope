@@ -31,6 +31,7 @@ private slots:
     void periodicUIUpdate();
     void enableTimedRun(int enabled);
     void changeRunDuration(int duration);
+    void SWTrig();
 
 };
 

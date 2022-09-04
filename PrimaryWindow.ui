@@ -56,9 +56,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="ScopeTab" name="scopeTabWidget" native="true">
-          <layout class="QGridLayout" name="primaryLayout" rowstretch="3" columnstretch="0"/>
-         </widget>
+         <widget class="ScopeTab" name="scopeTabWidget" native="true"/>
         </item>
        </layout>
       </widget>
@@ -151,19 +149,19 @@
   <customwidget>
    <class>ScopeTab</class>
    <extends>QWidget</extends>
-   <header location="global">ScopeTab.h</header>
+   <header>ScopeTab.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SpectroscopeTab</class>
    <extends>QWidget</extends>
-   <header location="global">SpectroscopeTab.h</header>
+   <header>SpectroscopeTab.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PrimaryControls</class>
    <extends>QWidget</extends>
-   <header location="global">PrimaryControls.h</header>
+   <header>PrimaryControls.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

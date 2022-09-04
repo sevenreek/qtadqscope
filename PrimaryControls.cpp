@@ -26,6 +26,7 @@ PrimaryControls::PrimaryControls(QWidget *parent)
   this->ui->timedRunCheckbox->connect(this->ui->timedRunCheckbox,
                                       &QCheckBox::stateChanged, this,
                                       &PrimaryControls::enableTimedRun);
+  connect(this->ui->swTrig, &QAbstractButton::clicked, this, &PrimaryControls::SWTrig);
   this->ui->timedRunValue->connect(
       this->ui->timedRunValue,
       static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this,
@@ -121,7 +122,7 @@ void PrimaryControls::onAcquisitionStateChanged(AcquisitionStates os,
     this->ui->streamStatusLabel->setText("STOPPING");
     break;
   case AcquisitionStates::STARTING:
-    this->ui->streamStartStopButton->setEnabled(false);
+    this->ui->streamStartStopButton->setEnabled(true);
     this->ui->streamStatusLabel->setText("STARTING");
     break;
   }
@@ -141,4 +142,8 @@ void PrimaryControls::periodicUIUpdate() {
 void PrimaryControls::enableAcquisitionSettings(bool enabled) {
   this->ui->timedRunCheckbox->setEnabled(enabled);
   this->ui->timedRunValue->setEnabled(enabled);
+}
+
+void PrimaryControls::SWTrig() {
+ this->digitizer.SWTrig();
 }

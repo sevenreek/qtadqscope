@@ -1,5 +1,6 @@
 #include "BinaryFileWriter.h"
 #include "AcquisitionConfiguration.h"
+#include "NullRecordProcessor.h"
 #include "spdlog/spdlog.h"
 #include "util.h"
 #include <QFile>
@@ -10,7 +11,11 @@
 
 #include "MinifiedRecordHeader.h"
 std::unique_ptr<IRecordProcessor>
-BinaryFileWriter::createFileSaverFromConfig(AcquisitionConfiguration &c) {
+createFileSaverFromConfig(AcquisitionConfiguration &c) {
+  if(c.storage.debug()) {
+    return std::unique_ptr<IRecordProcessor>(
+        new NullRecordProcessor());
+  }
   if (!c.storage.enabled()) {
     return nullptr;
   } else if (c.storage.storeHeaders()) {

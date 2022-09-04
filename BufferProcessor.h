@@ -31,9 +31,9 @@ protected:
   const AcquisitionConfiguration &config;
   const std::vector<IRecordProcessor *> &recordProcessors;
   ADQInterface &adq;
-  AcquisitionStateChangeCallback stateChangeCallback;
-  AcquisitionStates mState;
-  Errors mErrorCode;
+  AcquisitionStateChangeCallback stateChangeCallback = nullptr;
+  AcquisitionStates mState = AcquisitionStates::INACTIVE;
+  Errors mErrorCode = Errors::NO_ERROR;
 
 };
 

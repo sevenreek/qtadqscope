@@ -9,8 +9,8 @@ class ScopeUpdater : public QObject, public IRecordProcessor
     Q_OBJECT
 protected:
     QVector<double> x, y;
-    unsigned long long sampleCount;
-    int activeChannel;
+    unsigned long long sampleCount = 0;
+    int activeChannel = 0;
 public:
     bool startNewAcquisition(AcquisitionConfiguration* config) override;
     ScopeUpdater(unsigned long long sampleCount);

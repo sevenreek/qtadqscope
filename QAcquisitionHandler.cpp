@@ -7,11 +7,15 @@
 #include <memory>
 #include <stdlib.h>
 
-void QBufferProcessorProxy::startLoop() { this->processor.startLoop(); }
-void QBufferProcessorProxy::stop() { this->processor.stop(); }
+void QBufferProcessorProxy::startLoop() {
+    this->processor.startLoop();
+}
+void QBufferProcessorProxy::stop() {
+    this->processor.stop();
+}
 
-QAcquisitionHandlerGen3::QAcquisitionHandlerGen3(QObject *parent)
-    : QObject(parent) {
+QAcquisitionHandlerGen3::QAcquisitionHandlerGen3(ADQInterface *adq, QObject *parent)
+    :adq(adq), QObject(parent) {
   this->processingThread.start();
   this->acquisitionTimer.setSingleShot(true);
   connect(&this->acquisitionTimer, &QTimer::timeout, this,
@@ -54,22 +58,30 @@ bool QAcquisitionHandlerGen3::requestStart(
           }));
   this->processorProxy = std::unique_ptr<QBufferProcessorProxy>(
       new QBufferProcessorProxy(*this->bufferProcessor));
-  this->processorProxy->moveToThread(&this->processingThread);
+  this->processorProxy.get()->moveToThread(&this->processingThread);
   this->connect(this, &QAcquisitionHandlerGen3::requestProcessorProxyStart,
                 this->processorProxy.get(), &QBufferProcessorProxy::startLoop,
                 Qt::QueuedConnection);
   this->connect(this, &QAcquisitionHandlerGen3::requestProcessorProxyStop,
                 this->processorProxy.get(), &QBufferProcessorProxy::stop,
-                Qt::QueuedConnection);
+                Qt::DirectConnection);
   this->connect(
       this->processorProxy.get(), &QBufferProcessorProxy::stateChanged, this,
-      &QAcquisitionHandlerGen3::onProcessorStateChanged, Qt::QueuedConnection);
+      &QAcquisitionHandlerGen3::onProcessorStateChanged);
   this->delayAcquisitionStart();
   return true;
 }
+
 void QAcquisitionHandlerGen3::stopAcquisition() { this->requestStop(); }
+
 bool QAcquisitionHandlerGen3::requestStop() {
-  emit this->requestProcessorProxyStop();
+  this->acquisitionStabilizationTimer.stop(); 
+  this->acquisitionTimer.stop();
+  if(this->bufferProcessor && (this->bufferProcessor->state() != AcquisitionStates::INACTIVE))
+    emit this->requestProcessorProxyStop();
+  else
+    emit this->stateChanged(this->state(), AcquisitionStates::INACTIVE);
+  this->adq->StopDataAcquisition();
   return true;
 }
 
@@ -83,12 +95,16 @@ float QAcquisitionHandlerGen3::dmaUsage() {
 
 void QAcquisitionHandlerGen3::startAcquisition() {
   this->acquisitionTimer.start();
+  this->adq->StartDataAcquisition();
+  if(this->config->collection.isContinuous())
+    this->adq->SWTrig();
   emit this->requestProcessorProxyStart();
 }
 
 void QAcquisitionHandlerGen3::delayAcquisitionStart() {
   // time is set in this->configure()
   this->acquisitionStabilizationTimer.start();
+  emit this->stateChanged(this->state(), AcquisitionStates::STARTING);
 }
 
 void QAcquisitionHandlerGen3::onProcessorStateChanged(AcquisitionStates olds,
@@ -96,6 +112,9 @@ void QAcquisitionHandlerGen3::onProcessorStateChanged(AcquisitionStates olds,
   switch (news) {
   case AcquisitionStates::INACTIVE: {
     this->processorStopped();
+  } break;
+  case AcquisitionStates::STOPPING_ERROR: { 
+    this->requestStop();
   } break;
   default:
     break;
@@ -296,12 +315,12 @@ bool QAcquisitionHandlerGen3::configure(AcquisitionConfiguration *acq) {
 }
 
 std::chrono::milliseconds QAcquisitionHandlerGen3::remainingDuration() const {
-  return this->acquisitionTimer.remainingTimeAsDuration();
+  return std::chrono::milliseconds(this->acquisitionTimer.remainingTime());
 }
 
 AcquisitionStates QAcquisitionHandlerGen3::state() const
 {
     if(!this->bufferProcessor) return AcquisitionStates::INACTIVE;
+    else if (this->acquisitionStabilizationTimer.isActive()) return AcquisitionStates::STARTING;
     return this->bufferProcessor->state();
-
 }

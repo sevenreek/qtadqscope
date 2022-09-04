@@ -199,11 +199,12 @@ class RecordChannelConfiguration : public JSONSerializable, public ModificationO
 class FileSaveConfiguration : public JSONSerializable, public ModificationObserver
 {
   private:
-    bool enabled_;
+    bool enabled_ = false;
     std::string tag_;
     bool appendDate_ = false;
     bool storeHeaders_ = false;
     bool bufferInRAM_ = false;
+    bool debug_ = false;
     unsigned long long fileSizeLimit_ = 2e9;
 
   public:
@@ -229,6 +230,9 @@ class FileSaveConfiguration : public JSONSerializable, public ModificationObserv
     unsigned long long fileSizeLimit() const
     {
         return fileSizeLimit_;
+    }
+    bool debug() const {
+        return debug_;
     }
     void setEnabled(bool val)
     {
@@ -256,6 +260,10 @@ class FileSaveConfiguration : public JSONSerializable, public ModificationObserv
     void setFileSizeLimit(unsigned long long val)
     {
         fileSizeLimit_ = val;
+        this->modified();
+    }
+    void setDebug(bool val) {
+        debug_ = val;
         this->modified();
     }
     static FileSaveConfiguration fromJSON(const QJsonObject& json);
@@ -380,7 +388,7 @@ class DataCollectionConfiguration : public JSONSerializable, public Modification
 {
   private:
     CLOCK_SOURCES clockSource_ = CLOCK_SOURCES::INTSRC_INTREF_10MHZ;
-    ACQUISITION_MODES acquisitionMode_ = ACQUISITION_MODES::TRIGGERED;
+    ACQUISITION_MODES acquisitionMode_ = ACQUISITION_MODES::CONTINOUS;
     TRIGGER_APPROACHES triggerApproach_ = TRIGGER_APPROACHES::SINGLE;
     unsigned int sampleSkip_ = 1;
     unsigned long duration_ = 200;

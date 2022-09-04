@@ -19,7 +19,7 @@ void BufferProcessorGen3::startLoop() {
                          // as a pointer, so the actual channel is returned
     ADQDataReadoutStatus status = {0};
     ADQRecord *record = nullptr;
-
+/*
 #ifdef DEBUG_DMA_DELAY
 #if DEBUG_DMA_DELAY > 0
     /////////////////////////////////////// // THIS IS AN ARTIFIICAL DELAY FOR
@@ -31,8 +31,9 @@ void BufferProcessorGen3::startLoop() {
     /// PRODUCTION!
 #endif
 #endif
+*/
     bufferPayloadSize = this->adq.WaitForRecordBuffer(
-        &channel, reinterpret_cast<void **>(&record), 500, &status);
+        &channel, reinterpret_cast<void **>(&record), 1, &status);
     if (status.flags & ADQ_DATA_READOUT_STATUS_FLAGS_STARVING) {
       this->lastStarved = std::chrono::high_resolution_clock::now();
     }

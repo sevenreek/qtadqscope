@@ -1,4 +1,6 @@
 #include "ScopeTab.h"
+#include "ScopeUpdateSettingsPanel.h"
+#include "qnamespace.h"
 #include "ui_ScopeTab.h"
 
 ScopeTab::ScopeTab(QWidget *parent) : QWidget(parent), ui(new Ui::ScopeTab) {
@@ -13,6 +15,13 @@ ScopeTab::ScopeTab(QWidget *parent) : QWidget(parent), ui(new Ui::ScopeTab) {
       new QCPItemLine(this->ui->plotArea);  // adds a horizontal line for the
                                             // trigger level to the plot
   this->triggerLine->setPen(QPen(Qt::red)); // set the color of the line to red
+  this->connect(
+    this->acqSettingsPanel->scopeSettingsPanel()->scopeUpdater(), 
+    &ScopeUpdater::onScopeUpdate,
+    this,
+    &ScopeTab::updateScope, 
+    Qt::BlockingQueuedConnection
+  );
 }
 
 ScopeTab::~ScopeTab() { delete ui; }

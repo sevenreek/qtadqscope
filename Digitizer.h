@@ -33,6 +33,7 @@ public:
     float dmaUsage();
     AcquisitionStates state();
     std::chrono::milliseconds durationRemaining();
+    void SWTrig();
 signals:
     void acquisitionStateChanged(AcquisitionStates oldState, AcquisitionStates newState);
 };

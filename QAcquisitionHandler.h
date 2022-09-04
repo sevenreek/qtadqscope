@@ -30,7 +30,7 @@ signals:
 class QAcquisitionHandlerGen3 : public QObject, public AcquisitionHandler {
   Q_OBJECT
 public:
-  QAcquisitionHandlerGen3(QObject *parent = nullptr);
+  QAcquisitionHandlerGen3(ADQInterface * adq, QObject *parent = nullptr);
   ~QAcquisitionHandlerGen3();
   bool requestStart(AcquisitionConfiguration *config,
                     std::vector<IRecordProcessor *> *recordProcessors) override;

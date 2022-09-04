@@ -4,12 +4,13 @@
 #include "QAcquisitionHandler.h"
 #include "RecordProcessor.h"
 #include "RegisterConstants.h"
+#include "SpectroscopeController.h"
 #include "util.h"
 #include <chrono>
 
-Digitizer::Digitizer(ADQInterface *digitizerWrapper) : adq(digitizerWrapper) {
+Digitizer::Digitizer(ADQInterface *digitizerWrapper) : adq(digitizerWrapper), spectroscope_(adq) {
   this->acquisitionHandler =
-      std::unique_ptr<QAcquisitionHandlerGen3>(new QAcquisitionHandlerGen3());
+      std::unique_ptr<QAcquisitionHandlerGen3>(new QAcquisitionHandlerGen3(this->adq));
   this->acquisitionHandler->connect(this->acquisitionHandler.get(),
                                     &QAcquisitionHandlerGen3::stateChanged,
                                     this, &Digitizer::acquisitionStateChanged);
@@ -20,7 +21,15 @@ void Digitizer::appendRecordProcessor(IRecordProcessor *rp) {
 }
 
 void Digitizer::removeRecordProcessor(IRecordProcessor *rp) {
-  void(std::remove(this->recordProcessors.begin(), this->recordProcessors.end(), rp));
+  if(!rp) return;
+  this->recordProcessors.erase(
+              std::remove(
+                  this->recordProcessors.begin(),
+                  this->recordProcessors.end(),
+                  rp
+                  ),
+              this->recordProcessors.end()
+              );
 }
 
 bool Digitizer::startCustomAcquisition(
@@ -48,4 +57,8 @@ float Digitizer::ramFill() { return this->acquisitionHandler->ramFill(); }
 std::chrono::milliseconds Digitizer::durationRemaining()
 {
   return this->acquisitionHandler->remainingDuration();
+}
+
+void Digitizer::SWTrig() {
+    this->adq->SWTrig();
 }
