@@ -80,6 +80,8 @@ set(PROJECT_SOURCES
         ADQAPIIncluder.h
         RegisterConstants.h
         SpectrumPlotter.h SpectrumPlotter.cpp
+        GpioDialog.h GpioDialog.cpp GpioDialog.ui
+        AuxTriggerDialog.h AuxTriggerDialog.cpp AuxTriggerDialog.ui
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -76,6 +76,7 @@
     <addaction name="actionUser_logic"/>
     <addaction name="separator"/>
     <addaction name="actionSpectrumAnalyzer"/>
+    <addaction name="actionGPIO"/>
    </widget>
    <addaction name="menuConfiguration"/>
   </widget>
@@ -108,6 +109,11 @@
   <action name="actionSpectrumAnalyzer">
    <property name="text">
     <string>Spectrum analyzer</string>
+   </property>
+  </action>
+  <action name="actionGPIO">
+   <property name="text">
+    <string>GPIO</string>
    </property>
   </action>
  </widget>

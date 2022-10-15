@@ -66,6 +66,10 @@ public:
     virtual ~ADQInterfaceWrapper();
     virtual int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
     virtual unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
+    virtual bool SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask);
+    virtual bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask);
+    virtual bool ReadGPIOPort(unsigned int port, unsigned int *data);
+    virtual bool EnableGPIOSupplyOutput(unsigned int enable);
 };
 
 class MutexADQWrapper : public ADQInterfaceWrapper
@@ -113,6 +117,10 @@ public:
     int InitializeParameters(enum ADQParameterId id, void *const parameters) override;
     int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor) override;
     unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode) override;
+    bool SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask) override;
+    bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask) override;
+    bool ReadGPIOPort(unsigned int port, unsigned int *data) override;
+    bool EnableGPIOSupplyOutput(unsigned int enable) override;
 };
 
 

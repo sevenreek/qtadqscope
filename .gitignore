@@ -10,3 +10,4 @@ compile_commands.json
 .vscode/
 *.autosave
 *.user
+.cache

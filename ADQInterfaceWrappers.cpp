@@ -215,6 +215,31 @@ unsigned int MutexADQWrapper::SetupLevelTrigger(int *level, int *edge, int *rese
 
 }
 
+bool MutexADQWrapper::SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetDirectionGPIOPort(port, direction, mask);
+}
+
+bool MutexADQWrapper::WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::WriteGPIOPort(port, data, mask);
+}
+
+bool MutexADQWrapper::ReadGPIOPort(unsigned int port, unsigned int *data)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::ReadGPIOPort(port, data);
+}
+bool MutexADQWrapper::EnableGPIOSupplyOutput(unsigned int enable)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::EnableGPIOSupplyOutput(enable);
+}
+
+
+
 ADQInterfaceWrapper::ADQInterfaceWrapper(void *adqCU, unsigned int deviceNumber):
     deviceNumber(deviceNumber),
     adq(ADQControlUnit_GetADQ(adqCU, deviceNumber)),
@@ -398,4 +423,23 @@ int ADQInterfaceWrapper::SetChannelSampleSkip(unsigned int channel, unsigned int
 unsigned int ADQInterfaceWrapper::SetupLevelTrigger(int *level, int *edge, int *resetLevel, unsigned int channelMask, unsigned int individualMode)
 {
     return this->adq->SetupLevelTrigger(level, edge, resetLevel, channelMask, individualMode);
+}
+
+bool ADQInterfaceWrapper::SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask)
+{
+    return this->adq->SetDirectionGPIOPort(port, direction, mask);
+}
+
+bool ADQInterfaceWrapper::WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask)
+{
+    return this->adq->WriteGPIOPort(port, data, mask);
+}
+
+bool ADQInterfaceWrapper::ReadGPIOPort(unsigned int port, unsigned int *data)
+{
+    return this->adq->ReadGPIOPort(port, data);
+}
+bool ADQInterfaceWrapper::EnableGPIOSupplyOutput(unsigned int enable)
+{
+    return this->adq->EnableGPIOSupplyOutput(enable);
 }

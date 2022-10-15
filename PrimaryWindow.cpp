@@ -1,4 +1,5 @@
 #include "PrimaryWindow.h"
+#include "GpioDialog.h"
 #include "ui_PrimaryWindow.h"
 
 PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
@@ -50,18 +51,20 @@ PrimaryWindow::PrimaryWindow(ApplicationContext * context, QWidget *parent) :
     this->buffersDialog = std::unique_ptr<BuffersDialog>(new BuffersDialog(this));
     this->registerDialog = std::unique_ptr<RegisterDialog>(new RegisterDialog(this));
     this->spectrumDialog = std::unique_ptr<SpectrumDialog>(new SpectrumDialog(this));
+    this->gpioDialog = std::unique_ptr<GPIODialog>(new GPIODialog(this));
     this->calibrationDialog->initialize(this->context);
     this->buffersDialog->initialize(this->context);
     this->registerDialog->initialize(this->context);
     this->spectrumDialog->initialize(this->context);
+    this->gpioDialog->initialize(this->context);
     connect(this->ui->actionCalibration, &QAction::triggered, this, [=]{this->calibrationDialog->reloadUI(); this->calibrationDialog->show();});
     connect(this->ui->actionDMA_Buffers, &QAction::triggered, this, [=]{this->buffersDialog->reloadUI(); this->buffersDialog->show();});
     connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
-    connect(this->ui->actionUser_logic, &QAction::triggered, this, [=]{this->registerDialog->reloadUI(); this->registerDialog->show();});
+    connect(this->ui->actionGPIO, &QAction::triggered, this, [=]{this->gpioDialog->reloadUI(); this->gpioDialog->show();});
+    connect(this->ui->actionSpectrumAnalyzer, &QAction::triggered, this, &PrimaryWindow::openSpectrumAnalyzer);
     connect(this->context->digitizer, &Digitizer::triggerLevelChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::recordLengthChanged, this, [this]{this->autoSetTriggerLine();});
     connect(this->context->digitizer, &Digitizer::digitizerStateChanged, this, &PrimaryWindow::onDigitizerStateChanged);
-    connect(this->ui->actionSpectrumAnalyzer, &QAction::triggered, this, &PrimaryWindow::openSpectrumAnalyzer);
     connect(this->acqSettings, &AcquisitionSettings::onChannelTabChanged, this->primaryControls, &PrimaryControls::changePlotChannel);
 }
 

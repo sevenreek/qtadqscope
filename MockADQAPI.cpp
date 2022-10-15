@@ -390,4 +390,23 @@ ADQInterface::~ADQInterface()
 {
     for(int i = 0; i < 4; i++) free(sourceData[i]);
 }
+bool ADQInterface::SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask)
+{
+    return 1;
+}
+
+bool ADQInterface::WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask)
+{
+    return 1;
+}
+
+bool ADQInterface::ReadGPIOPort(unsigned int port, unsigned int *data)
+{
+    *data = rand();
+    return 1;
+}
+bool ADQInterface::EnableGPIOSupplyOutput(unsigned int enable)
+{
+    return 1;
+}
 #endif

@@ -30,7 +30,7 @@ public:
     explicit FullCalibrationDialog(QWidget *parent = nullptr);
     ~FullCalibrationDialog();
     Ui::FullCalibrationDialog *ui;
-    void reloadUI();
+    void reloadUI() override;
 
 private:
     std::unique_ptr<SignalParameterComputer> parameterComputer;
@@ -60,7 +60,7 @@ public slots:
     void save();
     void stopAcquisitions();
     void changeInputRange(int v);
-    void initialize(ApplicationContext *context);
+    void initialize(ApplicationContext *context) override;
 signals:
     void calibrationApply(CalibrationTable& table);
 

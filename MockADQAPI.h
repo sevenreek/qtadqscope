@@ -78,6 +78,10 @@ public:
     int InitializeParameters(enum ADQParameterId id, void *const parameters);
     int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
     unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
+    bool SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask);
+    bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask);
+    bool ReadGPIOPort(unsigned int port, unsigned int *data);
+    bool EnableGPIOSupplyOutput(unsigned int enable);
 };
 void * CreateADQControlUnit();
 extern ADQInterface * adqInterface;

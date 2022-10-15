@@ -106,6 +106,11 @@ public:
     bool readBlockUserRegister(unsigned int ul, unsigned int start, unsigned int* data, unsigned int numBytes, unsigned int options);
     bool readUserRegister(unsigned int ul, unsigned int regnum, unsigned int *returval);
 
+    bool setDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask);
+    bool writeGPIOPort(unsigned int port, unsigned int data, unsigned int mask);
+    unsigned int readGPIOPort(unsigned int port);
+    bool enableGPIOSupplyOutput(bool enable);
+
 
     DIGITIZER_STATE getDigitizerState();
     DIGITIZER_TRIGGER_MODE getTriggerMode();

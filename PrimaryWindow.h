@@ -10,6 +10,7 @@
 #include "BuffersDialog.h"
 #include "RegisterDialog.h"
 #include "SpectrumDialog.h"
+#include "GpioDialog.h"
 namespace Ui {
 class PrimaryWindow;
 }
@@ -33,6 +34,7 @@ private:
     std::unique_ptr<BuffersDialog> buffersDialog;
     std::unique_ptr<RegisterDialog> registerDialog;
     std::unique_ptr<SpectrumDialog> spectrumDialog;
+    std::unique_ptr<GPIODialog> gpioDialog;
 
 private slots:
     void openConfigSaveDialog();

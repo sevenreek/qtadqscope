@@ -782,3 +782,24 @@ bool Digitizer::getSpectroscopeEnabled()
 {
     return this->defaultAcquisition.getSpectroscopeEnabled();
 }
+
+bool Digitizer::setDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask)
+{
+    return this->adq.SetDirectionGPIOPort(port, direction, mask);
+}
+
+bool Digitizer::writeGPIOPort(unsigned int port, unsigned int data, unsigned int mask)
+{
+    return this->adq.WriteGPIOPort(port, data, mask);
+}
+
+unsigned int Digitizer::readGPIOPort(unsigned int port)
+{
+    unsigned int retval;
+    this->adq.ReadGPIOPort(port, &retval);
+    return retval;
+}
+bool Digitizer::enableGPIOSupplyOutput(bool enable)
+{
+    return this->adq.EnableGPIOSupplyOutput(enable);
+}
