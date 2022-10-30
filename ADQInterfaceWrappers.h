@@ -23,6 +23,7 @@ public:
     virtual bool SetPreTrigSamples(int pretrigger);
     virtual bool SetTrigLevelResetValue(int reset);
     virtual bool SetClockSource(unsigned int clockSource);
+    virtual int GetClockSource();
     virtual bool SetTriggerMode(unsigned int triggerMode);
     virtual bool SetSampleSkip(unsigned int sampleSkip);
     virtual bool BypassUserLogic(unsigned int ulTarget, unsigned int bypass);
@@ -63,6 +64,7 @@ public:
     virtual int GetParameters(enum ADQParameterId id, void *const parameters);
     virtual int SetParameters(void *const parameters);
     virtual int InitializeParameters(enum ADQParameterId id, void *const parameters);
+
     virtual ~ADQInterfaceWrapper();
     virtual int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
     virtual unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
@@ -70,6 +72,16 @@ public:
     virtual bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask);
     virtual bool ReadGPIOPort(unsigned int port, unsigned int *data);
     virtual bool EnableGPIOSupplyOutput(unsigned int enable);
+
+    virtual bool GetTimestampSyncState(unsigned int * state);
+    virtual bool GetTimestampValue(unsigned long long * value);
+    virtual bool ArmTimestampSync();
+    virtual bool DisarmTimestampSync();
+    virtual bool ResetTimestamp();
+    virtual bool SetupTimestampSync(unsigned int mode, unsigned int trig_source);
+
+    virtual bool SetTriggerMaskPXI(unsigned char mask);
+    virtual bool EnableClockRefOut(unsigned int enable);
 };
 
 class MutexADQWrapper : public ADQInterfaceWrapper
@@ -89,6 +101,7 @@ public:
     bool SetPreTrigSamples(int pretrigger) override;
     bool SetTrigLevelResetValue(int reset) override;
     bool SetClockSource(unsigned int clockSource) override;
+    int GetClockSource() override;
     bool SetTriggerMode(unsigned int triggerMode) override;
     bool SetSampleSkip(unsigned int sampleSkip) override;
     bool BypassUserLogic(unsigned int ulTarget, unsigned int bypass) override;
@@ -121,6 +134,16 @@ public:
     bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask) override;
     bool ReadGPIOPort(unsigned int port, unsigned int *data) override;
     bool EnableGPIOSupplyOutput(unsigned int enable) override;
+
+    bool GetTimestampSyncState(unsigned int * state) override;
+    bool GetTimestampValue(unsigned long long * value) override;
+    bool ArmTimestampSync() override;
+    bool DisarmTimestampSync() override;
+    bool ResetTimestamp() override;
+    bool SetupTimestampSync(unsigned int mode, unsigned int trig_source) override;
+
+    bool SetTriggerMaskPXI(unsigned char mask);
+    bool EnableClockRefOut(unsigned int enable);
 };
 
 

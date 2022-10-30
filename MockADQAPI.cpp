@@ -81,6 +81,10 @@ int ADQInterface::SetClockSource(int cs)
 {
     return 1;
 }
+int ADQInterface::GetClockSource()
+{
+    return 0;
+}
 int ADQInterface::SetTriggerMode(int tm)
 {
     return 1;
@@ -183,6 +187,7 @@ int64_t ADQInterface::WaitForRecordBuffer(int *channel, void **buffer, int timeo
     this->record.header->Channel = recordChannel;
     this->record.header->RecordLength = recordLength;
     this->record.header->RecordStatus = 0;
+    this->record.header->Timestamp = this->timestamp++;
     this->record.data = this->sourceData[recordChannel];
     *buffer = &this->record;
     return recordLength*sizeof(short);
@@ -406,6 +411,40 @@ bool ADQInterface::ReadGPIOPort(unsigned int port, unsigned int *data)
     return 1;
 }
 bool ADQInterface::EnableGPIOSupplyOutput(unsigned int enable)
+{
+    return 1;
+}
+bool ADQInterface::GetTimestampSyncState(unsigned int * state)
+{
+    *state = rand();
+    return 1;
+}
+bool ADQInterface::GetTimestampValue(unsigned long long * value)
+{
+    *value = this->timestamp++;
+    return 1;
+}
+bool ADQInterface::ArmTimestampSync()
+{
+    return 1;
+}
+bool ADQInterface::DisarmTimestampSync()
+{
+    return 1;
+}
+bool ADQInterface::ResetTimestamp()
+{
+    return 1;
+}
+bool ADQInterface::SetupTimestampSync(unsigned int mode, unsigned int trig_source)
+{
+    return 1;
+}
+bool ADQInterface::SetTriggerMaskPXI(unsigned char mask)
+{
+    return 1;
+}
+bool ADQInterface::EnableClockRefOut(unsigned int enable)
 {
     return 1;
 }

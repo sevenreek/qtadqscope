@@ -66,26 +66,6 @@ public:
     Q_PROPERTY(unsigned long recordLength READ getRecordLength NOTIFY recordLengthChanged WRITE setRecordLength)
     Q_PROPERTY(unsigned char channelMask READ getChannelMask NOTIFY channelMaskChanged WRITE setChannelMask)
     Q_PROPERTY(unsigned int sampleSkip READ getSampleSkip NOTIFY sampleSkipChanged WRITE setSampleSkip)
-private:
-    std::list<IRecordProcessor*> defaultRecordProcessors;
-    std::list<IRecordProcessor*> &recordProcessors;
-    ADQInterfaceWrapper &adq;
-    Acquisition defaultAcquisition;
-    Acquisition * acquisitionToStart = nullptr;
-    DIGITIZER_STATE currentState = DIGITIZER_STATE::READY;
-    DIGITIZER_TRIGGER_MODE currentTriggerMode = DIGITIZER_TRIGGER_MODE::CONTINUOUS;
-    void changeDigitizerState(DIGITIZER_STATE newState);
-    std::unique_ptr<BufferProcessor> bufferProcessorHandler;
-    QThread ADQThread;
-    QTimer acquisitionTimer;
-    QTimer acquisitionStartDelayTimer;
-    CalibrationTable defaultCalibrationTable;
-    bool isStreamFullyStopped();
-    void joinThreads();
-    TriggerConfiguration createTriggerConfig(Acquisition *acq);
-    bool configureAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
-    void finishRecordProcessors();
-    void handleAcquisitionFullyStopped();
 private slots:
     void onAcquisitionDelayEnd();
 public slots:
@@ -93,6 +73,7 @@ public slots:
     bool runAcquisition();
     void processorLoopStateChanged(BufferProcessor::STATE newState);
 public:
+    ADQInterfaceWrapper &adq;
     Digitizer(ADQInterfaceWrapper &digitizerWrapper);
     ~Digitizer();
     std::chrono::milliseconds getMillisFromLastStarve();
@@ -146,6 +127,7 @@ public:
 
     unsigned long long getLastBuffersFill();
     unsigned long long getQueueFill();
+    const TimestampSyncConfig &getTimestampSyncConfig();
 
 
     CalibrationTable getDefaultCalibrationTable() const;
@@ -180,6 +162,7 @@ public:
 
     void setDefaultCalibrationTable(const CalibrationTable &value);
     void setSpectroscopeEnabled(bool enabled);
+    void setTimestampSyncConfig(const TimestampSyncConfig &config);
 
 signals:
     void ramFillChanged(float ramFill);
@@ -209,6 +192,25 @@ signals:
     void digitalOffsetChanged(int ch, int offset);
     void analogOffsetChanged(int ch, int offset);
     void acquisitionTagChanged(std::string tag);
+private:
+    std::list<IRecordProcessor*> defaultRecordProcessors;
+    std::list<IRecordProcessor*> &recordProcessors;
+    Acquisition defaultAcquisition;
+    Acquisition * acquisitionToStart = nullptr;
+    DIGITIZER_STATE currentState = DIGITIZER_STATE::READY;
+    DIGITIZER_TRIGGER_MODE currentTriggerMode = DIGITIZER_TRIGGER_MODE::CONTINUOUS;
+    void changeDigitizerState(DIGITIZER_STATE newState);
+    std::unique_ptr<BufferProcessor> bufferProcessorHandler;
+    QThread ADQThread;
+    QTimer acquisitionTimer;
+    QTimer acquisitionStartDelayTimer;
+    CalibrationTable defaultCalibrationTable;
+    bool isStreamFullyStopped();
+    void joinThreads();
+    TriggerConfiguration createTriggerConfig(Acquisition *acq);
+    bool configureAcquisition(Acquisition *acq, std::list<IRecordProcessor*> &recordProcessors, CalibrationTable &calibrations);
+    void finishRecordProcessors();
+    void handleAcquisitionFullyStopped();
 };
 
 #endif // DIGITIZER_H

@@ -44,12 +44,14 @@ if __name__ == '__main__':
         _fields_ = [
             ("recordLength", ct.c_uint32),
             ("recordNumber", ct.c_uint32),
-            ("timestamp", ct.c_uint64)
+            ("timestamp", ct.c_uint64),
+            ("generalPurpose", ct.c_uint32),
         ]
 
     class MinifiedChannelConfiguration(ct.Structure):
         _pack_ = not parser.no_pack
         _fields_ = [
+            ("version", ct.c_uint64),
             ("fileTag", ct.c_char * parser.tag_size),
             ("isStreamContinuous", ct.c_uint32),
             ("userLogicBypass", ct.c_uint32),
@@ -57,14 +59,17 @@ if __name__ == '__main__':
             ("channel", ct.c_uint32),
             ("sampleSkip", ct.c_uint32),
             ("inputRangeFloat", ct.c_double),
+
             ("triggerEdge", ct.c_uint32),
             ("triggerMode", ct.c_uint32),
             ("triggerLevelCode", ct.c_int32),
             ("triggerLevelReset", ct.c_int32),
+
             ("digitalOffset", ct.c_int32),
             ("analogOffset", ct.c_int32),
             ("digitalGain", ct.c_int32),
             ("dcBias", ct.c_int32),
+
             ("recordLength", ct.c_uint32),
             ("recordCount", ct.c_uint32),
             ("pretrigger", ct.c_uint32),
@@ -91,7 +96,7 @@ if __name__ == '__main__':
                         break
                     head = MinifiedRecordHeader.from_buffer_copy(bhead)
                     # do anything else you need with the header
-                    print('#{} '.format(head.recordNumber))
+                    print('#{} {}'.format(head.recordNumber, head.timestamp))
                     record_length = head.recordLength
                     if(parser.verify):
                         if(head.recordNumber != record_count):

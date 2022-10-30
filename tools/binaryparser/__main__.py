@@ -1,8 +1,8 @@
 import argparse
 from matplotlib import pyplot as plt
 
-from binaryparser.parsers import RecordParser
-from binaryparser.record_sinks import ASCIISink, AveragingSpectrumSink, PlotSink, PrintSink, TimeOrderVerifier
+from parsers import RecordParser
+from record_sinks import ASCIISink, AveragingSpectrumSink, PlotSink, PrintSink, TimeOrderVerifier
 import ctypes as ct
 
 # The binary strucutre of files created with the Verbose Buffered Binary file output mode are as follows:

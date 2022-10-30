@@ -193,6 +193,11 @@ bool Digitizer::configureAcquisition(
     unsigned int retval;
     this->writeUserRegister(UL_TARGET, DC_SHIFT_REGISTER, 0, acq->getDcBias(CHANNEL_SOURCE), &retval);
     spdlog::debug("0x{:X} {}", DC_SHIFT_REGISTER, retval);
+    const TimestampSyncConfig &tsSync = acq->getTimestampSyncConfig();
+    if(tsSync.rearmOnAcquisitionStart) {
+        this->adq.DisarmTimestampSync();
+        this->adq.SetupTimestampSync(tsSync.syncOnMultipleEvents, tsSync.source);
+    }
     spdlog::info("Configured acquisition successfully.");
     return true;
 }
@@ -223,11 +228,11 @@ void Digitizer::handleAcquisitionFullyStopped()
 }
 
 Digitizer::Digitizer(ADQInterfaceWrapper &digitizerWrapper) :
+    adq(digitizerWrapper),
     defaultRecordProcessors(),
     recordProcessors(defaultRecordProcessors),
-    adq(digitizerWrapper),
     defaultAcquisition(),
-    bufferProcessorHandler(new BufferProcessor(this->recordProcessors, this->adq)),
+    bufferProcessorHandler(new BufferProcessor(this->recordProcessors, digitizerWrapper)),
     ADQThread()
 {
     //qRegisterMetaType<BufferProcessor::STATE>();
@@ -369,6 +374,9 @@ bool Digitizer::runOverridenAcquisition(
     if(!this->configureAcquisition(acq, recordProcessors, calibrations)) return false;
     this->changeDigitizerState(DIGITIZER_STATE::STABILIZING);
     spdlog::debug("Stabilizing... Acquisition will start in {} ms.", Digitizer::ACQUISITION_DELAY);
+    if(acq->getTimestampSyncConfig().rearmOnAcquisitionStart) {
+        this->adq.ArmTimestampSync();
+    }
     this->acquisitionStartDelayTimer.start();
     return true;
 }
@@ -791,6 +799,16 @@ bool Digitizer::setDirectionGPIOPort(unsigned int port, unsigned int direction, 
 bool Digitizer::writeGPIOPort(unsigned int port, unsigned int data, unsigned int mask)
 {
     return this->adq.WriteGPIOPort(port, data, mask);
+}
+
+void Digitizer::setTimestampSyncConfig(const TimestampSyncConfig &config)
+{
+    this->defaultAcquisition.setTimestampSyncConfig(config);
+}
+
+const TimestampSyncConfig &Digitizer::getTimestampSyncConfig()
+{
+    return this->defaultAcquisition.getTimestampSyncConfig();
 }
 
 unsigned int Digitizer::readGPIOPort(unsigned int port)

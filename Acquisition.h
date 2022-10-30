@@ -5,6 +5,8 @@
 #include <array>
 #include <QJsonObject>
 #include "spdlog/spdlog.h"
+#include "TimestampSyncConfig.h"
+
 class Acquisition {
 public:
     const static unsigned long INFINITE_RECORDS = -1;
@@ -46,6 +48,7 @@ private:
     std::array<float, MAX_NOF_CHANNELS> obtainedInputRange = {{5000,5000,5000,5000}};
 
     bool spectroscopeEnabled = true;
+    TimestampSyncConfig timestampSyncConfig;
 public:
     void log();
     std::string getTag() const;
@@ -110,6 +113,8 @@ public:
     static unsigned char verifyChannelMaskForSingularApproach(unsigned char channelMask);
     bool getSpectroscopeEnabled() const;
     void setSpectroscopeEnabled(bool newSpectroscopeEnabled);
+    const TimestampSyncConfig &getTimestampSyncConfig() const;
+    void setTimestampSyncConfig(const TimestampSyncConfig &newTimestampSyncConfig);
 };
 
 

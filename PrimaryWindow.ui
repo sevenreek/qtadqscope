@@ -77,6 +77,7 @@
     <addaction name="separator"/>
     <addaction name="actionSpectrumAnalyzer"/>
     <addaction name="actionGPIO"/>
+    <addaction name="actionTimestamp"/>
    </widget>
    <addaction name="menuConfiguration"/>
   </widget>
@@ -114,6 +115,11 @@
   <action name="actionGPIO">
    <property name="text">
     <string>GPIO</string>
+   </property>
+  </action>
+  <action name="actionTimestamp">
+   <property name="text">
+    <string>Timestamp</string>
    </property>
   </action>
  </widget>

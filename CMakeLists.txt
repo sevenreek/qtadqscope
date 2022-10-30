@@ -82,6 +82,9 @@ set(PROJECT_SOURCES
         SpectrumPlotter.h SpectrumPlotter.cpp
         GpioDialog.h GpioDialog.cpp GpioDialog.ui
         AuxTriggerDialog.h AuxTriggerDialog.cpp AuxTriggerDialog.ui
+        TimestampDialog.h TimestampDialog.cpp TimestampDialog.ui
+        TimestampSyncConfig.h
+        TimestampReader.h TimestampReader.cpp
         )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

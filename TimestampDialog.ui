@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TimestampDialog</class>
+ <widget class="QDialog" name="TimestampDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>583</width>
+    <height>172</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="5">
+    <widget class="QPushButton" name="readTimestamp">
+     <property name="text">
+      <string>Read now</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2" rowspan="2">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Timestamp&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="3" colspan="2">
+    <widget class="QComboBox" name="syncSource">
+     <item>
+      <property name="text">
+       <string>Software</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PXIe STARB</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>SYNC connector</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PXI Trigger</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Sync source</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="3">
+    <widget class="QCheckBox" name="pxiTrig0">
+     <property name="text">
+      <string>TRIG0</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="5">
+    <widget class="QCheckBox" name="armOnStart">
+     <property name="text">
+      <string>Rearm on acquisition start</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="5">
+    <widget class="QCheckBox" name="syncOnce">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Sync on first event only</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QPushButton" name="disarmSync">
+     <property name="text">
+      <string>Disarm Sync</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3" colspan="2">
+    <widget class="QCheckBox" name="updateTimestamp">
+     <property name="text">
+      <string>Read from records</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="2">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="4">
+    <widget class="QCheckBox" name="pxiTrig1">
+     <property name="text">
+      <string>TRIG1</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Clock reference</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="3" colspan="2">
+    <widget class="QPushButton" name="rearmSync">
+     <property name="text">
+      <string>Rearm Sync</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3" colspan="3">
+    <widget class="QLabel" name="timestamp">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>PXIe mask</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="3" colspan="2">
+    <widget class="QComboBox" name="clockSource">
+     <item>
+      <property name="text">
+       <string>Internal clock source, internal 10 MHz reference</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>External clock source</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Internal clock source, external 10 MHz reference (PXIsync)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Internal clock source, PXIe 100 MHz clock</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="6" column="5">
+    <widget class="QCheckBox" name="clockOutput">
+     <property name="text">
+      <string>Output</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

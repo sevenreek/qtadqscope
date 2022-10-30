@@ -55,6 +55,12 @@ bool MutexADQWrapper::SetClockSource(unsigned int clockSource)
     return ADQInterfaceWrapper::SetClockSource(clockSource);
 }
 
+int MutexADQWrapper::GetClockSource()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::GetClockSource();
+}
+
 bool MutexADQWrapper::SetTriggerMode(unsigned int triggerMode)
 {
     std::lock_guard<std::mutex> lck(this->mutex);
@@ -239,6 +245,47 @@ bool MutexADQWrapper::EnableGPIOSupplyOutput(unsigned int enable)
 }
 
 
+bool MutexADQWrapper::GetTimestampSyncState(unsigned int * state)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::GetTimestampSyncState(state);
+}
+bool MutexADQWrapper::GetTimestampValue(unsigned long long * value)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::GetTimestampValue(value);
+}
+bool MutexADQWrapper::ArmTimestampSync()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::ArmTimestampSync();
+}
+bool MutexADQWrapper::DisarmTimestampSync()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::DisarmTimestampSync();
+}
+bool MutexADQWrapper::ResetTimestamp()
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::ResetTimestamp();
+}
+bool MutexADQWrapper::SetupTimestampSync(unsigned int mode, unsigned int trig_source)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetupTimestampSync(mode, trig_source);
+}
+
+bool MutexADQWrapper::SetTriggerMaskPXI(unsigned char mask)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::SetTriggerMaskPXI(mask);
+}
+bool MutexADQWrapper::EnableClockRefOut(unsigned int enable)
+{
+    std::lock_guard<std::mutex> lck(this->mutex);
+    return ADQInterfaceWrapper::EnableClockRefOut(enable);
+}
 
 ADQInterfaceWrapper::ADQInterfaceWrapper(void *adqCU, unsigned int deviceNumber):
     deviceNumber(deviceNumber),
@@ -286,6 +333,11 @@ bool ADQInterfaceWrapper::SetTrigLevelResetValue(int reset)
 bool ADQInterfaceWrapper::SetClockSource(unsigned int clockSource)
 {
     return this->adq->SetClockSource(clockSource);
+}
+
+int ADQInterfaceWrapper::GetClockSource()
+{
+    return this->adq->GetClockSource();
 }
 
 bool ADQInterfaceWrapper::SetTriggerMode(unsigned int triggerMode)
@@ -442,4 +494,36 @@ bool ADQInterfaceWrapper::ReadGPIOPort(unsigned int port, unsigned int *data)
 bool ADQInterfaceWrapper::EnableGPIOSupplyOutput(unsigned int enable)
 {
     return this->adq->EnableGPIOSupplyOutput(enable);
+}
+bool ADQInterfaceWrapper::GetTimestampSyncState(unsigned int * state)
+{
+    return this->adq->GetTimestampSyncState(state);
+}
+bool ADQInterfaceWrapper::GetTimestampValue(unsigned long long * value)
+{
+    return this->adq->GetTimestampValue(value);
+}
+bool ADQInterfaceWrapper::ArmTimestampSync()
+{
+    return this->adq->ArmTimestampSync();
+}
+bool ADQInterfaceWrapper::DisarmTimestampSync()
+{
+    return this->adq->DisarmTimestampSync();
+}
+bool ADQInterfaceWrapper::ResetTimestamp()
+{
+    return this->adq->ResetTimestamp();
+}
+bool ADQInterfaceWrapper::SetupTimestampSync(unsigned int mode, unsigned int trig_source)
+{
+    return this->adq->SetupTimestampSync(mode, trig_source);
+}
+bool ADQInterfaceWrapper::SetTriggerMaskPXI(unsigned char mask)
+{
+    return this->adq->SetTriggerMaskPXI(mask);
+}
+bool ADQInterfaceWrapper::EnableClockRefOut(unsigned int enable)
+{
+    return this->adq->EnableClockRefOut(enable);
 }

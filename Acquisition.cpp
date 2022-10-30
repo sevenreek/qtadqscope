@@ -265,6 +265,16 @@ void Acquisition::setSpectroscopeEnabled(bool newSpectroscopeEnabled)
     spectroscopeEnabled = newSpectroscopeEnabled;
 }
 
+const TimestampSyncConfig &Acquisition::getTimestampSyncConfig() const
+{
+    return timestampSyncConfig;
+}
+
+void Acquisition::setTimestampSyncConfig(const TimestampSyncConfig &newTimestampSyncConfig)
+{
+    timestampSyncConfig = newTimestampSyncConfig;
+}
+
 void Acquisition::log()
 {
 

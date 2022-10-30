@@ -35,6 +35,7 @@ private:
     unsigned long long recordNumber = 0;
     ADQRecord record;
     ADQRecordHeader header;
+    unsigned long long timestamp = 0;
 public:
     static const unsigned long DEFAULT_BUFFER_SIZE;
     ADQInterface();
@@ -42,6 +43,7 @@ public:
     int StopStreaming();
     int StartStreaming();
     int SetClockSource(int cs);
+    int GetClockSource();
     int SetTriggerMode(int tm);
     unsigned int SetSampleSkip(unsigned int ss);
     unsigned int SetInputRange(unsigned int channel, float in, float* out);
@@ -78,10 +80,20 @@ public:
     int InitializeParameters(enum ADQParameterId id, void *const parameters);
     int SetChannelSampleSkip(unsigned int channel, unsigned int skipfactor);
     unsigned int SetupLevelTrigger(int * level, int * edge, int * resetLevel, unsigned int channelMask, unsigned int individualMode);
+
     bool SetDirectionGPIOPort(unsigned int port, unsigned int direction, unsigned int mask);
     bool WriteGPIOPort(unsigned int port, unsigned int data, unsigned int mask);
     bool ReadGPIOPort(unsigned int port, unsigned int *data);
     bool EnableGPIOSupplyOutput(unsigned int enable);
+    bool GetTimestampSyncState(unsigned int * state);
+    bool GetTimestampValue(unsigned long long * value);
+    bool ArmTimestampSync();
+    bool DisarmTimestampSync();
+    bool ResetTimestamp();
+    bool SetupTimestampSync(unsigned int mode, unsigned int trig_source);
+
+    bool SetTriggerMaskPXI(unsigned char mask);
+    bool EnableClockRefOut(unsigned int enable);
 };
 void * CreateADQControlUnit();
 extern ADQInterface * adqInterface;

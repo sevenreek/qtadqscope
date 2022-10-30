@@ -1,7 +1,7 @@
 from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
 import ctypes as ct
-from binaryparser.record_sinks import RecordSink
-from binaryparser.structures import get_structures
+from record_sinks import RecordSink
+from structures import get_structures
 import numpy as np
 
 def parse_version(fi):

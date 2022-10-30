@@ -11,6 +11,7 @@
 #include "RegisterDialog.h"
 #include "SpectrumDialog.h"
 #include "GpioDialog.h"
+#include "TimestampDialog.h"
 namespace Ui {
 class PrimaryWindow;
 }
@@ -35,6 +36,7 @@ private:
     std::unique_ptr<RegisterDialog> registerDialog;
     std::unique_ptr<SpectrumDialog> spectrumDialog;
     std::unique_ptr<GPIODialog> gpioDialog;
+    std::unique_ptr<TimestampDialog> timestampDialog;
 
 private slots:
     void openConfigSaveDialog();
