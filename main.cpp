@@ -21,7 +21,7 @@ void processArguments(QApplication &app, ApplicationConfiguration &cfg, Acquisit
     parser.process(app);
 
     const QStringList args = parser.positionalArguments();
-    QString acquisitionFile = "defaultconfig.json";
+    QString acquisitionFile = "default_config.json";
 
     if(args.count() > 0)
         acquisitionFile = args.at(0);

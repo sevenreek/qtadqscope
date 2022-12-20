@@ -64,7 +64,7 @@ IRecordProcessor::STATUS BinaryFileWriter::processRecord(ADQRecord* record, size
     }
     else
     {
-        this->bytesSaved += record->header->RecordLength*sizeof(short);
+        this->bytesSaved += bufferSize;
         this->dataStream[record->header->Channel].write((char*)record->data, bufferSize /*sizeof(short)*record->header->RecordLength*/);
         return STATUS::OK;
     }
