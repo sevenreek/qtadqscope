@@ -47,20 +47,26 @@ The DKMS is likely to be already installed on the operating system. No issues ha
 ## Building the project
 
 1. **Create a `build` directory in the root dir**
+
    ```sh
    mkdir build
    ```
+
 2. **`cd` into the directory**
+
    ```sh
    cd build
    ```
+
 3. **Configure CMake**
+
    ```sh
    cmake3 -DMOCK_ADQAPI=OFF -DLINUX_BUILD=ON ..
    ```
    The program can be used in debug mode on systems without the ADQAPI or the board plugged in. To indicate a production build intended to be used on a real setup unset `MOCK_ADQAPI`. Due to small differences between Linux and Windows systems the `LINUX_BUILD` setting must also be chosen appropriately. Additionaly, for Windows and possibly other systems the cmake command is going to be just `cmake` instead of `cmake3`.
 
 4. **Build the project**
+
    ```sh
    cmake3 --build .
    ```
